@@ -22,8 +22,8 @@ Verified against the `zencart/zencart` **2.3** branch (HEAD `0db1041`, 2026-07-2
 
 | Decision | Choice |
 |---|---|
-| Offer placement | Shopping cart page only |
-| Offer mechanism | `messageStack` — no template file involved |
+| How the question is put | A mod-owned Yes/No interstitial on entry to checkout, asked once |
+| Secondary hint | An optional offer on the cart page via `messageStack` |
 | Mod-owned pages | Shipping selection + confirmation |
 | Core-owned pages | `checkout_payment`, `checkout_process`, `checkout_success` |
 | Enable toggle | Dropped; installation implies enabled |
@@ -57,6 +57,20 @@ The cart-page offer avoids templates entirely: an observer on
 `NOTIFY_HEADER_END_SHOPPING_CART` adds a message to the `shopping_cart` messageStack,
 which every template renders (verified in `template_default`, `responsive_classic`,
 and ZCA Bootstrap 3.8.0 `tpl_shopping_cart_default.php:33`).
+
+### Why the question is a page, not a modal
+
+A dimming Yes/No overlay was considered and rejected. It would need JavaScript and CSS
+injected into a page the plugin does not own, which is possible only through
+`PageLoader::listModulePagesFiles()` — `@since v2.2.0`, and **absent at v2.0.0**, so it
+would have broken the declared support floor. Worse, "blocks until answered" means a
+script that fails to initialise blocks checkout altogether, turning a missed offer into
+a lost sale. A modal would also need focus trapping, ESC handling and ARIA to be usable,
+and would have to survive the store template's own modal machinery and z-index stack.
+
+The interstitial has none of those costs: a plain form, two submit buttons, no scripting,
+accessible by default, and — being a mod-owned page — it always wins template resolution.
+Its only price is one extra click, and only on carts that qualify.
 
 ## 4. Why no core files are needed
 
