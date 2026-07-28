@@ -19,6 +19,15 @@ $define = [
     'SHIP_TO_MULTIPLE_CART_OFFER' => 'Sending these items to more than one person? You can %s and choose a delivery address for each item.',
     'SHIP_TO_MULTIPLE_CART_OFFER_LINK' => 'ship to multiple addresses',
 
+    // -----
+    // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
+    // is the route back to the address grid. It replaces a link that used to be rendered
+    // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;
+    // delivering it through the messageStack keeps the plugin free of template files.
+    //
+    'MULTISHIP_RETURN_TO_ADDRESSES' => 'This order is going to more than one address. Choose a shipping method below, then click %s to set a delivery address for each item.',
+    'MULTISHIP_RETURN_TO_ADDRESSES_LINK' => 'continue to addresses',
+
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
     'TEXT_GRAND_TOTAL' => 'Grand Total:',

@@ -90,6 +90,31 @@ class multiship_observer extends base
                 if (!empty($_POST['multiship_changed'])) {
                     $_SESSION['multiship_shipping_changed'] = true;
                 }
+
+                // -----
+                // Restore the customer's route back to the address grid.
+                //
+                // checkout_multiship requires a shipping method, so a customer arriving
+                // from the interstitial is bounced here to choose one. The link back used
+                // to be rendered by an override of tpl_checkout_shipping_default.php,
+                // which this plugin no longer ships, so without this they would be
+                // stranded on the shipping page.
+                //
+                // Delivered as a message rather than by redirecting from checkout_payment:
+                // isSelected() only becomes true once two or more *different* addresses
+                // are assigned, so a redirect would trap any customer who opened the grid
+                // and left everything going to one address.
+                //
+                if ($_SESSION['multiship']->isChosen()) {
+                    $GLOBALS['messageStack']->add(
+                        'checkout_shipping',
+                        sprintf(
+                            MULTISHIP_RETURN_TO_ADDRESSES,
+                            '<a href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_RETURN_TO_ADDRESSES_LINK . '</a>'
+                        ),
+                        'caution'
+                    );
+                }
                 break;
             case 'NOTIFY_HEADER_START_CHECKOUT_PAYMENT':
                 if (isset($_SESSION['multiship_shipping_changed'])) {
