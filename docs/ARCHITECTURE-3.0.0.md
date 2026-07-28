@@ -99,9 +99,23 @@ coexists with it.
 
 ## 5. Guards that must survive
 
-`isEnabled()` currently disables the mod for group-pricing customers and when a
-coupon is applied. These are **tax-calculation correctness guards**, not user
-preferences, and must be retained even though the enable toggle is dropped.
+`isEnabled()` disables the mod for group-pricing customers and when a coupon is
+applied. These are **tax-calculation correctness guards**, not user preferences,
+and must be retained even though the enable toggle is dropped.
+
+It also disables the mod for **guest and express-checkout sessions** — COWOA, One
+Page Checkout guest checkout, and PayPal Express Checkout (`$_SESSION['COWOA']`,
+`customer_guest_id`, `paypal_ec_token`). Multiship requires a registered account:
+a guest flow leaves no account for the per-address sub-orders, and Express Checkout
+fixes a single delivery address from the PayPal account that cannot be reconciled
+with per-item addresses.
+
+OPC's own `guestCheckoutEnabled()` is gated on the same `isEnabled` flag the §4a
+bypass clears, so a multiship order could not be taken through OPC guest checkout
+in any case; this guard covers guest flows that reach the store by other routes,
+and makes the restriction an invariant rather than a property of the offer alone.
+The same three tests are duplicated in `multiship_opc_observer`, because it answers
+at `[90]` while `isEnabled()` does not run until `[130]`.
 
 The existing trigger in `class.multiship.php` already implements §1.2 exactly:
 
