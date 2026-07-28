@@ -17,33 +17,24 @@
 // | to obtain it through the world-wide-web, please send a note to       |
 // | license@zen-cart.com so we can mail you a copy immediately.          |
 // +----------------------------------------------------------------------+
-//  $Id: invoice.php 5961 2007-03-03 17:17:39Z ajeh $
+//  $Id: packingslip.php 5961 2007-03-03 17:17:39Z ajeh $
 //
+$define = [
+    'TABLE_HEADING_COMMENTS' => 'Comments',
+    'TABLE_HEADING_CUSTOMER_NOTIFIED' => 'Customer Notified',
+    'TABLE_HEADING_DATE_ADDED' => 'Date Added',
+    'TABLE_HEADING_STATUS' => 'Status',
 
-define('TABLE_HEADING_COMMENTS', 'Comments');
-define('TABLE_HEADING_CUSTOMER_NOTIFIED', 'Customer Notified');
-define('TABLE_HEADING_DATE_ADDED', 'Date Added');
-define('TABLE_HEADING_STATUS', 'Status');
+    'TABLE_HEADING_PRODUCTS_MODEL' => 'Model',
+    'TABLE_HEADING_PRODUCTS' => 'Products',
 
-define('TABLE_HEADING_PRODUCTS_MODEL', 'Model');
-define('TABLE_HEADING_PRODUCTS', 'Products');
-define('TABLE_HEADING_TAX', 'Tax');
-define('TABLE_HEADING_TOTAL', 'Total');
-define('TABLE_HEADING_PRICE_EXCLUDING_TAX', 'Price (ex)');
-define('TABLE_HEADING_PRICE_INCLUDING_TAX', 'Price (inc)');
-define('TABLE_HEADING_TOTAL_EXCLUDING_TAX', 'Total (ex)');
-define('TABLE_HEADING_TOTAL_INCLUDING_TAX', 'Total (inc)');
+    'ENTRY_CUSTOMER' => 'CUSTOMER:',
 
-define('ENTRY_CUSTOMER', 'CUSTOMER:');
+    'ENTRY_SOLD_TO' => 'BILL TO:',
+    'ENTRY_SHIP_TO' => 'SHIP TO:',
+    'ENTRY_PAYMENT_METHOD' => 'Payment Method:',
+    'ENTRY_DATE_PURCHASED' => 'Date Ordered:',
 
-define('ENTRY_SOLD_TO', 'SOLD TO:');
-define('ENTRY_SHIP_TO', 'SHIP TO:');
-define('ENTRY_PAYMENT_METHOD', 'Payment Method:');
-define('ENTRY_SUB_TOTAL', 'Sub-Total:');
-define('ENTRY_TAX', 'Tax:');
-define('ENTRY_SHIPPING', 'Shipping:');
-define('ENTRY_TOTAL', 'Total:');
-define('ENTRY_DATE_PURCHASED', 'Date Ordered:');
-
-define('ENTRY_ORDER_ID','Invoice No. ');
-define('TEXT_INFO_ATTRIBUTE_FREE', '&nbsp;-&nbsp;FREE');
+    'ENTRY_ORDER_ID' => 'Invoice No. ',
+];
+return $define;
