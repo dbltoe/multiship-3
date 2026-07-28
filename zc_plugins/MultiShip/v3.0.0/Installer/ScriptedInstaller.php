@@ -33,11 +33,17 @@ class ScriptedInstaller extends ScriptedInstallBase
 
     protected function executeInstall()
     {
-        $this->createSchema();
+        $success = $this->createSchema();
+
         $cgi = $this->getConfigurationGroupId();
-        $this->addConfigurationKeys($cgi);
+        if ($cgi === 0) {
+            return false;
+        }
+
+        $success = $this->addConfigurationKeys($cgi) && $success;
         $this->registerAdminPages($cgi);
-        return true;
+
+        return $success;
     }
 
     // -----
@@ -49,12 +55,18 @@ class ScriptedInstaller extends ScriptedInstallBase
     //
     protected function executeUpgrade($oldVersion = null)
     {
-        $this->createSchema();
+        $success = $this->createSchema();
+
         $cgi = $this->getConfigurationGroupId();
-        $this->addConfigurationKeys($cgi);
+        if ($cgi === 0) {
+            return false;
+        }
+
+        $success = $this->addConfigurationKeys($cgi) && $success;
         $this->registerAdminPages($cgi);
-        $this->removeRetiredConfigurationKeys();
-        return true;
+        $success = $this->removeRetiredConfigurationKeys() && $success;
+
+        return $success;
     }
 
     protected function executeUninstall()
@@ -63,32 +75,38 @@ class ScriptedInstaller extends ScriptedInstallBase
             ['customersInvoiceMultiship', 'customersPackingslipMultiship', 'configMultiship']
         );
 
+        $success = true;
+
         if ($this->columnExists(DB_PREFIX . 'orders_products', 'orders_multiship_id')) {
-            $this->executeInstallerSql(
+            $success = $this->executeInstallerSql(
                 "ALTER TABLE " . DB_PREFIX . "orders_products DROP COLUMN orders_multiship_id"
             );
         }
 
-        $this->executeInstallerSql("DROP TABLE IF EXISTS " . DB_PREFIX . "orders_multiship_total");
-        $this->executeInstallerSql("DROP TABLE IF EXISTS " . DB_PREFIX . "orders_multiship");
+        $success = $this->executeInstallerSql("DROP TABLE IF EXISTS " . DB_PREFIX . "orders_multiship_total") && $success;
+        $success = $this->executeInstallerSql("DROP TABLE IF EXISTS " . DB_PREFIX . "orders_multiship") && $success;
 
-        $this->executeInstallerSql(
+        $success = $this->executeInstallerSql(
             "DELETE FROM " . TABLE_CONFIGURATION . " WHERE configuration_key LIKE 'MODULE_MULTISHIP\_%'"
-        );
-        $this->executeInstallerSql(
+        ) && $success;
+        $success = $this->executeInstallerSql(
             "DELETE FROM " . TABLE_CONFIGURATION_GROUP . "
               WHERE configuration_group_title = '" . self::CONFIG_GROUP_TITLE . "'
               LIMIT 1"
-        );
+        ) && $success;
 
-        return true;
+        return $success;
     }
 
     // -------------------------------------------------------------------------
 
+    // -----
+    // Each statement is issued unconditionally -- the success flag is folded in
+    // afterwards -- so that one failure does not silently skip the rest.
+    //
     protected function createSchema()
     {
-        $this->executeInstallerSql(
+        $success = $this->executeInstallerSql(
             "CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "orders_multiship (
                 orders_multiship_id int(11) NOT NULL auto_increment,
                 orders_id int(11) NOT NULL default '0',
@@ -107,7 +125,7 @@ class ScriptedInstaller extends ScriptedInstallBase
              PRIMARY KEY (orders_multiship_id))"
         );
 
-        $this->executeInstallerSql(
+        $success = $this->executeInstallerSql(
             "CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "orders_multiship_total (
                 orders_multiship_total_id int(11) unsigned NOT NULL auto_increment,
                 orders_id int(11) NOT NULL default '0',
@@ -118,14 +136,16 @@ class ScriptedInstaller extends ScriptedInstallBase
                 class varchar(32) NOT NULL default '',
                 sort_order int(11) NOT NULL default '0',
              PRIMARY KEY (orders_multiship_total_id))"
-        );
+        ) && $success;
 
         if (!$this->columnExists(DB_PREFIX . 'orders_products', 'orders_multiship_id')) {
-            $this->executeInstallerSql(
+            $success = $this->executeInstallerSql(
                 "ALTER TABLE " . DB_PREFIX . "orders_products
                     ADD orders_multiship_id int(11) NOT NULL default '0' AFTER orders_id"
-            );
+            ) && $success;
         }
+
+        return $success;
     }
 
     // -----
@@ -165,8 +185,19 @@ class ScriptedInstaller extends ScriptedInstallBase
                 ('" . self::CONFIG_GROUP_TITLE . "', '" . self::CONFIG_GROUP_TITLE . "', 1, 1)"
         );
 
+        // -----
+        // Re-read rather than trusting insert_ID(), but do not assume the INSERT
+        // succeeded: returning 0 here makes the caller abort rather than writing
+        // configuration keys into a non-existent group.
+        //
         $check = $this->dbConn->Execute($sql);
+        if ($check->EOF) {
+            return 0;
+        }
         $cgi = (int)$check->fields['configuration_group_id'];
+        if ($cgi === 0) {
+            return 0;
+        }
 
         // Zen Cart convention: a configuration group sorts by its own id.
         $this->executeInstallerSql(
@@ -182,9 +213,10 @@ class ScriptedInstaller extends ScriptedInstallBase
     protected function addConfigurationKeys($cgi)
     {
         $cgi = (int)$cgi;
+        $success = true;
 
         if (!$this->configurationKeyExists('MODULE_MULTISHIP_PAYMENT_METHODS')) {
-            $this->executeInstallerSql(
+            $success = $this->executeInstallerSql(
                 "INSERT INTO " . TABLE_CONFIGURATION . "
                     (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
                  VALUES
@@ -197,7 +229,7 @@ class ScriptedInstaller extends ScriptedInstallBase
         }
 
         if (!$this->configurationKeyExists('MODULE_MULTISHIP_DEBUG')) {
-            $this->executeInstallerSql(
+            $success = $this->executeInstallerSql(
                 "INSERT INTO " . TABLE_CONFIGURATION . "
                     (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, set_function)
                  VALUES
@@ -207,8 +239,10 @@ class ScriptedInstaller extends ScriptedInstallBase
                      'Enable the plugin debug-log?',
                      $cgi, 500, NOW(),
                      'zen_cfg_select_option(array(\'true\', \'false\'),')"
-            );
+            ) && $success;
         }
+
+        return $success;
     }
 
     protected function configurationKeyExists($key_name)
@@ -224,7 +258,7 @@ class ScriptedInstaller extends ScriptedInstallBase
 
     protected function removeRetiredConfigurationKeys()
     {
-        $this->executeInstallerSql(
+        return $this->executeInstallerSql(
             "DELETE FROM " . TABLE_CONFIGURATION . "
               WHERE configuration_key IN ('" . implode("', '", self::RETIRED_CONFIG_KEYS) . "')"
         );
