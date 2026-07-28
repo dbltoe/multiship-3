@@ -15,3 +15,9 @@ define('TABLE_ORDERS_MULTISHIP', DB_PREFIX . 'orders_multiship');
 define('TABLE_ORDERS_MULTISHIP_TOTAL', DB_PREFIX . 'orders_multiship_total');
 
 define('FILENAME_CHECKOUT_MULTISHIP', 'checkout_multiship');
+
+// -----
+// The interstitial that asks, once per session, whether this order ships to more than
+// one address. A mod-owned page, so it needs no JavaScript and no template changes.
+//
+define('FILENAME_MULTISHIP_CHOICE', 'multiship_choice');

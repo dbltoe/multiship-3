@@ -8,19 +8,20 @@
 // ---------------------------------------------------------------------------
 
 // -----
-// The One Page Checkout bypass must be attached *before* OPC's own observer is
-// instantiated at checkpoint 97, since that observer calls checkEnabled() -- which
-// issues NOTIFY_OPC_SET_DISABLED -- from its constructor. It deliberately depends
-// on nothing but a session flag, as $_SESSION['multiship'] does not exist until 130.
+// Must be attached *before* One Page Checkout's own observer is instantiated at
+// checkpoint 97, for two reasons: that observer issues NOTIFY_OPC_SET_DISABLED from its
+// constructor, and it redirects NOTIFY_HEADER_START_CHECKOUT_SHIPPING to checkout_one.
+// Zen Cart notifies observers in attach order, so attaching first is what lets the
+// multiship interstitial be reached at all on an OPC store.
 //
 $autoLoadConfig[90][] = array(
     'autoType' => 'class',
-    'loadFile' => 'observers/class.multiship_opc_observer.php'
+    'loadFile' => 'observers/class.multiship_early_observer.php'
 );
 $autoLoadConfig[90][] = array(
     'autoType' => 'classInstantiate',
-    'className' => 'multiship_opc_observer',
-    'objectName' => 'multiship_opc_observer'
+    'className' => 'multiship_early_observer',
+    'objectName' => 'multiship_early_observer'
 );
 
 // -----

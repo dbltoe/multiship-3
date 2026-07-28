@@ -289,18 +289,34 @@ class multiship extends base
     // keying the One Page Checkout bypass on intent rather than on selected closes it.
     //
     // The flag lives directly in the session rather than on this object because
-    // multiship_opc_observer must read it at autoLoadConfig[90], before this class is
-    // instantiated at [130]. See class.multiship_opc_observer.php.
+    // multiship_early_observer must read it at autoLoadConfig[90], before this class is
+    // instantiated at [130]. See class.multiship_early_observer.php.
     //
     public function chooseMultiship()
     {
         $_SESSION['multiship_chosen'] = true;
+        $_SESSION['multiship_asked'] = true;
         $this->debugLog('chooseMultiship, customer opted in to multiple ship-to addresses.');
     }
 
     public function isChosen()
     {
         return !empty($_SESSION['multiship_chosen']);
+    }
+
+    // -----
+    // Whether the customer has already answered the ship-to-multiple-addresses question,
+    // whichever way they answered it.
+    //
+    // This is deliberately *not* cleared by sessionCleanup(). The intent flag is cleared
+    // there, and if the answer were cleared with it, a cleanup occurring between the
+    // interstitial and checkout would put the customer straight back on the interstitial
+    // -- an infinite loop for anyone who answered "no". Declining is durable for the
+    // session; the customer is asked at most once.
+    //
+    public function hasBeenAsked()
+    {
+        return !empty($_SESSION['multiship_asked']);
     }
 
     // -----
@@ -316,6 +332,7 @@ class multiship extends base
     {
         $this->debugLog('declineMultiship, customer opted back out of multiple ship-to addresses.');
         $this->sessionCleanup();
+        $_SESSION['multiship_asked'] = true;
     }
 
 

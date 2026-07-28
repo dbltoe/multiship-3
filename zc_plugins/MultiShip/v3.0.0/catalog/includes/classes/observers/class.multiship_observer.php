@@ -56,8 +56,11 @@ class multiship_observer extends base
             // template needs modifying. Every stock and third-party template renders
             // that messageStack.
             //
+            // hasBeenAsked() covers both answers: once the interstitial has put the
+            // question, re-offering on the cart would contradict a customer who declined.
+            //
             case 'NOTIFY_HEADER_END_SHOPPING_CART':
-                if ($_SESSION['multiship']->isChosen() || !$_SESSION['multiship']->offerAvailable()) {
+                if ($_SESSION['multiship']->hasBeenAsked() || !$_SESSION['multiship']->offerAvailable()) {
                     break;
                 }
                 $GLOBALS['messageStack']->add(
