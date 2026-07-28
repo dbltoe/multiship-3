@@ -143,11 +143,34 @@ test site. The five `lang.*.php` files were additionally *executed* under `E_ALL
 and each returns a well-formed `string => string` array with the same key count as
 the `define()`-based file it replaced (23 / 12 / 11 / 19 / 18).
 
-That is the limit of what local tooling proves. Syntax is verified; **behaviour is
-not**. Nothing has been run inside a Zen Cart request: the SQL in the installer has
-never executed, no notifier has fired, and the plugin has never been installed.
-All of §3 and §4 remains static analysis of the 2.3 source and must be confirmed
-against a running store before release.
+### Verified on a live store
+
+Tested 2026-07-28 on Zen Cart with PHP 8.5 and an **empty** `DB_PREFIX`, with One
+Page Checkout also installed. Install and uninstall both completed with no errors
+and nothing written to the logs.
+
+After install:
+
+- `orders_multiship` and `orders_multiship_total` created
+- `orders_products.orders_multiship_id` added as `int(11) NOT NULL default '0'`
+- `MODULE_MULTISHIP_PAYMENT_METHODS` and `MODULE_MULTISHIP_DEBUG` present, both
+  attached to a real configuration group (id 57, i.e. not the 0 that the
+  `getConfigurationGroupId()` guard exists to prevent)
+- the Configuration group rendered, confirming the `configMultiship` admin page
+  registered, and both settings were editable
+
+After uninstall, both tables, the column and both configuration keys were gone.
+
+This also confirms two branches that could not be checked statically: `DB_PREFIX`
+is honoured (the tables were created unprefixed to match the store), and
+`information_schema` is readable on the host, so `columnExists()` correctly drove
+both the `ADD` and the `DROP` of the column.
+
+### Still unverified
+
+Everything outside the installer. No notifier has fired, no storefront page has
+been exercised, and the checkout flow of §1 does not exist yet. All of §3, §4 and
+§4a remains static analysis of the Zen Cart 2.3 and OPC v2.6.3 sources.
 
 The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
 `executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
