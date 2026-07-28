@@ -29,13 +29,22 @@ if (!isset($_SESSION['multiship'])) {
 }
 
 // -----
-// Record the customer's answer. Either branch marks the question as asked, so it is
-// put at most once per session.
+// Record the customer's answer.
+//
+// 'yes' and 'no' both mark the question as asked, so it is put at most once per session.
+// 'shop' deliberately records nothing: the customer has not decided, they have gone back
+// to add items for other people, so they are asked again when they next check out. That
+// is the whole point of offering it -- realising the store can do this is often what
+// makes someone want to buy more.
 //
 if (isset($_POST['multiship_choice'])) {
     if ($_POST['multiship_choice'] === 'yes') {
         $_SESSION['multiship']->chooseMultiship();
         zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
+    }
+
+    if ($_POST['multiship_choice'] === 'shop') {
+        zen_redirect(zen_href_link(FILENAME_DEFAULT));
     }
 
     $_SESSION['multiship']->declineMultiship();
