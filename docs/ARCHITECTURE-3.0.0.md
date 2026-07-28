@@ -90,11 +90,14 @@ Done:
 - Language files converted to array-based `lang.*.php`
 - Obsolete core patches removed (`zc155/`, `zc156/`)
 - Restructured to `zc_plugins/MultiShip/v3.0.0/` with `manifest.php`
+- `Installer/ScriptedInstaller.php`, replacing `init_multiship_install.php`,
+  `init_multiship_upgrade.php` and `uninstall_multiship.sql`; `init_multiship.php`
+  reduced to per-request admin behaviour only
+- `MODULE_MULTISHIP_ENABLE` retired; `isEnabled()` now starts enabled and only the
+  correctness guards of §5 can disable it
 
 Outstanding:
 
-- `Installer/ScriptedInstaller.php` — convert `init_multiship_install.php`,
-  `init_multiship_upgrade.php` and `uninstall_multiship.sql`
 - Mod-owned shipping + confirmation pages, and the flow into and out of them
 - Cart-page offer observer
 - Retire the six legacy core-template overrides still parked at
@@ -105,6 +108,12 @@ Outstanding:
 
 **Nothing here has been executed.** There is no PHP runtime on the development
 machine, so every statement above is static analysis of the 2.3 source. Behaviour
-must be confirmed against a running store before release. In particular the
-`ScriptedInstaller` API should be checked against v2.0.0 as well as 2.3, since the
-plugin claims compatibility back to v2.0.0.
+must be confirmed against a running store before release.
+
+The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
+`executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
+arrived in v2.0.1 — and its `executeUpgrade()` takes no argument, where v2.0.1+
+passes the previous version. The installer therefore uses raw SQL throughout and
+declares `executeUpgrade($oldVersion = null)`, which is signature-compatible with
+both. `zen_register_admin_page`, `zen_deregister_admin_pages` and
+`queryFactory::prepare_input` were each confirmed present at v2.0.0 and at 2.3.

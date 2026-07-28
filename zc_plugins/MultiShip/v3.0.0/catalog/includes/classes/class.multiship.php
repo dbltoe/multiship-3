@@ -44,18 +44,21 @@ class multiship extends base
     public function isEnabled()
     {
         // -----
-        // The plugin is initially enabled via configuration setting.
+        // Installing the plugin *is* the decision to use it, so there is no longer a
+        // store-wide enable toggle (MODULE_MULTISHIP_ENABLE was retired in v3.0.0).
+        // The plugin starts out enabled and is disabled below only for the cases where
+        // multiple ship-to addresses would produce incorrect order totals.
         //
-        $this->enabled = (defined('MODULE_MULTISHIP_ENABLE') && MODULE_MULTISHIP_ENABLE == 'true');
-        
+        $this->enabled = true;
+
         // -----
-        // If enabled via configuration, need check a couple of additional conditions before
-        // multiple ship-to addresses can be enabled for the current order.
+        // Check the conditions under which multiple ship-to addresses cannot be
+        // offered for the current order.
         //
         if ($this->enabled) {
-            $payment_methods = str_replace(' ', '', MODULE_MULTISHIP_PAYMENT_METHODS);
+            $payment_methods = defined('MODULE_MULTISHIP_PAYMENT_METHODS') ? str_replace(' ', '', MODULE_MULTISHIP_PAYMENT_METHODS) : '';
             $this->payment_methods = ($payment_methods != '') ? explode(',', $payment_methods) : false;
-            $this->debug = (MODULE_MULTISHIP_DEBUG == 'true');
+            $this->debug = (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true');
             $this->logfile = DIR_FS_LOGS . '/multiship_' . date('Ymd') . '.log';
             
             // -----
