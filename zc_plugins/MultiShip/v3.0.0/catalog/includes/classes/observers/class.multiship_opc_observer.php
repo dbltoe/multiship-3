@@ -41,7 +41,20 @@ class multiship_opc_observer extends base
             return;
         }
 
-        if (!empty($_SESSION['multiship_chosen'])) {
+        // -----
+        // The guest and express-checkout tests are repeated here rather than left to
+        // multiship::isEnabled(), which would clear the intent flag for us. That check
+        // does not run until autoLoadConfig[130], well after this observer answers at
+        // [90], so relying on it would leave One Page Checkout suppressed for one extra
+        // request each time a customer switched into one of those flows.
+        //
+        // Multiship is never available to guests, so OPC must stay in charge of them.
+        //
+        if (!empty($_SESSION['multiship_chosen'])
+            && empty($_SESSION['COWOA'])
+            && empty($_SESSION['customer_guest_id'])
+            && empty($_SESSION['paypal_ec_token'])
+        ) {
             $p2 = true;
         }
     }

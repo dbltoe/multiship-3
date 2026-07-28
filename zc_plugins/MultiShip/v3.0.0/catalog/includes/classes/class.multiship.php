@@ -60,7 +60,27 @@ class multiship extends base
             $this->payment_methods = ($payment_methods != '') ? explode(',', $payment_methods) : false;
             $this->debug = (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true');
             $this->logfile = DIR_FS_LOGS . '/multiship_' . date('Ymd') . '.log';
-            
+
+            // -----
+            // Multiple ship-to addresses require a registered account, and are therefore
+            // never available to guest or express-checkout flows:
+            //
+            // - COWOA and One Page Checkout's guest checkout produce no account to which
+            //   the per-address sub-orders could be attached.
+            // - PayPal Express Checkout establishes a single delivery address from the
+            //   PayPal account, outside this plugin's control, which cannot be reconciled
+            //   with per-item addresses.
+            //
+            // offerAvailable() applies the same test before offering, but this guard is
+            // what makes it an invariant: a customer who accepts the offer and *then*
+            // enters one of these flows is disabled here, and the sessionCleanup() below
+            // clears the intent flag, which in turn re-enables One Page Checkout.
+            //
+            if (!empty($_SESSION['COWOA']) || !empty($_SESSION['customer_guest_id']) || !empty($_SESSION['paypal_ec_token'])) {
+                $this->debugLog('isEnabled, setting disabled for a guest or express-checkout session.');
+                $this->enabled = false;
+            }
+
             // -----
             // If a customer's currently logged-in, and they're part of a 'group-pricing'
             // group, multiple ship-to addresses are disabled.  The ot_group_pricing
