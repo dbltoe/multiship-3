@@ -1,7 +1,8 @@
 <?php
 // -----
 // Part of the Multiple Shipping Addresses plugin for Zen Cart
-// Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
+// Original plugin Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
+// This file new in v3.0.0, Copyright (C) 2026 dbltoe
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 // Two jobs that both have to be done *early*, before lat9's One Page Checkout gets a
