@@ -157,9 +157,14 @@ Done:
 
 Outstanding:
 
-- Mod-owned shipping + confirmation pages, and the flow into and out of them
-- Cart-page offer observer
-- `NOTIFY_OPC_SET_DISABLED` observer, and the session flag it reads (§4a)
+- The mod-owned confirmation page; the legacy version relied on core template
+  overrides that are no longer shipped
+- **Accessibility pass, deferred by decision** — deliberately postponed until the
+  flow works end to end. One known defect already: on the `multiship_choice`
+  interstitial each button's help text sits in a sibling `div` with no
+  programmatic association, so it is announced to sighted users only and needs
+  `aria-describedby`. Also unresolved: whether the three actions should be a
+  `fieldset`/`legend` group. To be set by dbltoe, whose field this is.
 - Retire the six legacy core-template overrides still parked at
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
