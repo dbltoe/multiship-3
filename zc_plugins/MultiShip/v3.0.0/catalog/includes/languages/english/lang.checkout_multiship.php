@@ -11,6 +11,13 @@ $define = [
     'HEADING_TITLE' => 'Choose Shipping Address for Each Item',
     'TEXT_RETURN_TO_SHIPPING' => 'All finished? Click %s to resume the checkout process.',
 
+    // -----
+    // Lets a customer who accepted the offer change their mind. Without it, accepting
+    // is irreversible for the rest of the session.
+    //
+    'TEXT_DECLINE_MULTISHIP' => 'Changed your mind? Click %s to send this whole order to a single address and return to the normal checkout.',
+    'TEXT_DECLINE_MULTISHIP_LINK' => 'here',
+
     'TEXT_CURRENT_SHIPPING_METHOD' => 'Your current shipping method: ',
     'TEXT_SHIPPING_METHOD_CHANGE' => 'Click %s to change your shipping method.',
 

@@ -32,6 +32,20 @@ if (empty($_SESSION['customer_id'])) {
 }
 
 // -----
+// The customer has asked to go back to sending the whole order to one address. Clear
+// the multiship intent and any partial address assignments, then hand them back to the
+// store's normal checkout.
+//
+// This must run before the intent is recorded below, or declining would immediately
+// re-assert it. On the *next* request the intent flag is gone, so One Page Checkout
+// re-enables itself and takes the customer to its own checkout if the store runs it.
+//
+if (isset($_GET['action']) && $_GET['action'] === 'decline') {
+    $_SESSION['multiship']->declineMultiship();
+    zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
+}
+
+// -----
 // Reaching this point means the customer has a qualifying cart, is logged in and has
 // asked to ship to multiple addresses. Record that intent now, *before* any of the
 // redirects below.

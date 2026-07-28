@@ -303,6 +303,21 @@ class multiship extends base
         return !empty($_SESSION['multiship_chosen']);
     }
 
+    // -----
+    // The customer has declined multiple ship-to addresses after previously accepting
+    // the offer. Without this, accepting the offer would be irreversible for the rest
+    // of the session: the intent flag would keep One Page Checkout suppressed and the
+    // customer would be held in the 3-step checkout they no longer want.
+    //
+    // sessionCleanup() clears the intent flag along with any partially-entered address
+    // assignments, so the next request sees One Page Checkout re-enabled.
+    //
+    public function declineMultiship()
+    {
+        $this->debugLog('declineMultiship, customer opted back out of multiple ship-to addresses.');
+        $this->sessionCleanup();
+    }
+
 
     // -----
     // Returns a binary flag that indicates whether the customer can be offered multiple shipping

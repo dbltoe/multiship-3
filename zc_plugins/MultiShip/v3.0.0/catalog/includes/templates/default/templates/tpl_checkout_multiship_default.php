@@ -68,5 +68,6 @@ if ($products_onetime_charges) {
 
     <div class="buttonRow back"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT, 'name="update" onclick="ok2leave();"'); ?></div>
     <div class="buttonRow forward"><?php echo sprintf(TEXT_RETURN_TO_SHIPPING, $checkout_shipping_anchor); ?></div>
+    <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
     </form>
 </div>
