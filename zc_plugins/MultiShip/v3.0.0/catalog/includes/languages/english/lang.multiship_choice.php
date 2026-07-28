@@ -2,7 +2,7 @@
 // -----
 // Part of the Multiple Shipping Addresses plugin for Zen Cart
 // Original plugin Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
-// This file new in v3.0.0, Copyright (C) 2026 dbltoe
+// This file new in v3.0.0, Copyright (C) 2026 My Zen Cart Host (dbltoe)
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 // Kept deliberately short. This page sits between the customer and their checkout, so

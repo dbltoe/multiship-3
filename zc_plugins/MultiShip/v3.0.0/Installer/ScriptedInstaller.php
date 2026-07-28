@@ -3,7 +3,7 @@
 // Multiple Ship-To Addresses, encapsulated-plugin installer.
 //
 // Original plugin Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
-// This file new in v3.0.0, Copyright (C) 2026 dbltoe
+// This file new in v3.0.0, Copyright (C) 2026 My Zen Cart Host (dbltoe)
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 // Portability note: this plugin declares support back to Zen Cart v2.0.0, and
