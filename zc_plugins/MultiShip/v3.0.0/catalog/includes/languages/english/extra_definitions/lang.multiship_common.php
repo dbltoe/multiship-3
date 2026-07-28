@@ -13,13 +13,6 @@ $define = [
     'SHIP_TO_MULTIPLE_HERE' => '* HERE *',   //-Used as the anchor text for the links (%s), inserted above.
 
     // -----
-    // Offered on the shopping-cart page when the cart holds more than one shippable
-    // unit. %s is replaced by the anchor built from SHIP_TO_MULTIPLE_CART_OFFER_LINK.
-    //
-    'SHIP_TO_MULTIPLE_CART_OFFER' => 'Sending these items to more than one person? You can %s and choose a delivery address for each item.',
-    'SHIP_TO_MULTIPLE_CART_OFFER_LINK' => 'ship to multiple addresses',
-
-    // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
     // is the route back to the address grid. It replaces a link that used to be rendered
     // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;

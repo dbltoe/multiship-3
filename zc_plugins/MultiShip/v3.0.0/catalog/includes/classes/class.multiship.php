@@ -320,6 +320,16 @@ class multiship extends base
     }
 
     // -----
+    // Public wrapper around debugLog, so the early observer can record why it did or did
+    // not intercept checkout. That observer cannot call debugLog directly, since it is a
+    // separate class and debugLog is protected.
+    //
+    public function debugNote($message)
+    {
+        $this->debugLog($message);
+    }
+
+    // -----
     // The customer has declined multiple ship-to addresses after previously accepting
     // the offer. Without this, accepting the offer would be irreversible for the rest
     // of the session: the intent flag would keep One Page Checkout suppressed and the

@@ -85,12 +85,22 @@ class multiship_early_observer extends base
             // question answered either way, and that mark survives sessionCleanup().
             //
             case 'NOTIFY_HEADER_START_CHECKOUT_SHIPPING':
-                if (!isset($_SESSION['multiship'])
-                    || $_SESSION['multiship']->hasBeenAsked()
-                    || !$_SESSION['multiship']->offerAvailable()
-                ) {
+                if (!isset($_SESSION['multiship'])) {
+                    // Cannot use debugNote here; there is no object to call it on.
                     break;
                 }
+
+                if ($_SESSION['multiship']->hasBeenAsked()) {
+                    $_SESSION['multiship']->debugNote('checkout intercept: already asked, not offering again.');
+                    break;
+                }
+
+                if (!$_SESSION['multiship']->offerAvailable()) {
+                    $_SESSION['multiship']->debugNote('checkout intercept: cart does not qualify, no interstitial.');
+                    break;
+                }
+
+                $_SESSION['multiship']->debugNote('checkout intercept: redirecting to the multiship_choice interstitial.');
                 zen_redirect(zen_href_link(FILENAME_MULTISHIP_CHOICE, '', 'SSL'));
                 break;
 
