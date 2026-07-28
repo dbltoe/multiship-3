@@ -11,9 +11,12 @@ if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
   die('Illegal Access');
 }
 
-class multiship_observer extends base 
+class multiship_observer extends base
 {
-    public function __construct () 
+    protected $eventID = '';
+    protected $processed_order;
+
+    public function __construct ()
     {
         $this->attach(
             $this, 
@@ -214,8 +217,7 @@ class multiship_observer extends base
   
     protected function logError($message) 
     {
-        $event_info = ($this->eventID != '') ? '' : (' (' . $this->eventID . ')');
-        trigger_error($event_info . ': ' . $message, E_USER_ERROR);
-        exit();
+        $event_info = ($this->eventID !== '') ? (' (' . $this->eventID . ')') : '';
+        throw new \RuntimeException($event_info . ': ' . $message);
     }
 }

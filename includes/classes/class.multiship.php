@@ -13,7 +13,18 @@ class multiship extends base
               $enabled,
               $can_offer,
               $debug,
-              $logfile;
+              $logfile,
+              $cart,
+              $details,
+              $totals,
+              $shipping_method_id,
+              $shipping_method,
+              $initialization_active,
+              $saved_order_info,
+              $orders_multiship_ids,
+              $text_email,
+              $shipping_total,
+              $noship_address_id;
 
     // -----
     // Class constructor.  This class is created via auto_load as $_SESSION['multicart'].
@@ -190,6 +201,15 @@ class multiship extends base
         $validated = true;
         if (count($addresses) > 1 || (count($addresses) == 1 && $addresses[0] != $_SESSION['sendto'])) {
             // -----
+            // The shipping id is required, in 'module_method' form, to perform the validation.  If it's
+            // not present (or malformed), the validation can't be performed.
+            //
+            if (empty($_SESSION['shipping']['id']) || strpos($_SESSION['shipping']['id'], '_') === false) {
+                $this->debugLog('addressValidation: shipping id not set/malformed, cannot validate.');
+                return false;
+            }
+
+            // -----
             // Pull in the httpClient class for those shipping methods (like UPS) that require it!
             //
             require_once DIR_WS_CLASSES . 'http_client.php';
@@ -287,8 +307,7 @@ class multiship extends base
     public function getShippingId()
     {
         if (empty($this->shipping_method_id)) {
-            trigger_error("Sequencing error, shipping_method_id is empty.", E_USER_ERROR);
-            exit();
+            throw new \RuntimeException('Sequencing error, shipping_method_id is empty.');
         }
         $this->debugLog("getShippingId, returning {$this->shipping_method_id}.");
         return $this->shipping_method_id;
@@ -300,8 +319,7 @@ class multiship extends base
     public function getMultiShipShippingCost()
     {
         if (empty($this->details)) {
-            trigger_error("Sequencing error, details is empty.", E_USER_ERROR);
-            exit();
+            throw new \RuntimeException('Sequencing error, details is empty.');
         }
         $shipping_cost = 0;
         foreach ($this->details as $addr_id => $ms_info) {
