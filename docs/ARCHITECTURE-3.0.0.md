@@ -106,9 +106,16 @@ Outstanding:
 
 ## 7. Not yet verified
 
-**Nothing here has been executed.** There is no PHP runtime on the development
-machine, so every statement above is static analysis of the 2.3 source. Behaviour
-must be confirmed against a running store before release.
+All 40 PHP files pass `php -l` under **PHP 8.5.9**, matching the version on the
+test site. The five `lang.*.php` files were additionally *executed* under `E_ALL`
+and each returns a well-formed `string => string` array with the same key count as
+the `define()`-based file it replaced (23 / 12 / 11 / 19 / 18).
+
+That is the limit of what local tooling proves. Syntax is verified; **behaviour is
+not**. Nothing has been run inside a Zen Cart request: the SQL in the installer has
+never executed, no notifier has fired, and the plugin has never been installed.
+All of §3 and §4 remains static analysis of the 2.3 source and must be confirmed
+against a running store before release.
 
 The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
 `executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
