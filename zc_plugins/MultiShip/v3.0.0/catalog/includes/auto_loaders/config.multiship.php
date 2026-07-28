@@ -8,6 +8,22 @@
 // ---------------------------------------------------------------------------
 
 // -----
+// The One Page Checkout bypass must be attached *before* OPC's own observer is
+// instantiated at checkpoint 97, since that observer calls checkEnabled() -- which
+// issues NOTIFY_OPC_SET_DISABLED -- from its constructor. It deliberately depends
+// on nothing but a session flag, as $_SESSION['multiship'] does not exist until 130.
+//
+$autoLoadConfig[90][] = array(
+    'autoType' => 'class',
+    'loadFile' => 'observers/class.multiship_opc_observer.php'
+);
+$autoLoadConfig[90][] = array(
+    'autoType' => 'classInstantiate',
+    'className' => 'multiship_opc_observer',
+    'objectName' => 'multiship_opc_observer'
+);
+
+// -----
 // Needs to be instantiated before the init_cart_handler (at checkpoint 140).
 //
 $autoLoadConfig[131][] = array(

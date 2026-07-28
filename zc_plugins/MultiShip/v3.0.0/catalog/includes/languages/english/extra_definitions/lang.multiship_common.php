@@ -12,6 +12,13 @@ $define = [
     'SHIP_TO_MULTIPLE_ADDRESSES_ACTIVE' => 'Currently shipping to %1$u addresses.  Click %2$s to make any changes.',
     'SHIP_TO_MULTIPLE_HERE' => '* HERE *',   //-Used as the anchor text for the links (%s), inserted above.
 
+    // -----
+    // Offered on the shopping-cart page when the cart holds more than one shippable
+    // unit. %s is replaced by the anchor built from SHIP_TO_MULTIPLE_CART_OFFER_LINK.
+    //
+    'SHIP_TO_MULTIPLE_CART_OFFER' => 'Sending these items to more than one person? You can %s and choose a delivery address for each item.',
+    'SHIP_TO_MULTIPLE_CART_OFFER_LINK' => 'ship to multiple addresses',
+
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
     'TEXT_GRAND_TOTAL' => 'Grand Total:',

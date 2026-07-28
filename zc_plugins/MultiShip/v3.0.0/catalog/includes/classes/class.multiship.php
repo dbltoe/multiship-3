@@ -254,21 +254,77 @@ class multiship extends base
     // Returns a binary flag that indicates whether or not the customer has selected multiple
     // shipping addresses for the current order.
     //
-    public function isSelected() 
+    public function isSelected()
     {
         return $this->selected;
     }
-  
+
+    // -----
+    // The customer's *intent* to ship to multiple addresses, recorded the moment they
+    // accept the offer on the shopping-cart page.
+    //
+    // This is deliberately distinct from $this->selected, which only becomes true once
+    // addresses have actually been assigned to products. Between accepting the offer and
+    // completing those assignments there is a window in which selected is still false;
+    // keying the One Page Checkout bypass on intent rather than on selected closes it.
+    //
+    // The flag lives directly in the session rather than on this object because
+    // multiship_opc_observer must read it at autoLoadConfig[90], before this class is
+    // instantiated at [130]. See class.multiship_opc_observer.php.
+    //
+    public function chooseMultiship()
+    {
+        $_SESSION['multiship_chosen'] = true;
+        $this->debugLog('chooseMultiship, customer opted in to multiple ship-to addresses.');
+    }
+
+    public function isChosen()
+    {
+        return !empty($_SESSION['multiship_chosen']);
+    }
+
+
     // -----
     // Returns a binary flag that indicates whether the customer can be offered multiple shipping
     // addresses for this order, as set by the checkoutInitialization method's processing during the
     // checkout-shipping page.
     //
-    public function canOffer() 
+    public function canOffer()
     {
         return ($this->enabled && $this->can_offer);
     }
-  
+
+    // -----
+    // Evaluates the offer conditions on demand.
+    //
+    // canOffer() reports $this->can_offer, which is only computed by checkoutInitialize()
+    // during the checkout process; on the shopping-cart page that value is absent or
+    // stale. This method applies the same conditions directly:
+    //
+    // 1) More than one *physical* unit in the cart -- cartPhysicalItemsCount() sums
+    //    quantities, so a single product with a quantity of 2 qualifies, while virtual
+    //    and downloadable products are excluded because they do not ship.
+    // 2) The customer is not checking out via COWOA.
+    // 3) The customer is not checking out via a PayPal Express Checkout guest account.
+    // 4) At least one shipping module is installed.
+    //
+    public function offerAvailable()
+    {
+        if (!$this->enabled) {
+            return false;
+        }
+
+        if (empty($_SESSION['cart']) || !is_object($_SESSION['cart']) || empty($_SESSION['cart']->contents)) {
+            return false;
+        }
+
+        return ($this->cartPhysicalItemsCount() > 1
+                && empty($_SESSION['COWOA'])
+                && empty($_SESSION['customer_guest_id'])
+                && zen_count_shipping_modules() > 0);
+    }
+
+
     // -----
     // Returns an array that contains the details of the multiple shipping addresses.  The
     // primary index for the array is the address_id to which the array of products is to
@@ -1125,10 +1181,15 @@ class multiship extends base
     // receipt of NOTIFY_HEADER_END_CHECKOUT_PROCESS (issued by the header_php.php file for the checkout_process page, just
     // prior to re-directing to the checkout_success page).
     //
-    public function sessionCleanup() 
+    public function sessionCleanup()
     {
         $this->debugLog('sessionCleanup!');
         $this->selected = false;
+        // -----
+        // Clearing the intent flag re-enables One Page Checkout for this session, so a
+        // customer who backs out of multiship gets the store's normal checkout back.
+        //
+        unset($_SESSION['multiship_chosen']);
         $this->address2multiship = array();
         unset($this->details, $this->cart, $this->totals, $this->shipping_method, $this->orders_multiship_ids, $this->text_email, $this->noship_address_id);
     }

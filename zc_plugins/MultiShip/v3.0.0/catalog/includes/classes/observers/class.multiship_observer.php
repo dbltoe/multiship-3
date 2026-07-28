@@ -26,10 +26,11 @@ class multiship_observer extends base
                     'NOTIFIER_CART_UPDATE_QUANTITY_START', 
                     'NOTIFIER_CART_ADD_CART_START',
                     
-                    /* page header_php.php's */ 
+                    /* page header_php.php's */
                     'NOTIFY_HEADER_END_CHECKOUT_PROCESS',
                     'NOTIFY_HEADER_START_CHECKOUT_SHIPPING',
                     'NOTIFY_HEADER_START_CHECKOUT_PAYMENT',
+                    'NOTIFY_HEADER_END_SHOPPING_CART',
                     
                     /* /includes/modules[/YOUR_TEMPLATE]/checkout_process.php */
                     'NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_TOTALS_PROCESS',
@@ -41,9 +42,34 @@ class multiship_observer extends base
         }
     }
   
-    public function update(&$class, $eventID, $p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7, &$p8, &$p9) 
+    public function update(&$class, $eventID, $p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7, &$p8, &$p9)
     {
         switch ($eventID) {
+            // -----
+            // Offer multiple ship-to addresses on the shopping-cart page, which is the
+            // only placement consistent with requiring registration: checkout_shipping
+            // already demands a login, so an offer made there could never reach a
+            // not-yet-registered customer.
+            //
+            // The offer is pushed into the 'shopping_cart' messageStack rather than
+            // rendered by a template, so no template file is shipped and no store
+            // template needs modifying. Every stock and third-party template renders
+            // that messageStack.
+            //
+            case 'NOTIFY_HEADER_END_SHOPPING_CART':
+                if ($_SESSION['multiship']->isChosen() || !$_SESSION['multiship']->offerAvailable()) {
+                    break;
+                }
+                $GLOBALS['messageStack']->add(
+                    'shopping_cart',
+                    sprintf(
+                        SHIP_TO_MULTIPLE_CART_OFFER,
+                        '<a href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . SHIP_TO_MULTIPLE_CART_OFFER_LINK . '</a>'
+                    ),
+                    'caution'
+                );
+                break;
+
             // -----
             // These two notifications work in concert with the jscript_checkout_shipping_multiship.php script's
             // processing.  If Multi-Ship is enabled, that jQuery processing adds an additional field to the to-be-posted

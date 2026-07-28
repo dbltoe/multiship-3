@@ -31,6 +31,18 @@ if (empty($_SESSION['customer_id'])) {
     }
 }
 
+// -----
+// Reaching this point means the customer has a qualifying cart, is logged in and has
+// asked to ship to multiple addresses. Record that intent now, *before* any of the
+// redirects below.
+//
+// This matters because the next redirect can send the customer to checkout_shipping to
+// pick a shipping method. That is a page One Page Checkout hijacks, so unless the intent
+// flag is already set when the following request reaches autoLoadConfig[90], OPC will
+// redirect them into one-page checkout and the multiship flow is lost.
+//
+$_SESSION['multiship']->chooseMultiship();
+
 // if no shipping method has been selected, redirect the customer to the shipping method selection page
 if (!isset($_SESSION['shipping'])) {
     $zco_notifier->notify('CHECKOUT_MULTISHIP_SHIPPING_NOT_SELECTED');
