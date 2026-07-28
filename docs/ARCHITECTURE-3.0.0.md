@@ -66,6 +66,37 @@ the legacy plugin used to inject by shipping patched core files —
 and `NOTIFY_OT_SHIPPING_TAX_CALCS` among them — have all been upstreamed. The
 `zc155/` and `zc156/` patch trees were removed accordingly.
 
+## 4a. One Page Checkout
+
+Most stores now run lat9's One Page Checkout rather than the 3-step flow, and a
+multiship order cannot be expressed on a single page. When multiship is active for
+an order, OPC is therefore bypassed completely.
+
+Verified against One Page Checkout **v2.6.3** (`lat9/one_page_checkout`, HEAD
+`258f15b`, 2026-07-21):
+
+- `OnePageCheckout::checkEnabled()` fires `NOTIFY_OPC_SET_DISABLED` and any
+  observer setting `$set_disabled = true` forces `isEnabled = false`
+  (`includes/classes/OnePageCheckout.php:159-164`). This is a supported extension
+  point: neither OPC nor Zen Cart core needs modifying.
+- OPC's observer redirects **all three** core checkout steps to `checkout_one`
+  (`class.checkout_one_observer.php:271-282`).
+
+That second point is why the disable observer is mandatory rather than optional.
+The design in §2 hands the payment step back to core; with OPC enabled, entering
+core `checkout_payment` fires `NOTIFY_HEADER_START_CHECKOUT_PAYMENT` and redirects
+the customer into one-page checkout mid-order, losing the multiship context.
+
+The flag driving the observer is **per-session, not global**: OPC is disabled only
+for orders where the customer chose multiship, so installing this plugin does not
+degrade checkout for every other order. The flag must be cleared by the existing
+`sessionCleanup()` so that a customer who backs out gets OPC again. If OPC is not
+installed the notifier never fires and the observer is inert.
+
+OPC also hooks `NOTIFY_HEADER_START_SHOPPING_CART`, but only to call
+`saveOrdersSendtoAddress()` — it does not redirect, so the cart-page offer of §3
+coexists with it.
+
 ## 5. Guards that must survive
 
 `isEnabled()` currently disables the mod for group-pricing customers and when a
@@ -100,6 +131,7 @@ Outstanding:
 
 - Mod-owned shipping + confirmation pages, and the flow into and out of them
 - Cart-page offer observer
+- `NOTIFY_OPC_SET_DISABLED` observer, and the session flag it reads (§4a)
 - Retire the six legacy core-template overrides still parked at
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
