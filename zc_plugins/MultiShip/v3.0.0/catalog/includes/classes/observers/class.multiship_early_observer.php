@@ -45,6 +45,7 @@ class multiship_early_observer extends base
             [
                 'NOTIFY_OPC_SET_DISABLED',
                 'NOTIFY_HEADER_START_CHECKOUT_SHIPPING',
+                'NOTIFY_HEADER_START_SHOPPING_CART',
             ]
         );
     }
@@ -102,6 +103,34 @@ class multiship_early_observer extends base
 
                 $_SESSION['multiship']->debugNote('checkout intercept: redirecting to the multiship_choice interstitial.');
                 zen_redirect(zen_href_link(FILENAME_MULTISHIP_CHOICE, '', 'SSL'));
+                break;
+
+            // -----
+            // Returning to the cart reopens the question.
+            //
+            // Declining used to be final for the whole session: the sticky asked-flag kept
+            // the interstitial away, so a customer who said no and then thought better of
+            // it had no route back to multiship at all.
+            //
+            // The cart is the right place to reset it. The redirect loop that the sticky
+            // flag exists to prevent runs interstitial -> checkout_shipping -> interstitial
+            // and never passes through the cart, so clearing it here cannot reintroduce
+            // that loop, while "go back to your cart and you will be asked again" is
+            // behaviour a customer can discover and rely on.
+            //
+            // Only a declined decision is reset. If multiship was chosen, the customer may
+            // be part-way through assigning addresses and visiting the cart to check
+            // something; re-asking them would be noise.
+            //
+            case 'NOTIFY_HEADER_START_SHOPPING_CART':
+                if (!isset($_SESSION['multiship'])
+                    || $_SESSION['multiship']->isChosen()
+                    || !$_SESSION['multiship']->hasBeenAsked()
+                ) {
+                    break;
+                }
+                unset($_SESSION['multiship_asked']);
+                $_SESSION['multiship']->debugNote('returned to the cart after declining; the question will be asked again at checkout.');
                 break;
 
             default:

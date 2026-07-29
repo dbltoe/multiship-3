@@ -32,7 +32,7 @@
     </div>
 
     <div class="multishipChoiceOption">
-        <div class="buttonRow back">
+        <div class="buttonRow forward">
             <button type="submit" name="multiship_choice" value="shop" class="button multishipChoiceShop"><?php echo BUTTON_MULTISHIP_CHOICE_SHOP; ?></button>
         </div>
         <div class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_SHOP_HELP; ?></div>
