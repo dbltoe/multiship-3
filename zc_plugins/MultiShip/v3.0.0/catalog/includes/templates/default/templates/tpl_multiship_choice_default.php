@@ -17,15 +17,21 @@
 
 <?php echo zen_draw_form('multiship_choice', zen_href_link(FILENAME_MULTISHIP_CHOICE, '', 'SSL'), 'post'); ?>
 
+    <hr class="multishipChoiceRule">
+
     <div class="multishipChoiceOption">
         <button type="submit" name="multiship_choice" value="yes" class="button multishipChoiceYes"><?php echo BUTTON_MULTISHIP_CHOICE_YES; ?></button>
         <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_YES_HELP; ?></p>
     </div>
 
+    <hr class="multishipChoiceRule">
+
     <div class="multishipChoiceOption">
         <button type="submit" name="multiship_choice" value="no" class="button multishipChoiceNo"><?php echo BUTTON_MULTISHIP_CHOICE_NO; ?></button>
         <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_NO_HELP; ?></p>
     </div>
+
+    <hr class="multishipChoiceRule">
 
     <div class="multishipChoiceOption">
         <button type="submit" name="multiship_choice" value="shop" class="button multishipChoiceShop"><?php echo BUTTON_MULTISHIP_CHOICE_SHOP; ?></button>

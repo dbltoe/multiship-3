@@ -16,7 +16,7 @@ $define = [
 
     'HEADING_TITLE_MULTISHIP_CHOICE' => 'Shopping for Just You?',
 
-    'TEXT_MULTISHIP_CHOICE_INTRO' => '%s can now send each item straight to its own address &mdash; shop for the whole family or all your friends in one order, with no repacking and no second trip to the post office.',
+    'TEXT_MULTISHIP_CHOICE_INTRO' => '%s can split this order across as many addresses as you like &mdash; one to cousin Fred, two to Aunt Jane, three to the folks at the bakery &mdash; all shipped straight to them, with no repacking and no second trip to the post office.',
 
     'BUTTON_MULTISHIP_CHOICE_YES' => 'Send items to different addresses',
     'TEXT_MULTISHIP_CHOICE_YES_HELP' => 'Pick a delivery address for each item. You will need an account.',
