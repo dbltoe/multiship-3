@@ -14,7 +14,7 @@
 $define = [
     'NAVBAR_TITLE_MULTISHIP_CHOICE' => 'Delivery Addresses',
 
-    'HEADING_TITLE_MULTISHIP_CHOICE' => 'Shopping for more than one person?',
+    'HEADING_TITLE_MULTISHIP_CHOICE' => 'Shopping for Just You?',
 
     'TEXT_MULTISHIP_CHOICE_INTRO' => '%s can now send each item straight to its own address &mdash; shop for the whole family or all your friends in one order, with no repacking and no second trip to the post office.',
 
