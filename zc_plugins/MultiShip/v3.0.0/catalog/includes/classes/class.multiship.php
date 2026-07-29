@@ -373,17 +373,37 @@ class multiship extends base
     public function offerAvailable()
     {
         if (!$this->enabled) {
+            $this->debugLog('offerAvailable: false, the plugin is not enabled.');
             return false;
         }
 
         if (empty($_SESSION['cart']) || !is_object($_SESSION['cart']) || empty($_SESSION['cart']->contents)) {
+            $this->debugLog('offerAvailable: false, the cart is empty or unavailable.');
             return false;
         }
 
-        return ($this->cartPhysicalItemsCount() > 1
-                && empty($_SESSION['COWOA'])
-                && empty($_SESSION['customer_guest_id'])
-                && zen_count_shipping_modules() > 0);
+        // -----
+        // Each condition is evaluated separately and reported, rather than collapsed into
+        // a single boolean return. Three of the four fail silently and look identical
+        // from the storefront, which makes a bare true/false useless for diagnosis.
+        //
+        $physical_units = $this->cartPhysicalItemsCount();
+        $shipping_modules = zen_count_shipping_modules();
+        $in_cowoa = !empty($_SESSION['COWOA']);
+        $is_guest = !empty($_SESSION['customer_guest_id']);
+
+        $available = ($physical_units > 1 && !$in_cowoa && !$is_guest && $shipping_modules > 0);
+
+        $this->debugLog(
+            'offerAvailable: ' . ($available ? 'true' : 'false')
+            . ' [physical units: ' . $physical_units
+            . ', cart lines: ' . count($_SESSION['cart']->contents)
+            . ', shipping modules: ' . $shipping_modules
+            . ', COWOA: ' . ($in_cowoa ? 'yes' : 'no')
+            . ', guest: ' . ($is_guest ? 'yes' : 'no') . ']'
+        );
+
+        return $available;
     }
 
 
@@ -842,14 +862,20 @@ class multiship extends base
     // -----
     // Counts (and returns) the number of PHYSICAL products present in the current session's cart.
     //
-    protected function cartPhysicalItemsCount() 
+    protected function cartPhysicalItemsCount()
     {
         $num_physical_items = 0;
-        foreach ($_SESSION['cart']->contents as $prid => $current_product) {     
+        $skipped = [];
+        foreach ($_SESSION['cart']->contents as $prid => $current_product) {
             if ($this->cartItemIsPhysical($prid)) {
                 $num_physical_items += $current_product['qty'];
+            } else {
+                $skipped[] = $prid;
             }
-        } 
+        }
+        if ($skipped !== []) {
+            $this->debugLog('cartPhysicalItemsCount: not counted as physical: ' . implode(', ', $skipped));
+        }
         return $num_physical_items;
     }
   
