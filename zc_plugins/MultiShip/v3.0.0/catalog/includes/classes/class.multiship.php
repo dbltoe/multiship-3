@@ -388,17 +388,34 @@ class multiship extends base
         // from the storefront, which makes a bare true/false useless for diagnosis.
         //
         $physical_units = $this->cartPhysicalItemsCount();
-        $shipping_modules = zen_count_shipping_modules();
         $in_cowoa = !empty($_SESSION['COWOA']);
         $is_guest = !empty($_SESSION['customer_guest_id']);
 
-        $available = ($physical_units > 1 && !$in_cowoa && !$is_guest && $shipping_modules > 0);
+        // -----
+        // Deliberately NOT zen_count_shipping_modules(), which checkoutInitialize() can
+        // safely use but this method cannot.
+        //
+        // That function counts shipping modules already instantiated as globals, not
+        // modules that are installed. The shipping class is not created until line ~100
+        // of the checkout_shipping page header, whereas this method is reached from
+        // NOTIFY_HEADER_START_CHECKOUT_SHIPPING, issued on line 11 -- and from the
+        // shopping-cart page, where the shipping modules are never instantiated at all.
+        // In both contexts it would return 0 regardless of the store's configuration,
+        // making the offer permanently unavailable.
+        //
+        // MODULE_SHIPPING_INSTALLED is a semicolon-separated list of the installed
+        // modules, available from configuration on every page, which is what this test
+        // actually wants to know.
+        //
+        $has_shipping_modules = (defined('MODULE_SHIPPING_INSTALLED') && MODULE_SHIPPING_INSTALLED !== '');
+
+        $available = ($physical_units > 1 && !$in_cowoa && !$is_guest && $has_shipping_modules);
 
         $this->debugLog(
             'offerAvailable: ' . ($available ? 'true' : 'false')
             . ' [physical units: ' . $physical_units
             . ', cart lines: ' . count($_SESSION['cart']->contents)
-            . ', shipping modules: ' . $shipping_modules
+            . ', shipping modules installed: ' . ($has_shipping_modules ? 'yes' : 'no')
             . ', COWOA: ' . ($in_cowoa ? 'yes' : 'no')
             . ', guest: ' . ($is_guest ? 'yes' : 'no') . ']'
         );
