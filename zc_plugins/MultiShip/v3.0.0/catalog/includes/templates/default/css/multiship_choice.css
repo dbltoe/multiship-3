@@ -1,0 +1,18 @@
+/**
+ * Part of the Multiple Shipping Addresses plugin for Zen Cart
+ * Original plugin Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
+ * This file new in v3.0.0, Copyright (C) 2026 My Zen Cart Host (dbltoe)
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ *
+ * Loaded automatically on the multiship_choice page: html_header_css_loader.php
+ * looks for a stylesheet named after the current page, and get_template_dir()
+ * resolves that through PageLoader, which searches installed plugins. No store
+ * template carries a multiship_choice.css, so this one is always the match.
+ *
+ * Kept minimal on purpose. The page inherits the store template's own button and
+ * typography styling, which is what keeps it looking like the rest of the shop.
+ */
+
+#multishipChoice {
+    text-align: center;
+}
