@@ -199,11 +199,32 @@ is honoured (the tables were created unprefixed to match the store), and
 `information_schema` is readable on the host, so `columnExists()` correctly drove
 both the `ADD` and the `DROP` of the column.
 
+### Storefront entry, verified live
+
+Tested 2026-07-28/29 on the same store, template `bootstrap` (ZCA Bootstrap 3.8.0),
+with One Page Checkout v2.6.3 installed and its guest checkout enabled:
+
+- the trigger behaves as specified — one item does not offer, two items does
+- the interstitial appears on entry to checkout, ahead of any login prompt
+- all three answers work: multiship, single address, and back to shopping
+- declining continues into OPC's one-page checkout with guest checkout intact,
+  confirming the bypass is scoped to the session and does not affect normal orders
+- returning to the cart after declining reopens the question
+
+One bug worth recording, since the same mistake is easy to repeat. `offerAvailable()`
+originally tested `zen_count_shipping_modules()`, copied from `checkoutInitialize()`.
+That function counts shipping modules **already instantiated as globals**, not modules
+installed. The shipping class is not created until line ~100 of the checkout_shipping
+header, while the interception runs from the notifier on line 11, and the cart page
+never instantiates them at all — so it returned 0 in every context this plugin uses,
+and the offer could never appear. It now tests `MODULE_SHIPPING_INSTALLED`, which is
+configuration and readable anywhere.
+
 ### Still unverified
 
-Everything outside the installer. No notifier has fired, no storefront page has
-been exercised, and the checkout flow of §1 does not exist yet. All of §3, §4 and
-§4a remains static analysis of the Zen Cart 2.3 and OPC v2.6.3 sources.
+The multiship path itself. Choosing multiple addresses, assigning them per item,
+per-address shipping quotes, OPC actually standing down for a chosen multiship
+order, order creation, and the confirmation page — which is not built yet.
 
 The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
 `executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
