@@ -14,7 +14,7 @@
 //
 ?>
 <div class="centerColumn" id="multishipAddress">
-<h1 id="multishipAddress-pageHeading" class="pageHeading"><?php echo HEADING_TITLE_MULTISHIP_ADDRESS; ?></h1>
+<h1 id="multishipAddress-pageHeading" class="pageHeading"><?php echo HEADING_TITLE; ?></h1>
 
 <?php
 if ($messageStack->size('addressbook') > 0) {
