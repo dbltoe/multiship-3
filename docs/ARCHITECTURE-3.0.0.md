@@ -181,6 +181,14 @@ Outstanding:
   focus visibility still need checking against `docs/style.css` and `menu.css`, which
   a static read cannot settle, as does the keyboard behaviour of
   `back_to_top.min.js`.
+
+  **Contrast target: 7:1 wherever achievable** (WCAG 2.2 AAA, 1.4.6 Contrast
+  Enhanced), not the 4.5:1 of AA. This is the project standard set by dbltoe and
+  applies to anything this plugin ships with colour of its own — currently the
+  readme's stylesheets. The storefront pages deliberately inherit the store
+  template's colours, so their contrast is the store's to answer for, not ours;
+  that is a consequence of shipping almost no CSS and is the right trade, but it
+  means the standard binds only where we actually choose colours.
 - Retire the six legacy core-template overrides still parked at
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
@@ -308,6 +316,17 @@ with `javascript:void(0);`, and the sibling `time_out/on_load_main.js` already c
 is `focus({preventScroll: true})` plus removal of the `autofocus` attribute at
 `tpl_login_default.php:44`, which keeps the convenience of a focused field without moving
 the viewport. Once that lands, this file can be deleted.
+
+### Add-address flow, verified live
+
+Tested with the store's own limit left at its default of 5. A customer part-way through
+a multiship order added a sixth and then a seventh delivery address through the plugin's
+own page, saw the over-limit notice naming both counts, and returned to the grid with the
+new addresses selectable. **The store owner changed no setting.**
+
+Also confirmed: two entries for the same person — a PO box and a street address — are
+distinguishable in the Send To dropdown, because it labels options with
+`zen_address_label()`, the full formatted address, rather than the name alone.
 
 ### Still unverified
 
