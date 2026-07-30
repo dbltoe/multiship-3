@@ -21,6 +21,15 @@ if ($cart_contents <= 0) {
 
 // if the customer is not logged on, redirect them to the login page
 if (empty($_SESSION['customer_id'])) {
+    // -----
+    // Say why they are suddenly looking at a login page. They chose to ship to several
+    // addresses and this is the first thing they see; without a word of explanation the
+    // redirect reads as the site losing their place.
+    //
+    // add_session() rather than add(), since the message has to survive the redirect.
+    //
+    $messageStack->add_session('login', MULTISHIP_LOGIN_REQUIRED, 'caution');
+
     $_SESSION['navigation']->set_snapshot(array('mode' => 'SSL', 'page' => FILENAME_CHECKOUT_MULTISHIP));
     zen_redirect(zen_href_link(FILENAME_LOGIN, '', 'SSL'));
 } else {

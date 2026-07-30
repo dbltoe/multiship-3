@@ -28,6 +28,18 @@ $define = [
     'SHIP_TO_MULTIPLE_CART_NOTICE_EC' => 'PayPal Express sends the whole order to one address.',
 
     // -----
+    // Added to the 'login' messageStack when a not-yet-signed-in customer chooses to ship
+    // to multiple addresses, since checkout_multiship requires an account.
+    //
+    // Without it the customer clicks "send items to different addresses" and lands on a
+    // login page with no explanation of why. Deliberately says neither "above" nor
+    // "below": Zen Cart's stock template and ZCA Bootstrap order the sign-in and
+    // create-account sections differently, and ZCA autofocuses the sign-in field, which
+    // scrolls its create-account section out of view.
+    //
+    'MULTISHIP_LOGIN_REQUIRED' => 'Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.',
+
+    // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
     // is the route back to the address grid. It replaces a link that used to be rendered
     // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;
