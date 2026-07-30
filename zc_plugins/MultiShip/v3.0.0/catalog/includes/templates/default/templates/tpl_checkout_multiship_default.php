@@ -36,9 +36,9 @@ $resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_sh
             <th class="sendto"><?php echo HEADING_SENDTO; ?></th>
         </tr>
 <?php
-foreach ($productsArray as $currentProduct) {
+foreach ($productsArray as $multishipRowIndex => $currentProduct) {
 ?>
-        <tr class="multishipItem<?php echo ($currentProduct['is_physical']) ? '' : ' virtual'; ?>">
+        <tr id="multishipRow<?php echo (int)$multishipRowIndex; ?>" class="multishipItem<?php echo ($currentProduct['is_physical']) ? '' : ' virtual'; ?>">
             <td>
                 <div class="msipItemName"><?php echo $currentProduct['name'] . zen_draw_hidden_field('prid[]', $currentProduct['id']); ?></div>
 <?php
@@ -59,7 +59,24 @@ foreach ($productsArray as $currentProduct) {
             </td>
             <td class="msipPrice"><?php echo $currentProduct['price']; ?></td>
             <td class="qty"><?php echo zen_draw_input_field('qty[]', 1, 'onchange="notok2leave();"'); ?></td>
-            <td class="sendto"><?php echo zen_draw_pull_down_menu('address[]', $multishipAddresses, $currentProduct['sendto'], 'onchange="ok2leave(); this.form.submit();"') . ' ' . $_SESSION['multiship']->getNoShipIcon($currentProduct['sendto']); ?></td>
+<?php
+    // -----
+    // Choosing an address submits the form, so the page reloads and the browser lands back
+    // at the top -- once per item, which on a five-row order means scrolling down four
+    // times to do four things. Pointing the form at the *next* row's anchor puts the
+    // customer where they were about to work instead.
+    //
+    // Done by rewriting the action rather than with a scroll script, so it needs nothing
+    // beyond the submit that was already happening here. Customers without JavaScript never
+    // reach this path at all; they set every row and press Update.
+    //
+    $multishipNextRow = (int)$multishipRowIndex + 1;
+    $multishipOnChange =
+        'ok2leave();'
+        . ' this.form.action = this.form.action.split(\'#\')[0] + \'#multishipRow' . $multishipNextRow . '\';'
+        . ' this.form.submit();';
+?>
+            <td class="sendto"><?php echo zen_draw_pull_down_menu('address[]', $multishipAddresses, $currentProduct['sendto'], 'onchange="' . $multishipOnChange . '"') . ' ' . $_SESSION['multiship']->getNoShipIcon($currentProduct['sendto']); ?></td>
         </tr>
 <?php
 }
