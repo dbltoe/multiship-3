@@ -24,8 +24,18 @@ $define = [
     //
     'SHIP_TO_MULTIPLE_CART_NOTICE' => 'Sending these items to more than one address? Choose <strong>Checkout</strong> below and we will help you send each item where it needs to go.',
 
-    // Appended to the above only when PayPal Express Checkout is enabled on the store.
+    // Appended to the cart notices below only when PayPal Express Checkout is enabled.
     'SHIP_TO_MULTIPLE_CART_NOTICE_EC' => 'PayPal Express sends the whole order to one address.',
+
+    // -----
+    // Shown on the cart page once the customer has chosen multiple addresses.
+    //
+    // Without it the cart goes silent after the choice is made: the offer disappears, as
+    // it should, but nothing confirms the choice was kept. A customer returning to their
+    // cart mid-flow has no way to tell whether multiship is still active, and reasonably
+    // wonders where it went.
+    //
+    'SHIP_TO_MULTIPLE_CART_ACTIVE' => 'This order is going to more than one address. Choose <strong>Checkout</strong> to set a delivery address for each item.',
 
     // -----
     // Added to the 'login' messageStack when a not-yet-signed-in customer chooses to ship

@@ -126,8 +126,23 @@ class multiship_early_observer extends base
 
                 $_SESSION['multiship']->debugNote('cart page: evaluating whether to show the notice.');
 
+                // -----
+                // Multiship already chosen: confirm it rather than saying nothing.
+                //
+                // Suppressing the offer here is right -- there is nothing left to offer --
+                // but going completely silent leaves a customer who returns to their cart
+                // mid-flow unable to tell whether their choice survived. Say it is still
+                // active, and where to continue.
+                //
                 if ($_SESSION['multiship']->isChosen()) {
-                    $_SESSION['multiship']->debugNote('cart page: multiship already chosen, no notice needed.');
+                    if (defined('SHIP_TO_MULTIPLE_CART_ACTIVE') && !empty($GLOBALS['messageStack']) && is_object($GLOBALS['messageStack'])) {
+                        $active = SHIP_TO_MULTIPLE_CART_ACTIVE;
+                        if (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True') {
+                            $active .= ' ' . SHIP_TO_MULTIPLE_CART_NOTICE_EC;
+                        }
+                        $GLOBALS['messageStack']->add('shopping_cart', $active, 'caution');
+                        $_SESSION['multiship']->debugNote('cart page: multiship already chosen, confirming it is still active.');
+                    }
                     break;
                 }
 
