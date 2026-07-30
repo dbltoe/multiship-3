@@ -13,6 +13,21 @@ $define = [
     'SHIP_TO_MULTIPLE_HERE' => '* HERE *',   //-Used as the anchor text for the links (%s), inserted above.
 
     // -----
+    // Shown on the shopping-cart page when the cart qualifies and the question has not
+    // yet been put. Deliberately carries NO link: the interstitial reached via Checkout
+    // is the single entry point, and a link here would let a customer skip it.
+    //
+    // It exists mainly for customers who leave the cart by some route other than the
+    // Checkout button -- PayPal Express Checkout in particular, which posts straight to
+    // PayPal from the cart page and never reaches checkout_shipping, so the interstitial
+    // can never be shown to them.
+    //
+    'SHIP_TO_MULTIPLE_CART_NOTICE' => 'Sending these items to more than one address? Choose <strong>Checkout</strong> below and we will help you send each item where it needs to go.',
+
+    // Appended to the above only when PayPal Express Checkout is enabled on the store.
+    'SHIP_TO_MULTIPLE_CART_NOTICE_EC' => 'PayPal Express sends the whole order to one address.',
+
+    // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
     // is the route back to the address grid. It replaces a link that used to be rendered
     // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;

@@ -123,14 +123,41 @@ class multiship_early_observer extends base
             // something; re-asking them would be noise.
             //
             case 'NOTIFY_HEADER_START_SHOPPING_CART':
-                if (!isset($_SESSION['multiship'])
-                    || $_SESSION['multiship']->isChosen()
-                    || !$_SESSION['multiship']->hasBeenAsked()
-                ) {
+                if (!isset($_SESSION['multiship']) || $_SESSION['multiship']->isChosen()) {
                     break;
                 }
-                unset($_SESSION['multiship_asked']);
-                $_SESSION['multiship']->debugNote('returned to the cart after declining; the question will be asked again at checkout.');
+
+                if ($_SESSION['multiship']->hasBeenAsked()) {
+                    unset($_SESSION['multiship_asked']);
+                    $_SESSION['multiship']->debugNote('returned to the cart after declining; the question will be asked again at checkout.');
+                }
+
+                // -----
+                // Tell the customer the option exists, without offering a way to reach it
+                // from here.
+                //
+                // The interstitial is only reached through the Checkout button, because
+                // that is the one route that passes through checkout_shipping. A customer
+                // who leaves the cart another way never sees it -- most importantly via
+                // PayPal Express Checkout, whose button is included directly into the cart
+                // template and posts straight to PayPal. Multiship genuinely cannot apply
+                // to such an order, since Express Checkout fixes a single delivery address
+                // from the PayPal account, but without this notice the customer would
+                // never learn the choice was available at all.
+                //
+                // Deliberately carries no link. An earlier version of this notice did, and
+                // it let customers reach the address grid while skipping the explicit
+                // Yes/No page; pointing at the Checkout button keeps one entry point.
+                //
+                if (!$_SESSION['multiship']->offerAvailable()) {
+                    break;
+                }
+
+                $notice = SHIP_TO_MULTIPLE_CART_NOTICE;
+                if (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True') {
+                    $notice .= ' ' . SHIP_TO_MULTIPLE_CART_NOTICE_EC;
+                }
+                $GLOBALS['messageStack']->add('shopping_cart', $notice, 'caution');
                 break;
 
             default:
