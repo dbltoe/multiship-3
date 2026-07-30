@@ -160,11 +160,27 @@ Outstanding:
 - The mod-owned confirmation page; the legacy version relied on core template
   overrides that are no longer shipped
 - **Accessibility pass, deferred by decision** — deliberately postponed until the
-  flow works end to end. One known defect already: on the `multiship_choice`
-  interstitial each button's help text sits in a sibling `div` with no
-  programmatic association, so it is announced to sighted users only and needs
-  `aria-describedby`. Also unresolved: whether the three actions should be a
-  `fieldset`/`legend` group. To be set by dbltoe, whose field this is.
+  flow works end to end. To be set by dbltoe, whose field this is. Known items so far:
+
+  **`multiship_choice` interstitial** — each button's help text sits in a sibling
+  `div` with no programmatic association, so it is announced to sighted users only
+  and needs `aria-describedby`. Also unresolved: whether the three actions should be
+  a `fieldset`/`legend` group.
+
+  **`docs/readme.html`** — now shipped inside the plugin and linked from the Plugin
+  Manager listing, so it is a page store owners will actually open. Two Level A
+  failures found by inspection:
+
+  - no `lang` attribute on `<html>` (3.1.1 Language of Page)
+  - six `<h1>` elements in the sequence
+    `h1 h1 h2 h2 h1 h1 h1 h2 h1 h2 h2 h1` — the document has no single top-level
+    heading and its outline does not nest (1.3.1 Info and Relationships)
+
+  Otherwise cleaner than expected: no images, so no missing `alt`; no tables; no
+  "click here" link text; no inline styles; no `<font>` or `<center>`. Contrast and
+  focus visibility still need checking against `docs/style.css` and `menu.css`, which
+  a static read cannot settle, as does the keyboard behaviour of
+  `back_to_top.min.js`.
 - Retire the six legacy core-template overrides still parked at
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
