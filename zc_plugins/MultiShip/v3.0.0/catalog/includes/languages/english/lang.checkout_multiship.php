@@ -43,6 +43,18 @@ $define = [
     'TEXT_OPTION_DIVIDER' => ': ',
     'ONETIME_CHARGE_INDICATOR' => '*',
     'TEXT_ONETIME_CHARGES_APPLY' => 'One-time charges apply.',
+    // -----
+    // Shown when the customer holds more addresses than MAX_ADDRESS_BOOK_ENTRIES.
+    //
+    // Multiship lists every address the customer has -- its query carries no limit -- but
+    // core's address book counts against that setting and will tell the customer they have
+    // reached the maximum. Without a word here, that reads as "some of my addresses have
+    // been lost", exactly when they are about to rely on them.
+    //
+    // %1$u is how many they hold, %2$u the store's normal limit.
+    //
+    'TEXT_MULTISHIP_OVER_ADDRESS_LIMIT' => 'You have %1$u delivery addresses saved. This store normally keeps %2$u, so your account page may say you have reached the maximum &mdash; nothing has been lost. Every address is saved and all of them can be used here.',
+
     'TEXT_NEED_ANOTHER_ADDRESS' => 'Need another address? ',
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',
     'TEXT_DELETE_ITEM' => 'If you changed any quantities, click ',

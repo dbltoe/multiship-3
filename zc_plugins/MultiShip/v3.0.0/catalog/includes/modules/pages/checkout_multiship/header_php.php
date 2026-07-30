@@ -186,6 +186,22 @@ while (!$addresses->EOF) {
 }
 
 // -----
+// Reassure a customer holding more addresses than the store's normal limit.
+//
+// The query above deliberately carries no LIMIT, so every address is offered here. Core's
+// address book, however, counts against MAX_ADDRESS_BOOK_ENTRIES and will tell the same
+// customer they have reached the maximum. Left unexplained that reads as though addresses
+// have been lost, at precisely the moment they are about to depend on them.
+//
+if (defined('MAX_ADDRESS_BOOK_ENTRIES') && count($multishipAddresses) > (int)MAX_ADDRESS_BOOK_ENTRIES) {
+    $messageStack->add(
+        'multiship',
+        sprintf(TEXT_MULTISHIP_OVER_ADDRESS_LIMIT, count($multishipAddresses), (int)MAX_ADDRESS_BOOK_ENTRIES),
+        'caution'
+    );
+}
+
+// -----
 // Build up the products' list, one entry for each item currently in the cart, so each entry is associated with a quantity of 1
 // for the specified product.
 //
