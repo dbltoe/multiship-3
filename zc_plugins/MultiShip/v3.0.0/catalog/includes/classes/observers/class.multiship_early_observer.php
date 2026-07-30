@@ -123,7 +123,15 @@ class multiship_early_observer extends base
             // something; re-asking them would be noise.
             //
             case 'NOTIFY_HEADER_START_SHOPPING_CART':
-                if (!isset($_SESSION['multiship']) || $_SESSION['multiship']->isChosen()) {
+                if (!isset($_SESSION['multiship'])) {
+                    // No object to log through; nothing further is possible either.
+                    break;
+                }
+
+                $_SESSION['multiship']->debugNote('cart page: evaluating whether to show the notice.');
+
+                if ($_SESSION['multiship']->isChosen()) {
+                    $_SESSION['multiship']->debugNote('cart page: multiship already chosen, no notice needed.');
                     break;
                 }
 
@@ -153,11 +161,22 @@ class multiship_early_observer extends base
                     break;
                 }
 
+                if (!defined('SHIP_TO_MULTIPLE_CART_NOTICE')) {
+                    $_SESSION['multiship']->debugNote('cart page: SHIP_TO_MULTIPLE_CART_NOTICE is not defined; the extra_definitions language file has not loaded.');
+                    break;
+                }
+
+                if (empty($GLOBALS['messageStack']) || !is_object($GLOBALS['messageStack'])) {
+                    $_SESSION['multiship']->debugNote('cart page: messageStack unavailable, cannot show the notice.');
+                    break;
+                }
+
                 $notice = SHIP_TO_MULTIPLE_CART_NOTICE;
                 if (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True') {
                     $notice .= ' ' . SHIP_TO_MULTIPLE_CART_NOTICE_EC;
                 }
                 $GLOBALS['messageStack']->add('shopping_cart', $notice, 'caution');
+                $_SESSION['multiship']->debugNote('cart page: notice added to the shopping_cart messageStack.');
                 break;
 
             default:
