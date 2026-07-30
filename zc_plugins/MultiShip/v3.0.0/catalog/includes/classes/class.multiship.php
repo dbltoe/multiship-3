@@ -318,6 +318,9 @@ class multiship extends base
     // completing those assignments there is a window in which selected is still false;
     // keying the One Page Checkout bypass on intent rather than on selected closes it.
     //
+    // For the same reason sessionCleanup() must not touch this flag: it runs whenever
+    // selected is false, which is exactly the window above. See that method.
+    //
     // The flag lives directly in the session rather than on this object because
     // multiship_early_observer must read it at autoLoadConfig[90], before this class is
     // instantiated at [130]. See class.multiship_early_observer.php.
@@ -371,6 +374,13 @@ class multiship extends base
     public function declineMultiship()
     {
         $this->debugLog('declineMultiship, customer opted back out of multiple ship-to addresses.');
+
+        // -----
+        // The only place intent is cleared. sessionCleanup() deliberately leaves it alone,
+        // since it runs as routine housekeeping in states a committed multiship customer is
+        // normally in. Clearing it here re-enables One Page Checkout from the next request.
+        //
+        unset($_SESSION['multiship_chosen']);
         $this->sessionCleanup();
         $_SESSION['multiship_asked'] = true;
     }
@@ -1314,15 +1324,24 @@ class multiship extends base
     // receipt of NOTIFY_HEADER_END_CHECKOUT_PROCESS (issued by the header_php.php file for the checkout_process page, just
     // prior to re-directing to the checkout_success page).
     //
+    // -----
+    // Clears the multiship *selection* state -- the assigned addresses and the derived
+    // totals, shipping and order information.
+    //
+    // It must NOT clear $_SESSION['multiship_chosen'], the customer's intent. This method
+    // is called from nine places as ordinary housekeeping, including checkoutInitialize()
+    // when $this->selected is false -- and false is the normal state for a customer who
+    // has just chosen multiship but has not reached the address grid yet. Clearing intent
+    // here destroyed the choice on the customer's first visit to checkout_shipping, which
+    // in turn let One Page Checkout take the order back.
+    //
+    // Intent is cleared only by declineMultiship(), which is the one place the customer
+    // has actually said no.
+    //
     public function sessionCleanup()
     {
         $this->debugLog('sessionCleanup!');
         $this->selected = false;
-        // -----
-        // Clearing the intent flag re-enables One Page Checkout for this session, so a
-        // customer who backs out of multiship gets the store's normal checkout back.
-        //
-        unset($_SESSION['multiship_chosen']);
         $this->address2multiship = array();
         unset($this->details, $this->cart, $this->totals, $this->shipping_method, $this->orders_multiship_ids, $this->text_email, $this->noship_address_id);
     }
