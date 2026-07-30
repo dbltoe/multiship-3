@@ -65,11 +65,7 @@ class multiship_early_observer extends base
             // OPC must stay in charge of them.
             //
             case 'NOTIFY_OPC_SET_DISABLED':
-                if (!empty($_SESSION['multiship_chosen'])
-                    && empty($_SESSION['COWOA'])
-                    && empty($_SESSION['customer_guest_id'])
-                    && empty($_SESSION['paypal_ec_token'])
-                ) {
+                if (!empty($_SESSION['multiship_chosen']) && !multiship::inExpressOrGuestCheckout()) {
                     $p2 = true;
                 }
                 break;

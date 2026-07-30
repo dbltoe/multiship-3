@@ -41,6 +41,36 @@ class multiship extends base
     // processing is still to be enabled and to initialize various elements (since this class
     // is session-based).  Also called by the class constructor.
     //
+    // -----
+    // Whether the session is in a guest or PayPal Express Checkout flow, neither of which
+    // can support multiple ship-to addresses: a guest flow leaves no account to attach the
+    // per-address sub-orders to, and Express Checkout fixes a single delivery address from
+    // the PayPal account.
+    //
+    // Static, and reachable before this class is instantiated, because
+    // multiship_early_observer must answer NOTIFY_OPC_SET_DISABLED at autoLoadConfig[97],
+    // before $_SESSION['multiship'] exists at [130]. The class *file* is loaded at [0], so
+    // a static call is available throughout.
+    //
+    // The PayPal test requires all three session values, matching the test One Page
+    // Checkout applies in OnePageCheckout::checkEnabled(). paypal_ec_token alone is set the
+    // moment a customer clicks the Express Checkout button and *survives them abandoning
+    // it*, so testing the token by itself disabled multiship for the rest of the session
+    // for anyone who merely looked at PayPal and came back. payer_id and payer_info only
+    // exist once the customer has actually returned from PayPal authorised, which is what
+    // distinguishes an express checkout in progress from an abandoned click.
+    //
+    public static function inExpressOrGuestCheckout()
+    {
+        if (!empty($_SESSION['COWOA']) || !empty($_SESSION['customer_guest_id'])) {
+            return true;
+        }
+
+        return (!empty($_SESSION['paypal_ec_token'])
+                && !empty($_SESSION['paypal_ec_payer_id'])
+                && !empty($_SESSION['paypal_ec_payer_info']));
+    }
+
     public function isEnabled()
     {
         // -----
@@ -76,7 +106,7 @@ class multiship extends base
             // enters one of these flows is disabled here, and the sessionCleanup() below
             // clears the intent flag, which in turn re-enables One Page Checkout.
             //
-            if (!empty($_SESSION['COWOA']) || !empty($_SESSION['customer_guest_id']) || !empty($_SESSION['paypal_ec_token'])) {
+            if (self::inExpressOrGuestCheckout()) {
                 $this->debugLog('isEnabled, setting disabled for a guest or express-checkout session.');
                 $this->enabled = false;
             }
@@ -388,8 +418,7 @@ class multiship extends base
         // from the storefront, which makes a bare true/false useless for diagnosis.
         //
         $physical_units = $this->cartPhysicalItemsCount();
-        $in_cowoa = !empty($_SESSION['COWOA']);
-        $is_guest = !empty($_SESSION['customer_guest_id']);
+        $express_or_guest = self::inExpressOrGuestCheckout();
 
         // -----
         // Deliberately NOT zen_count_shipping_modules(), which checkoutInitialize() can
@@ -409,15 +438,14 @@ class multiship extends base
         //
         $has_shipping_modules = (defined('MODULE_SHIPPING_INSTALLED') && MODULE_SHIPPING_INSTALLED !== '');
 
-        $available = ($physical_units > 1 && !$in_cowoa && !$is_guest && $has_shipping_modules);
+        $available = ($physical_units > 1 && !$express_or_guest && $has_shipping_modules);
 
         $this->debugLog(
             'offerAvailable: ' . ($available ? 'true' : 'false')
             . ' [physical units: ' . $physical_units
             . ', cart lines: ' . count($_SESSION['cart']->contents)
             . ', shipping modules installed: ' . ($has_shipping_modules ? 'yes' : 'no')
-            . ', COWOA: ' . ($in_cowoa ? 'yes' : 'no')
-            . ', guest: ' . ($is_guest ? 'yes' : 'no') . ']'
+            . ', express/guest checkout: ' . ($express_or_guest ? 'yes' : 'no') . ']'
         );
 
         return $available;
