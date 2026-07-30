@@ -152,13 +152,35 @@ if (isset($_POST['securityToken'])) {
     // Check to see that the ship-to addresses currently selected are 'compatible' with
     // the currently-selected shipping method.
     //
-    if (!$_SESSION['multiship']->addressValidation($_POST['address'])) {
+    // -----
+    // Rows the customer has not yet answered post an empty address, because the Send To
+    // menu opens on a "please choose" prompt rather than defaulting to the primary
+    // address. Those are dropped here, keeping address and prid aligned by index, so that
+    // neither addressValidation() nor setMultiship() ever sees an empty address -- the
+    // former would try to quote for it, the latter would use it as an array key.
+    //
+    // Note the quantity handling above can unset() entries, leaving gaps in the arrays.
+    // foreach preserves the original keys, so $_POST['prid'][$i] still pairs correctly.
+    //
+    $multiship_chosen_addresses = [];
+    $multiship_chosen_prids = [];
+    foreach (($_POST['address'] ?? []) as $i => $posted_address) {
+        if ($posted_address === '' || $posted_address === null) {
+            continue;
+        }
+        $multiship_chosen_addresses[] = $posted_address;
+        $multiship_chosen_prids[] = $_POST['prid'][$i];
+    }
+
+    if ($multiship_chosen_addresses === []) {
+        $_SESSION['multiship']->sessionCleanup();
+    } elseif (!$_SESSION['multiship']->addressValidation($multiship_chosen_addresses)) {
         $messageStack->add('multiship', ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING, 'error');
     } else {
         // -----
         // Record the customer's multiship selection in the session variable.
         //
-        $_SESSION['multiship']->setMultiship($_POST['address'], $_POST['prid']);
+        $_SESSION['multiship']->setMultiship($multiship_chosen_addresses, $multiship_chosen_prids);
     }
 }
 
@@ -176,7 +198,23 @@ $addresses = $db->Execute(
 if ($addresses->EOF) {
     zen_redirect(zen_href_link(FILENAME_ADDRESS_BOOK, '', 'SSL'));
 }
-$multishipAddresses = array();
+// -----
+// A prompt sits at the top of every Send To menu and is what an unanswered row shows.
+//
+// Previously a row defaulted to the customer's primary address, so a customer who missed
+// one silently shipped that item to themselves -- the failure is invisible until the
+// parcel arrives at the wrong door. This mirrors how a product with required attributes
+// refuses to be added until a choice is made: nothing is assumed on the customer's behalf.
+//
+// Its id is an empty string; the POST handling above drops those rows rather than treating
+// the empty value as an address.
+//
+$multishipAddresses = array(
+    array(
+        'id' => '',
+        'text' => TEXT_SELECT_ADDRESS_PROMPT,
+    ),
+);
 while (!$addresses->EOF) {
     $multishipAddresses[] = array( 
         'id' => $addresses->fields['address_book_id'],
@@ -266,8 +304,14 @@ for ($i = 0, $productsArray = array(), $n = count($products); $i < $n; $i++) {
 //
 $multiship_details = $_SESSION['multiship']->getCart();
 $invalid_address_present = false;
+$multiship_unassigned = 0;
 for ($i = 0, $n = count($productsArray); $i < $n; $i++) {
-    $productsArray[$i]['sendto'] = $_SESSION['sendto'];
+    // -----
+    // Unassigned, not "the primary address". A row only gains an address once the customer
+    // has chosen one; anything still unanswered shows the prompt and is counted below so
+    // the page can refuse to send them onward with items nobody has claimed.
+    //
+    $productsArray[$i]['sendto'] = '';
     $prid = $productsArray[$i]['id'];
     $productsArray[$i]['is_physical'] = $_SESSION['multiship']->cartItemIsPhysical($prid);
     foreach ($multiship_details as $address_id => &$currentProducts) {
@@ -281,6 +325,18 @@ for ($i = 0, $n = count($productsArray); $i < $n; $i++) {
         }
     }
     unset($currentProducts);
+
+    if ($productsArray[$i]['sendto'] === '') {
+        $multiship_unassigned++;
+    }
+}
+
+// -----
+// Until every item has an address, the customer is not finished. The template hides the
+// route onward and shows this instead, so nothing can be carried into checkout half-answered.
+//
+if ($multiship_unassigned > 0) {
+    $messageStack->add('multiship', sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned), 'caution');
 }
 
 $checkout_shipping_link = ($invalid_address_present) ? zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'address_correction', 'SSL') : zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL');

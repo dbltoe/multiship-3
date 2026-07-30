@@ -76,7 +76,13 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
         . ' this.form.action = this.form.action.split(\'#\')[0] + \'#multishipRow' . $multishipNextRow . '\';'
         . ' this.form.submit();';
 ?>
-            <td class="sendto"><?php echo zen_draw_pull_down_menu('address[]', $multishipAddresses, $currentProduct['sendto'], 'onchange="' . $multishipOnChange . '"') . ' ' . $_SESSION['multiship']->getNoShipIcon($currentProduct['sendto']); ?></td>
+            <td class="sendto"><?php
+                echo zen_draw_pull_down_menu('address[]', $multishipAddresses, $currentProduct['sendto'], 'onchange="' . $multishipOnChange . '"');
+                // Only ask about serviceability once there is an address to ask about.
+                if ($currentProduct['sendto'] !== '') {
+                    echo ' ' . $_SESSION['multiship']->getNoShipIcon($currentProduct['sendto']);
+                }
+            ?></td>
         </tr>
 <?php
 }
@@ -91,7 +97,19 @@ if ($products_onetime_charges) {
 ?>
 
     <div class="buttonRow back"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT, 'name="update" onclick="ok2leave();"'); ?></div>
+<?php
+// -----
+// The way onward appears only once every item has an address. Offering it while rows are
+// unanswered would let a customer leave with items nobody has claimed -- and the earlier
+// behaviour silently sent those to the customer themselves, which is the mistake this
+// whole change exists to prevent. The messageStack above says how many are outstanding.
+//
+if ($multiship_unassigned === 0) {
+?>
     <div class="buttonRow forward"><?php echo sprintf(TEXT_RETURN_TO_SHIPPING, $resume_checkout_anchor); ?></div>
+<?php
+}
+?>
     <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
     </form>
 </div>

@@ -55,6 +55,18 @@ $define = [
     //
     'TEXT_MULTISHIP_OVER_ADDRESS_LIMIT' => 'You have %1$u delivery addresses saved. This store normally keeps %2$u, so your account page may say you have reached the maximum &mdash; nothing has been lost. Every address is saved and all of them can be used here.',
 
+    // -----
+    // The first entry in every Send To menu, and what an unanswered row shows.
+    //
+    // A row used to default to the customer's primary address, so a missed item shipped
+    // to them silently. Nothing is assumed now: the customer chooses for every item, the
+    // same way a product with required attributes will not be added until answered.
+    //
+    'TEXT_SELECT_ADDRESS_PROMPT' => 'Please choose an address for this item',
+
+    // %u is how many items are still unanswered.
+    'TEXT_MULTISHIP_ITEMS_UNASSIGNED' => 'Please choose a delivery address for every item. %u still need one, and you will not be able to continue until they do.',
+
     'TEXT_NEED_ANOTHER_ADDRESS' => 'Need another address? ',
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',
     'TEXT_DELETE_ITEM' => 'If you changed any quantities, click ',
