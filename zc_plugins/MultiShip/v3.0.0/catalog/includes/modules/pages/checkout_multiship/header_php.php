@@ -28,7 +28,17 @@ if (empty($_SESSION['customer_id'])) {
     //
     // add_session() rather than add(), since the message has to survive the redirect.
     //
-    $messageStack->add_session('login', MULTISHIP_LOGIN_REQUIRED, 'caution');
+    // -----
+    // The login page carries a PayPal Express Checkout button too -- it and the shopping
+    // cart are the only two templates that include tpl_ec_button.php. So this is the
+    // second place a customer can silently leave multiship behind, and it is a page we
+    // deliberately sent them to. Warn about it here for the same reason as on the cart.
+    //
+    $login_message = MULTISHIP_LOGIN_REQUIRED;
+    if (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True') {
+        $login_message .= ' ' . SHIP_TO_MULTIPLE_CART_NOTICE_EC;
+    }
+    $messageStack->add_session('login', $login_message, 'caution');
 
     $_SESSION['navigation']->set_snapshot(array('mode' => 'SSL', 'page' => FILENAME_CHECKOUT_MULTISHIP));
     zen_redirect(zen_href_link(FILENAME_LOGIN, '', 'SSL'));
