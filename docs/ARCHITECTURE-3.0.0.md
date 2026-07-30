@@ -211,7 +211,14 @@ with One Page Checkout v2.6.3 installed and its guest checkout enabled:
   confirming the bypass is scoped to the session and does not affect normal orders
 - returning to the cart after declining reopens the question
 
-One bug worth recording, since the same mistake is easy to repeat. `offerAvailable()`
+Also verified after PayPal Express Checkout was enabled on the test store:
+
+- the cart-page notice appears once the cart qualifies, rendering as a blue
+  `alert-info` with a question-mark icon under ZCA Bootstrap, which maps `caution`
+  that way in `zca_message_stack.php`
+- clicking PayPal Express and then abandoning it no longer disables multiship
+
+Two bugs worth recording, since both mistakes are easy to repeat. `offerAvailable()`
 originally tested `zen_count_shipping_modules()`, copied from `checkoutInitialize()`.
 That function counts shipping modules **already instantiated as globals**, not modules
 installed. The shipping class is not created until line ~100 of the checkout_shipping
@@ -219,6 +226,18 @@ header, while the interception runs from the notifier on line 11, and the cart p
 never instantiates them at all — so it returned 0 in every context this plugin uses,
 and the offer could never appear. It now tests `MODULE_SHIPPING_INSTALLED`, which is
 configuration and readable anywhere.
+
+The guest/express guard originally tested `$_SESSION['paypal_ec_token']` on its own.
+That value is set the moment a customer clicks the Express Checkout button on the cart
+page and **survives them abandoning it**, so glancing at PayPal and coming back left
+multiship disabled for the rest of the session — and because `isEnabled()` calls
+`sessionCleanup()` whenever it disables, every later page load also wiped any multiship
+selection already made. It now requires `paypal_ec_token`, `paypal_ec_payer_id` and
+`paypal_ec_payer_info` together, matching `OnePageCheckout::checkEnabled()`; the latter
+two only exist once the customer has returned from PayPal authorised. The test lives in
+`multiship::inExpressOrGuestCheckout()`, static so the early observer can call it at
+`[97]` before the session object exists at `[130]`, and so both callers apply one test
+rather than two hand-copied approximations.
 
 ### Still unverified
 
