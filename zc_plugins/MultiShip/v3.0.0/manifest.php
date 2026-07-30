@@ -24,15 +24,30 @@
 // it must not fatal if it is ever read outside a full storefront/admin context; without
 // the constant the button is simply omitted.
 //
+// -----
+// Declared once and used for both the version and the readme path, so bumping the version
+// cannot leave the button pointing at a directory that no longer exists. The version
+// folder name and this value must always match.
+//
+$multiship_version = 'v3.0.0';
+
 $multiship_readme_button = '';
 if (defined('DIR_WS_CATALOG')) {
     $multiship_readme_button =
-        '<br /><br /><a href="' . DIR_WS_CATALOG . 'zc_plugins/MultiShip/v3.0.0/docs/readme.html"'
+        '<br /><br /><a href="' . DIR_WS_CATALOG . 'zc_plugins/MultiShip/' . $multiship_version . '/docs/readme.html"'
         . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">Read Me</a>';
 }
 
+// -----
+// A GitHub button is deliberately not added yet. github_repo below is populated, but the
+// Plugin Manager renders that field nowhere (see docs/multiship_core_requirements.md 2.4),
+// and the repository's master branch still holds the pre-v3.0.0 plugin. Linking there now
+// would send a store owner to code older than what they have installed. Add it here, the
+// same way as the readme button, once the work is merged.
+//
+
 return [
-    'pluginVersion' => 'v3.0.0',
+    'pluginVersion' => $multiship_version,
     'pluginName' => 'Multiple Ship-To Addresses',
     'pluginDescription' => 'Allows a customer to ship the individual products in their cart to two or more different addresses, splitting the order into per-address sub-orders that can be tracked and status-updated independently in the admin.<br /><br />Built on the <em>Multiple Ship-To Addresses</em> plugin created by lat9 of Vinos de Frutas Tropicales, whose original work provides the order-splitting, per-address shipping-cost and destination-based tax handling that this plugin still relies on.' . $multiship_readme_button,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
