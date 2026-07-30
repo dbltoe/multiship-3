@@ -252,28 +252,46 @@ document.loginForm.email_address.focus();
 Removing the `autofocus` attribute from the template does not help, because the scripted
 focus runs regardless.
 
-**This plugin cannot fix it.** A plugin stylesheet resolves at step 4 of the template
-lookup, behind the active template's own `css` directory at step 3, and One Page Checkout
-installs its own `login.css` into the template — so on any store running OPC, a plugin
-`login.css` never loads. A `jscript_` file in `catalog/includes/modules/pages/login/`
-*would* be merged with core's by `listModulePagesFiles()`, but that method is
-`@since v2.2.0` and would break the declared v2.0.0 floor for a cosmetic fix.
+CSS cannot deliver a fix. A plugin stylesheet resolves at step 4 of the template lookup,
+behind the active template's own `css` directory at step 3, and One Page Checkout installs
+its own `login.css` into the template — so on any store running OPC, a plugin `login.css`
+never loads. A `login.css` was written and then removed for exactly that reason.
 
-What the plugin does instead: explain the redirect, via a `login` messageStack message
-wrapped in `.multishipLoginNotice`. That span is a deliberate styling hook — a store
-owner can scope a fix to multiship-initiated logins only, from their own
-`stylesheet.css`, which always loads:
+**What the plugin ships instead:** `catalog/includes/modules/pages/login/on_load_multiship.js`.
 
-```css
-body:has(.multishipLoginNotice) #login-email-address {
-    scroll-margin-top: 600px;
-}
+`index.php` builds the `<body onload="...">` attribute from `on_load_*.js` files gathered
+by `listModulePagesFiles('on_load_', '.js')`, which merges the core page directory with
+plugin page directories. Plugin contents are appended after core's, so this runs *after*
+`document.loginForm.email_address.focus()` and undoes it:
+
+```js
+if (document.querySelector('.multishipLoginNotice') && document.loginForm && document.loginForm.email_address) { document.loginForm.email_address.blur(); window.scrollTo(0, 0); }
 ```
 
-Whether `scroll-margin` overrides a scripted `focus()` is untested. The real fix is
-upstream: four other core pages — `create_account`, `checkout_shipping_address`,
-`checkout_payment_address`, `address_book_process` — already neutralise the same file
-with `javascript:void(0);`, so the mechanism exists and `login` simply is not one of them.
+It **blurs as well as scrolls**. Scrolling alone would leave focus in a field the visitor
+cannot see, which is worse than the original problem for a keyboard or screen-reader user.
+Blurring returns the page to the state an ordinary page load would produce.
+
+Three constraints govern that file, and breaking any of them corrupts every login page:
+
+- **No double quotes** — the contents are emitted inside `onload="…"`.
+- **No `//` comments** — files are concatenated, so a line comment would silently disable
+  whatever followed it. A single-line `/* … */` is safe.
+- **Filename must match `^on_load_`**, the pattern `listModulePagesFiles` searches for.
+
+Scoped to `.multishipLoginNotice`, so ordinary logins are untouched. It degrades well: the
+problem is caused by JavaScript, so with scripting disabled there is no focus to undo and
+nothing to fix. `listModulePagesFiles()` is `@since v2.2.0`, so on v2.0.0 and v2.1.0 the
+file is simply never read — inert, not broken.
+
+This is a stopgap. The real fix is upstream, and is a one-line change with precedent:
+four core pages — `create_account`, `checkout_shipping_address`,
+`checkout_payment_address`, `address_book_process` — already neutralise that same file
+with `javascript:void(0);`, and the sibling `time_out/on_load_main.js` already carries the
+`if (document.login)` guard that the login page's copy lacks. The recommended core change
+is `focus({preventScroll: true})` plus removal of the `autofocus` attribute at
+`tpl_login_default.php:44`, which keeps the convenience of a focused field without moving
+the viewport. Once that lands, this file can be deleted.
 
 ### Still unverified
 

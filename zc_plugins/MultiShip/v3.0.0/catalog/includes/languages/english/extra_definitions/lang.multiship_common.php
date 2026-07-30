@@ -50,17 +50,10 @@ $define = [
     // Checkout installs a login.css into the template -- so on any store running OPC a
     // plugin login.css never loads at all.
     //
-    // A store owner who wants to address it can, because this span gives them a scope.
-    // In the template's own stylesheet.css, which loads on every page:
-    //
-    //     body:has(.multishipLoginNotice) #login-email-address {
-    //         scroll-margin-top: 600px;   /* enough to clear the create-account card */
-    //     }
-    //
-    // That applies only to logins multiship caused, leaving ordinary logins alone.
-    // Whether scroll-margin overrides a scripted focus() is untested; the real fix is
-    // upstream, where four other core pages already neutralise on_load_main.js with
-    // javascript:void(0);
+    // The span is what scopes the workaround in
+    // catalog/includes/modules/pages/login/on_load_multiship.js, which blurs the field and
+    // scrolls back to the top -- but only when this notice is present, so ordinary logins
+    // are untouched. Renaming or removing the span silently disables that file.
     'MULTISHIP_LOGIN_REQUIRED' => '<span class="multishipLoginNotice">Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.</span>',
 
     // -----
