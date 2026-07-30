@@ -37,7 +37,9 @@ $define = [
     // create-account sections differently, and ZCA autofocuses the sign-in field, which
     // scrolls its create-account section out of view.
     //
-    'MULTISHIP_LOGIN_REQUIRED' => 'Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.',
+    // The wrapping span is not cosmetic: login.css keys off it so the scroll fix applies
+    // only to logins this plugin caused. See that file.
+    'MULTISHIP_LOGIN_REQUIRED' => '<span class="multishipLoginNotice">Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.</span>',
 
     // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This

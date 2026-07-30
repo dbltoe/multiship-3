@@ -1,0 +1,25 @@
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+
+   Both Zen Cart's stock login template and ZCA Bootstrap put autofocus on the
+   returning-customer email field, which sits below the create-account section. The
+   browser scrolls to the focused field on load, so a customer arrives with the
+   create-account section above the fold. That matters here because multiship requires
+   an account, so the customers this plugin sends to login are the ones most likely to
+   need the section they cannot see.
+
+   scroll-margin-top reserves space above the element when it is scrolled into view. A
+   viewport-sized margin cannot be satisfied, so the browser clamps to the top of the
+   document -- which is the wanted result. Focus still lands in the email field, so
+   keyboard and screen-reader users are unaffected; only the scroll position changes.
+
+   Scoped to :has(.multishipLoginNotice), the span wrapping MULTISHIP_LOGIN_REQUIRED, so
+   this applies only to logins this plugin caused. An ordinary login is untouched: a
+   shipping plugin has no business changing how the login page behaves for everyone.
+
+   Degrades safely. Without :has() or scroll-margin support the page simply behaves as it
+   does today.
+*/
+
+body:has(.multishipLoginNotice) #login-email-address {
+    scroll-margin-top: 100vh;
+}
