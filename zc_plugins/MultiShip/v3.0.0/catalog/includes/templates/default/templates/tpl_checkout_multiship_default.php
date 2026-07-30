@@ -15,9 +15,16 @@ if ($messageStack->size('multiship') > 0) {
 if ($messageStack->size('shopping_cart') > 0) {
     echo $messageStack->output('shopping_cart'); 
 }
-$checkout_shipping_anchor = '<a href="' . $checkout_shipping_link . '">' . SHIP_TO_MULTIPLE_HERE . '</a>';
+// -----
+// Two anchors, not one. Both go to checkout_shipping, but they mean different things --
+// one changes the shipping method, the other says the addresses are finished -- and a
+// single shared label could only ever be vague enough to cover both, which is how this
+// came to say "* HERE *" twice.
+//
+$change_shipping_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_SHIPPING_METHOD_CHANGE_LINK . '</a>';
+$resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_RETURN_TO_SHIPPING_LINK . '</a>';
 ?>
-    <div id="checkoutMultishipShipping"><?php echo TEXT_CURRENT_SHIPPING_METHOD; ?><strong><?php echo $_SESSION['shipping']['title']; ?></strong>. <?php echo sprintf(TEXT_SHIPPING_METHOD_CHANGE, $checkout_shipping_anchor); ?></div>
+    <div id="checkoutMultishipShipping"><?php echo TEXT_CURRENT_SHIPPING_METHOD; ?><strong><?php echo $_SESSION['shipping']['title']; ?></strong>. <?php echo sprintf(TEXT_SHIPPING_METHOD_CHANGE, $change_shipping_anchor); ?></div>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
     <div id="checkoutMultishipNewAddress"><?php echo TEXT_NEED_ANOTHER_ADDRESS; ?><a href="<?php echo zen_href_link(FILENAME_ADDRESS_BOOK, '', 'SSL'); ?>"><?php echo TEXT_ENTER_NEW_ADDRESS; ?></a></div>
     <?php echo zen_draw_form('checkout_multiship', zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL')); ?>
@@ -67,7 +74,7 @@ if ($products_onetime_charges) {
 ?>
 
     <div class="buttonRow back"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT, 'name="update" onclick="ok2leave();"'); ?></div>
-    <div class="buttonRow forward"><?php echo sprintf(TEXT_RETURN_TO_SHIPPING, $checkout_shipping_anchor); ?></div>
-    <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
+    <div class="buttonRow forward"><?php echo sprintf(TEXT_RETURN_TO_SHIPPING, $resume_checkout_anchor); ?></div>
+    <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
     </form>
 </div>

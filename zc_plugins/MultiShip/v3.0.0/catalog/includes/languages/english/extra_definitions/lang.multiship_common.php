@@ -72,8 +72,12 @@ $define = [
     // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;
     // delivering it through the messageStack keeps the plugin free of template files.
     //
+    // The link text is title case and reads as a control rather than prose, because in
+    // lowercase it looked like part of the sentence and customers did not recognise it as
+    // the way forward. It stays descriptive rather than becoming "click here", so that it
+    // still makes sense when read out of context in a screen reader's list of links.
     'MULTISHIP_RETURN_TO_ADDRESSES' => 'This order is going to more than one address. Choose a shipping method below, then click %s to set a delivery address for each item.',
-    'MULTISHIP_RETURN_TO_ADDRESSES_LINK' => 'continue to addresses',
+    'MULTISHIP_RETURN_TO_ADDRESSES_LINK' => 'Continue to Addresses',
 
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 

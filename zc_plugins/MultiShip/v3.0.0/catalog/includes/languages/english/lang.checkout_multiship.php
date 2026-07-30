@@ -9,17 +9,31 @@ $define = [
     'NAVBAR_TITLE_2' => 'Choose Multiple Shipping Addresses',
 
     'HEADING_TITLE' => 'Choose Shipping Address for Each Item',
-    'TEXT_RETURN_TO_SHIPPING' => 'All finished? Click %s to resume the checkout process.',
+    'TEXT_RETURN_TO_SHIPPING' => 'All finished? %s.',
+    'TEXT_RETURN_TO_SHIPPING_LINK' => 'Return to Checkout',
 
     // -----
     // Lets a customer who accepted the offer change their mind. Without it, accepting
     // is irreversible for the rest of the session.
     //
-    'TEXT_DECLINE_MULTISHIP' => 'Changed your mind? Click %s to send this whole order to a single address and return to the normal checkout.',
-    'TEXT_DECLINE_MULTISHIP_LINK' => 'here',
+    'TEXT_DECLINE_MULTISHIP' => 'Changed your mind? %s to send this whole order to a single address.',
+    'TEXT_DECLINE_MULTISHIP_LINK' => 'Use the Normal Checkout',
 
     'TEXT_CURRENT_SHIPPING_METHOD' => 'Your current shipping method: ',
-    'TEXT_SHIPPING_METHOD_CHANGE' => 'Click %s to change your shipping method.',
+
+    // -----
+    // Link text on this page names its destination rather than saying "here".
+    //
+    // Screen-reader users commonly navigate by pulling up a list of every link on the
+    // page, where the surrounding sentence is not read out. "HERE" and "here" tell such a
+    // user nothing, and this page previously used both for two links that go to different
+    // places. WCAG 2.4.4 (Link Purpose in Context) is the relevant criterion.
+    //
+    // Sentences are phrased so the link reads as a control rather than running on as
+    // prose, which is also what makes it look clickable to everyone else.
+    //
+    'TEXT_SHIPPING_METHOD_CHANGE' => 'Not the one you want? %s.',
+    'TEXT_SHIPPING_METHOD_CHANGE_LINK' => 'Change Shipping Method',
 
     'HEADING_ITEM' => 'Item',
     'HEADING_PRICE' => 'Price',

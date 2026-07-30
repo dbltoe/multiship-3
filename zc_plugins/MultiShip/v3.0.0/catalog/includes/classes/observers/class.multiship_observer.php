@@ -81,7 +81,14 @@ class multiship_observer extends base
                         'checkout_shipping',
                         sprintf(
                             MULTISHIP_RETURN_TO_ADDRESSES,
-                            '<a href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_RETURN_TO_ADDRESSES_LINK . '</a>'
+                            // -----
+                            // The class is a styling hook, not decoration. Customers were
+                            // not recognising a plain inline link as the way forward, so a
+                            // store can render it as a button from its own stylesheet --
+                            // which is the only place that reliably loads, since plugin CSS
+                            // sits behind the active template in the lookup order.
+                            //
+                            '<a class="multishipContinueLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_RETURN_TO_ADDRESSES_LINK . '</a>'
                         ),
                         'caution'
                     );
