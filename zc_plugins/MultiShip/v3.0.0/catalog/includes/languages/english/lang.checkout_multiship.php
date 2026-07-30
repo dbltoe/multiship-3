@@ -45,7 +45,6 @@ $define = [
 
     'HEADING_ITEM' => 'Item',
     'HEADING_PRICE' => 'Price',
-    'HEADING_QTY' => 'Qty.',
     'HEADING_SENDTO' => 'Send To:',
 
     'TEXT_OPTION_DIVIDER' => ': ',
@@ -82,7 +81,24 @@ $define = [
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',
     'TEXT_DELETE_ITEM' => 'If you changed any quantities, click ',
 
-    'TEXT_MULTISHIP_INSTRUCTIONS' => 'You can delete an item by changing its quantity to 0 and clicking the "Update" button. To send a single item to multiple people, change the item\'s quantity to equal the number of people you\'re sending it to and then click the "Update" button.<br /><br /><strong>Notes:</strong><ul><li>If an icon appears next to a shipping address, that address is not supported by the currently-selected shipping method.</li><li>Any products that you have in your cart that don\'t require shipping (like gift certificates or downloadable products) are not displayed here.</li></ul>',
+    // -----
+    // Rewritten for v3.0.0. The original explained a quantity box that has been removed:
+    // each unit now has its own row, and quantities are changed in the cart where customers
+    // already expect to change them. What remains is what the page cannot tell you itself.
+    //
+    'TEXT_MULTISHIP_INSTRUCTIONS' => 'Every item is listed separately, so you can send each one wherever you like.<br /><br /><strong>Two things worth knowing:</strong><ul><li>If a warning icon appears beside an address, your chosen shipping method cannot deliver there. Pick another address, or change the shipping method.</li><li>Anything that does not need shipping, such as a gift certificate or a download, is not listed here.</li></ul>',
+
+    // -----
+    // Quantities and extra items are the cart's business, not this page's. %1$s and %2$s
+    // are links to the cart and to the storefront.
+    //
+    'TEXT_MULTISHIP_CHANGE_QUANTITIES' => 'Sending more than one of something, or changed your mind about an item? %1$s to adjust quantities, or %2$s to keep shopping.',
+    'TEXT_MULTISHIP_CHANGE_QUANTITIES_CART' => 'Return to Your Cart',
+    'TEXT_MULTISHIP_CHANGE_QUANTITIES_SHOP' => 'browse the store',
+
+    // The submit that saves the menu selections. Named for what it does, and the only way
+    // to save them without JavaScript, since the menus otherwise submit on change.
+    'BUTTON_MULTISHIP_SAVE_ADDRESSES' => 'Save Addresses',
 
     'TEXT_QUANTITIES_CHANGED' => 'One or more product quantities have been changed, but not yet updated.  If you leave this page, those changes will not be saved.  To save those quantity changes, stay on the page and click the update button.',
 

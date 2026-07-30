@@ -52,7 +52,6 @@ if (function_exists('zca_button_link')) {
         <tr>
             <th class="item"><?php echo HEADING_ITEM; ?></th>
             <th class="price"><?php echo HEADING_PRICE; ?></th>
-            <th class="qty"><?php echo HEADING_QTY; ?></th>
             <th class="sendto"><?php echo HEADING_SENDTO; ?></th>
         </tr>
 <?php
@@ -78,7 +77,6 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
 ?>
             </td>
             <td class="msipPrice"><?php echo $currentProduct['price']; ?></td>
-            <td class="qty"><?php echo zen_draw_input_field('qty[]', 1, 'onchange="notok2leave();"'); ?></td>
 <?php
     // -----
     // Choosing an address submits the form, so the page reloads and the browser lands back
@@ -116,7 +114,24 @@ if ($products_onetime_charges) {
 }
 ?>
 
-    <div class="buttonRow back"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT, 'name="update" onclick="ok2leave();"'); ?></div>
+<?php
+// -----
+// Quantities and extra items belong to the cart, so this points there rather than
+// duplicating it. The quantity box that used to sit on every row is gone.
+//
+$multiship_cart_link = '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_SHOPPING_CART, '', 'SSL') . '">' . TEXT_MULTISHIP_CHANGE_QUANTITIES_CART . '</a>';
+$multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_DEFAULT) . '">' . TEXT_MULTISHIP_CHANGE_QUANTITIES_SHOP . '</a>';
+?>
+    <div id="multishipQuantityNote" class="content"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
+
+<?php
+// -----
+// Kept, though the address menus submit on change, because that submit needs JavaScript.
+// Without this a customer with scripting disabled could choose addresses and have no way
+// to save them. Named for what it now does, rather than the quantity Update it replaced.
+//
+?>
+    <div class="buttonRow back"><?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?></div>
 <?php
 // -----
 // One position, two states. While items are unanswered the customer gets a reminder where

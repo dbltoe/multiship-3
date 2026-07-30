@@ -114,40 +114,18 @@ if (isset($_GET['address_correction'])) {
 //
 if (isset($_POST['securityToken'])) {
     // -----
-    // If the update button was pressed, then one or more of the item quantities might have changed.
+    // Quantity handling used to live here: a box on each row where 0 removed that unit and
+    // 3 split it into three. It has been removed for v3.0.0.
     //
-    if (isset($_POST['update_x'])) {
-        for ($i = 0, $n = count($_POST['qty']); $i < $n; $i++) {
-            $qty = (int)$_POST['qty'][$i];
-            if ($qty != 1) {
-                $prid = $_POST['prid'][$i];
-                $current_qty = $_SESSION['cart']->get_quantity($prid);
-            
-                $attributes = (isset($_SESSION['cart']->contents[$prid]['attributes'])) ? $_SESSION['cart']->contents[$prid]['attributes'] : array ();
-                foreach ($attributes as $option => $value) {
-                    if ($value == 0) {
-                        unset($attributes[$option]);
-                        $attributes[TEXT_PREFIX . $option] = $_SESSION['cart']->contents[$prid]['attributes_values'][$option];
-                    }
-                }
-
-                $current_qty = ($qty <= 0) ? $current_qty : $current_qty + $qty;       
-                $_SESSION['cart']->update_quantity($prid, $current_qty-1, $attributes);
-            
-                if ($qty <= 0) {
-                    unset($_POST['prid'][$i], $_POST['qty'][$i], $_POST['address'][$i]);
-                } else {
-                    $sendto = $_POST['address'][$i];
-                    for ($j = 0, $m = $qty - 1; $j < $m; $j++) {
-                        $_POST['prid'][] = $prid;
-                        $_POST['qty'][] = 1;
-                        $_POST['address'][] = $sendto;
-                    }
-                }
-            }
-        }
-    }
-    
+    // Every unit already has its own row, so a column of boxes all reading 1 explained
+    // nothing, and its real behaviour was discoverable only by reading the instructions
+    // above the grid. Quantities are the cart's business and customers already know to
+    // change them there, so the page now links back rather than duplicating it.
+    //
+    // Removing it also removed the trickiest code on the page: it rewrote $_POST in place,
+    // unsetting entries and appending others, which left the address and prid arrays with
+    // gaps that everything downstream had to keep in step.
+    //
     // -----
     // Check to see that the ship-to addresses currently selected are 'compatible' with
     // the currently-selected shipping method.
