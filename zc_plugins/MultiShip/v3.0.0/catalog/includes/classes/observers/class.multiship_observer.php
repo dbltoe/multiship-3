@@ -26,6 +26,9 @@ class multiship_observer extends base
                     'NOTIFIER_CART_UPDATE_QUANTITY_START', 
                     'NOTIFIER_CART_ADD_CART_START',
                     
+                    /* /includes/modules/pages/address_book_process/header_php.php */
+                    'NOTIFY_MODULE_ADDRESS_BOOK_ADDED_ADDRESS_BOOK_RECORD',
+
                     /* page header_php.php's */
                     'NOTIFY_HEADER_END_CHECKOUT_PROCESS',
                     'NOTIFY_HEADER_START_CHECKOUT_SHIPPING',
@@ -56,6 +59,24 @@ class multiship_observer extends base
             // Multiple Ship-to addresses' processing to perform any shipping-cost recalculations based on that
             // shipping-selection change.
             //
+            // -----
+            // A multiship customer who has just added an address belongs back at the
+            // address grid, not at their account address book.
+            //
+            // Core redirects to FILENAME_ADDRESS_BOOK a few lines after issuing this
+            // notifier (address_book_process line 253). Redirecting here pre-empts that,
+            // which is the only way to change the destination -- the target in core is a
+            // literal, so there is nothing to filter.
+            //
+            // Guarded on isChosen() so an ordinary address-book addition is untouched.
+            //
+            case 'NOTIFY_MODULE_ADDRESS_BOOK_ADDED_ADDRESS_BOOK_RECORD':
+                if ($_SESSION['multiship']->isChosen()) {
+                    $_SESSION['multiship']->debugNote('address added during multiship; returning to the address grid.');
+                    zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
+                }
+                break;
+
             case 'NOTIFY_HEADER_START_CHECKOUT_SHIPPING':
                 unset($_SESSION['multiship_shipping_changed']);
                 if (!empty($_POST['multiship_changed'])) {

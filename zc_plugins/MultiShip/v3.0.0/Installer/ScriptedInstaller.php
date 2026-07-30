@@ -229,6 +229,19 @@ class ScriptedInstaller extends ScriptedInstallBase
             );
         }
 
+        if (!$this->configurationKeyExists('MODULE_MULTISHIP_MAX_ADDRESSES')) {
+            $success = $this->executeInstallerSql(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+                 VALUES
+                    ('Maximum Delivery Addresses',
+                     'MODULE_MULTISHIP_MAX_ADDRESSES',
+                     '10',
+                     'The most delivery addresses a customer may save while placing a multiple ship-to order.<br /><br />This is deliberately separate from <b>Maximum Address Book Entries</b> under <em>Customer Details</em>. That setting governs how many addresses an ordinary customer may keep and is left alone; this one governs how far a single multiship order may spread. Set it no lower than the store-wide limit.',
+                     $cgi, 30, NOW())"
+            ) && $success;
+        }
+
         if (!$this->configurationKeyExists('MODULE_MULTISHIP_DEBUG')) {
             $success = $this->executeInstallerSql(
                 "INSERT INTO " . TABLE_CONFIGURATION . "

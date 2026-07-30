@@ -21,3 +21,9 @@ define('FILENAME_CHECKOUT_MULTISHIP', 'checkout_multiship');
 // one address. A mod-owned page, so it needs no JavaScript and no template changes.
 //
 define('FILENAME_MULTISHIP_CHOICE', 'multiship_choice');
+
+// -----
+// Adds a delivery address without the store's address-book limit turning the customer
+// away mid-order. See the page's own header for why this is safe.
+//
+define('FILENAME_MULTISHIP_ADDRESS', 'multiship_address');
