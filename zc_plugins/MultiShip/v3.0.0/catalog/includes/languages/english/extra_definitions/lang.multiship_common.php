@@ -37,8 +37,30 @@ $define = [
     // create-account sections differently, and ZCA autofocuses the sign-in field, which
     // scrolls its create-account section out of view.
     //
-    // The wrapping span is not cosmetic: login.css keys off it so the scroll fix applies
-    // only to logins this plugin caused. See that file.
+    // The wrapping span is a styling hook, kept deliberately.
+    //
+    // Zen Cart focuses the login email field from core JavaScript --
+    // includes/modules/pages/login/on_load_main.js contains
+    // document.loginForm.email_address.focus(); -- so the login page arrives scrolled
+    // past the create-account section. That hurts multiship customers particularly,
+    // since they have just been told they need an account.
+    //
+    // This plugin cannot fix it. A plugin stylesheet resolves at step 4 of the template
+    // lookup, behind the active template's own css directory at step 3, and One Page
+    // Checkout installs a login.css into the template -- so on any store running OPC a
+    // plugin login.css never loads at all.
+    //
+    // A store owner who wants to address it can, because this span gives them a scope.
+    // In the template's own stylesheet.css, which loads on every page:
+    //
+    //     body:has(.multishipLoginNotice) #login-email-address {
+    //         scroll-margin-top: 600px;   /* enough to clear the create-account card */
+    //     }
+    //
+    // That applies only to logins multiship caused, leaving ordinary logins alone.
+    // Whether scroll-margin overrides a scripted focus() is untested; the real fix is
+    // upstream, where four other core pages already neutralise on_load_main.js with
+    // javascript:void(0);
     'MULTISHIP_LOGIN_REQUIRED' => '<span class="multishipLoginNotice">Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.</span>',
 
     // -----

@@ -239,6 +239,42 @@ two only exist once the customer has returned from PayPal authorised. The test l
 `[97]` before the session object exists at `[130]`, and so both callers apply one test
 rather than two hand-copied approximations.
 
+### Known limitation: the login page scroll position
+
+A customer who chooses multiple addresses is sent to log in, and the login page arrives
+scrolled past the create-account section — the very section they need. The cause is core
+JavaScript, `includes/modules/pages/login/on_load_main.js`:
+
+```js
+document.loginForm.email_address.focus();
+```
+
+Removing the `autofocus` attribute from the template does not help, because the scripted
+focus runs regardless.
+
+**This plugin cannot fix it.** A plugin stylesheet resolves at step 4 of the template
+lookup, behind the active template's own `css` directory at step 3, and One Page Checkout
+installs its own `login.css` into the template — so on any store running OPC, a plugin
+`login.css` never loads. A `jscript_` file in `catalog/includes/modules/pages/login/`
+*would* be merged with core's by `listModulePagesFiles()`, but that method is
+`@since v2.2.0` and would break the declared v2.0.0 floor for a cosmetic fix.
+
+What the plugin does instead: explain the redirect, via a `login` messageStack message
+wrapped in `.multishipLoginNotice`. That span is a deliberate styling hook — a store
+owner can scope a fix to multiship-initiated logins only, from their own
+`stylesheet.css`, which always loads:
+
+```css
+body:has(.multishipLoginNotice) #login-email-address {
+    scroll-margin-top: 600px;
+}
+```
+
+Whether `scroll-margin` overrides a scripted `focus()` is untested. The real fix is
+upstream: four other core pages — `create_account`, `checkout_shipping_address`,
+`checkout_payment_address`, `address_book_process` — already neutralise the same file
+with `javascript:void(0);`, so the mechanism exists and `login` simply is not one of them.
+
 ### Still unverified
 
 The multiship path itself. Choosing multiple addresses, assigning them per item,
