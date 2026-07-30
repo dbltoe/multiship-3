@@ -119,15 +119,21 @@ if ($products_onetime_charges) {
     <div class="buttonRow back"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT, 'name="update" onclick="ok2leave();"'); ?></div>
 <?php
 // -----
-// The way onward appears only once every item has an address. Offering it while rows are
-// unanswered would let a customer leave with items nobody has claimed -- and the earlier
-// behaviour silently sent those to the customer themselves, which is the mistake this
-// whole change exists to prevent. The messageStack above says how many are outstanding.
+// One position, two states. While items are unanswered the customer gets a reminder where
+// the button will be; once none are, the button takes its place.
+//
+// The reminder lives here rather than in the messageStack at the top of the page because
+// the customer is working at the bottom of a long grid -- a message they scrolled past
+// before they started is not a reminder. Sharing the position also means the space never
+// sits empty next to Update, which read as though the two were related.
 //
 if ($multiship_unassigned === 0) {
 ?>
-    <div id="multishipComplete" class="content"><?php echo TEXT_CONTINUE_CHECKOUT; ?></div>
     <div class="buttonRow forward"><?php echo $resume_checkout_anchor; ?></div>
+<?php
+} else {
+?>
+    <div class="buttonRow forward multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned); ?></div>
 <?php
 }
 ?>

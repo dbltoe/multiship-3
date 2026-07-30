@@ -18,7 +18,6 @@ $define = [
     // to 0 removes that unit, setting it to 3 splits the row into three addressable ones.
     // Update changes what is in the order; this leaves the page.
     //
-    'TEXT_CONTINUE_CHECKOUT' => 'Every item has a delivery address.',
     'TEXT_CONTINUE_CHECKOUT_LINK' => 'Continue with Checkout',
 
     // -----
@@ -73,8 +72,11 @@ $define = [
     //
     'TEXT_SELECT_ADDRESS_PROMPT' => 'Please choose an address for this item',
 
-    // %u is how many items are still unanswered.
-    'TEXT_MULTISHIP_ITEMS_UNASSIGNED' => 'Please choose a delivery address for every item. %u still need one, and you will not be able to continue until they do.',
+    // -----
+    // Shown where the Continue button will appear, so the space reads as "not finished
+    // yet" rather than sitting empty. %u is how many items are still unanswered.
+    //
+    'TEXT_MULTISHIP_ITEMS_UNASSIGNED' => 'Choose a delivery address for every item &mdash; your own, or the person you are sending it to. %u still to go.',
 
     'TEXT_NEED_ANOTHER_ADDRESS' => 'Need another address? ',
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',

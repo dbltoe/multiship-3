@@ -332,12 +332,12 @@ for ($i = 0, $n = count($productsArray); $i < $n; $i++) {
 }
 
 // -----
-// Until every item has an address, the customer is not finished. The template hides the
-// route onward and shows this instead, so nothing can be carried into checkout half-answered.
+// $multiship_unassigned drives the template: while it is non-zero the route onward is
+// replaced by a reminder in the same position, so nothing can be carried into checkout
+// half-answered. Deliberately not pushed to the messageStack, which renders at the top of
+// the page -- the customer is working at the bottom of a long grid, and a message they
+// have already scrolled past is not a reminder.
 //
-if ($multiship_unassigned > 0) {
-    $messageStack->add('multiship', sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned), 'caution');
-}
 
 $checkout_shipping_link = ($invalid_address_present) ? zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'address_correction', 'SSL') : zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL');
 
