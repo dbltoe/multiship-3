@@ -9,8 +9,17 @@ $define = [
     'NAVBAR_TITLE_2' => 'Choose Multiple Shipping Addresses',
 
     'HEADING_TITLE' => 'Choose Shipping Address for Each Item',
-    'TEXT_RETURN_TO_SHIPPING' => 'All finished? %s.',
-    'TEXT_RETURN_TO_SHIPPING_LINK' => 'Return to Checkout',
+    // -----
+    // Stated, not asked. This only renders once every item has an address, so "All
+    // finished?" was a question whose answer was always yes -- and "Return to Checkout"
+    // described going back when the customer is going on.
+    //
+    // Distinct from the Update button beside it, which changes quantities: setting a row
+    // to 0 removes that unit, setting it to 3 splits the row into three addressable ones.
+    // Update changes what is in the order; this leaves the page.
+    //
+    'TEXT_CONTINUE_CHECKOUT' => 'Every item has a delivery address. %s.',
+    'TEXT_CONTINUE_CHECKOUT_LINK' => 'Continue with Checkout',
 
     // -----
     // Lets a customer who accepted the offer change their mind. Without it, accepting

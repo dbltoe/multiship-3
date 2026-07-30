@@ -22,7 +22,7 @@ if ($messageStack->size('shopping_cart') > 0) {
 // came to say "* HERE *" twice.
 //
 $change_shipping_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_SHIPPING_METHOD_CHANGE_LINK . '</a>';
-$resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_RETURN_TO_SHIPPING_LINK . '</a>';
+$resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_CONTINUE_CHECKOUT_LINK . '</a>';
 ?>
     <div id="checkoutMultishipShipping"><?php echo TEXT_CURRENT_SHIPPING_METHOD; ?><strong><?php echo $_SESSION['shipping']['title']; ?></strong>. <?php echo sprintf(TEXT_SHIPPING_METHOD_CHANGE, $change_shipping_anchor); ?></div>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
@@ -106,7 +106,7 @@ if ($products_onetime_charges) {
 //
 if ($multiship_unassigned === 0) {
 ?>
-    <div class="buttonRow forward"><?php echo sprintf(TEXT_RETURN_TO_SHIPPING, $resume_checkout_anchor); ?></div>
+    <div class="buttonRow forward"><?php echo sprintf(TEXT_CONTINUE_CHECKOUT, $resume_checkout_anchor); ?></div>
 <?php
 }
 ?>
