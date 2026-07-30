@@ -24,7 +24,15 @@ if ($messageStack->size('addressbook') > 0) {
 
 <div id="multishipAddress-intro" class="content"><?php echo TEXT_MULTISHIP_ADDRESS_INTRO; ?></div>
 
-<?php echo zen_draw_form('multiship_address', zen_href_link(FILENAME_ADDRESS_BOOK_PROCESS, '', 'SSL'), 'post', 'onsubmit="return check_form(multiship_address);"') . zen_draw_hidden_field('action', 'process'); ?>
+<?php
+// -----
+// No onsubmit="check_form(...)" here, unlike core's address form. That function comes from
+// a jscript_ file the address_book_process page loads, and this page does not, so calling
+// it would throw. Core validates server-side after the post regardless -- the client-side
+// pass is a nicety, not the gate.
+//
+echo zen_draw_form('multiship_address', zen_href_link(FILENAME_ADDRESS_BOOK_PROCESS, '', 'SSL'), 'post') . zen_draw_hidden_field('action', 'process');
+?>
 
 <?php require $template->get_template_dir('tpl_modules_address_book_details.php', DIR_WS_TEMPLATE, $current_page_base, 'templates') . '/tpl_modules_address_book_details.php'; ?>
 

@@ -6,6 +6,7 @@
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 $define = [
+    'NAVBAR_TITLE_MULTISHIP_ADDRESSES' => 'Delivery Addresses',
     'NAVBAR_TITLE_MULTISHIP_ADDRESS' => 'Add a Delivery Address',
 
     'HEADING_TITLE_MULTISHIP_ADDRESS' => 'Add a Delivery Address',

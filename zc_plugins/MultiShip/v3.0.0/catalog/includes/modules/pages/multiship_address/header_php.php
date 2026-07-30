@@ -105,7 +105,13 @@ $entry->fields['entry_country_id'] = $selected_country;
 $flag_show_pulldown_states = (ACCOUNT_STATE_DRAW_INITIAL_DROPDOWN === 'true');
 $state_field_label = ($flag_show_pulldown_states) ? '' : ENTRY_STATE;
 
-$breadcrumb->add(NAVBAR_TITLE_1, zen_href_link(FILENAME_ACCOUNT, '', 'SSL'));
+// -----
+// Both crumbs come from this page's own language file. An earlier version borrowed
+// NAVBAR_TITLE_1 from address_book_process, which is page-specific and therefore not
+// defined here -- a fatal on a page that had never been loaded. Only constants from
+// lang.english.php, or from this plugin's own files, are safe to use on a mod-owned page.
+//
+$breadcrumb->add(NAVBAR_TITLE_MULTISHIP_ADDRESSES, zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
 $breadcrumb->add(NAVBAR_TITLE_MULTISHIP_ADDRESS);
 
 $zco_notifier->notify('NOTIFY_HEADER_END_MULTISHIP_ADDRESS');
