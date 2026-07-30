@@ -1,1 +1,3 @@
 *.php~
+# Parked locally at dbltoe's request - notes for the Zen Cart core team, not part of the plugin
+docs/multiship_core_requirements.md
