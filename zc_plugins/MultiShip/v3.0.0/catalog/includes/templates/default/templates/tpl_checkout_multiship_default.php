@@ -22,7 +22,27 @@ if ($messageStack->size('shopping_cart') > 0) {
 // came to say "* HERE *" twice.
 //
 $change_shipping_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_SHIPPING_METHOD_CHANGE_LINK . '</a>';
-$resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_CONTINUE_CHECKOUT_LINK . '</a>';
+// -----
+// Rendered as a button, so leaving this page looks like every other step of checkout --
+// the same control the cart uses to start checkout and the confirmation page uses to place
+// the order. A text link here read as an aside rather than the way forward.
+//
+// zca_button_link() is ZCA Bootstrap's own helper, and what its shopping cart uses for the
+// Checkout button, so detecting it gives that store its native button with our wording.
+// Any other template falls back to the pattern core's cart uses: zen_image_button() inside
+// an anchor, which picks up whatever that template does with buttons.
+//
+// The fallback's accessible name is BUTTON_CHECKOUT_ALT rather than our own wording,
+// deliberately: it must match the text drawn on the button image, or a speech-input user
+// asking for what they can see would not reach it (WCAG 2.5.3, Label in Name).
+//
+if (function_exists('zca_button_link')) {
+    // button_checkout is the class ZCA's own shopping cart passes for its Checkout button,
+    // so this picks up that exact styling rather than merely being some button.
+    $resume_checkout_anchor = zca_button_link($checkout_shipping_link, TEXT_CONTINUE_CHECKOUT_LINK, 'button_checkout multishipActionLink');
+} else {
+    $resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . zen_image_button(BUTTON_IMAGE_CHECKOUT, BUTTON_CHECKOUT_ALT) . '</a>';
+}
 ?>
     <div id="checkoutMultishipShipping"><?php echo TEXT_CURRENT_SHIPPING_METHOD; ?><strong><?php echo $_SESSION['shipping']['title']; ?></strong>. <?php echo sprintf(TEXT_SHIPPING_METHOD_CHANGE, $change_shipping_anchor); ?></div>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
@@ -106,7 +126,8 @@ if ($products_onetime_charges) {
 //
 if ($multiship_unassigned === 0) {
 ?>
-    <div class="buttonRow forward"><?php echo sprintf(TEXT_CONTINUE_CHECKOUT, $resume_checkout_anchor); ?></div>
+    <div id="multishipComplete" class="content"><?php echo TEXT_CONTINUE_CHECKOUT; ?></div>
+    <div class="buttonRow forward"><?php echo $resume_checkout_anchor; ?></div>
 <?php
 }
 ?>

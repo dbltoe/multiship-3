@@ -18,7 +18,7 @@ $define = [
     // to 0 removes that unit, setting it to 3 splits the row into three addressable ones.
     // Update changes what is in the order; this leaves the page.
     //
-    'TEXT_CONTINUE_CHECKOUT' => 'Every item has a delivery address. %s.',
+    'TEXT_CONTINUE_CHECKOUT' => 'Every item has a delivery address.',
     'TEXT_CONTINUE_CHECKOUT_LINK' => 'Continue with Checkout',
 
     // -----
