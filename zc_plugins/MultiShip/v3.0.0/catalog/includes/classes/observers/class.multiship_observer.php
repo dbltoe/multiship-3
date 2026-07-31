@@ -40,6 +40,27 @@ class multiship_observer extends base
                     
                     /* /includes/modules/order_total/ot_shipping.php (zc156b+) */
                     'NOTIFY_OT_SHIPPING_TAX_CALCS',
+
+                    // -----
+                    // How the customer's order-history detail reaches the multiship template.
+                    //
+                    // includes/modules/pages/account_history_info/main_template_vars.php exists in
+                    // this plugin to swap tpl_account_history_info_default for the multiship
+                    // version, and has never been loaded. PageLoader::getBodyCode() tests
+                    //     file_exists(DIR_WS_MODULES . 'pages/' . $mainPage . '/main_template_vars.php')
+                    // which is the core includes tree only -- there is no plugin lookup for that
+                    // filename, unlike the header_php_ and jscript_ prefixes that
+                    // listModulePagesFiles() scans.
+                    //
+                    // So the page's header_php ran and built $multiship_info in full, and the
+                    // default template then rendered without it. The customer saw the order but
+                    // not the breakout.
+                    //
+                    // Core emits this notifier one line after setting $body_code, by reference,
+                    // for exactly this purpose.
+                    //
+                    /* /includes/templates/*[/common]/main_template_vars.php */
+                    'NOTIFY_MAIN_TEMPLATE_VARS_END',
                 )
             );
         }
@@ -48,6 +69,14 @@ class multiship_observer extends base
     public function update(&$class, $eventID, $p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7, &$p8, &$p9)
     {
         switch ($eventID) {
+            // -----
+            // Point account_history_info at the multiship template when the order being
+            // viewed went to several addresses. $p2 is $body_code, by reference.
+            //
+            case 'NOTIFY_MAIN_TEMPLATE_VARS_END':
+                $this->setMultishipHistoryTemplate($p2);
+                break;
+
             // -----
             // These two notifications work in concert with the jscript_checkout_shipping_multiship.php script's
             // processing.  If Multi-Ship is enabled, that jQuery processing adds an additional field to the to-be-posted
@@ -286,6 +315,44 @@ class multiship_observer extends base
                 
             default:
                 break;
+        }
+    }
+
+    // -----
+    // Redirects account_history_info's body to the multiship template for an order that went
+    // to several addresses, replacing the main_template_vars.php mechanism that a zc_plugin
+    // cannot reach (see the note beside NOTIFY_MAIN_TEMPLATE_VARS_END above).
+    //
+    // $is_multiship_order and $multiship_info are set by this plugin's
+    // header_php_account_history_info_multiship.php, which does load -- index.php gathers
+    // 'header_php' files through listModulePagesFiles() well before the body code is chosen.
+    //
+    // Only the template chosen for this one page is affected; every other page, and a
+    // single-address order on this page, falls through untouched.
+    //
+    protected function setMultishipHistoryTemplate(&$body_code)
+    {
+        global $current_page_base, $template, $is_multiship_order;
+
+        if (empty($is_multiship_order) || $current_page_base !== FILENAME_ACCOUNT_HISTORY_INFO) {
+            return;
+        }
+
+        // -----
+        // Resolved rather than built by hand, so a store that has put its own copy of this
+        // template in its active template directory keeps it: get_template_dir() finds the
+        // template's copy at step 3 before this plugin's at step 4.
+        //
+        $tpl_page_body = '/tpl_account_history_info_multiship.php';
+        $template_dir = $template->get_template_dir($tpl_page_body, DIR_WS_TEMPLATE, $current_page_base, 'templates');
+
+        // -----
+        // If it cannot be found, leave $body_code alone. The customer then sees the default
+        // history page -- their order, without the per-address breakout -- which is what they
+        // saw before this existed, rather than a fatal.
+        //
+        if (file_exists($template_dir . $tpl_page_body)) {
+            $body_code = $template_dir . $tpl_page_body;
         }
     }
 }
