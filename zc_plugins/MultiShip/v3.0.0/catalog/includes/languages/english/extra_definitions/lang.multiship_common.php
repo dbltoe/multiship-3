@@ -67,6 +67,16 @@ $define = [
     'MULTISHIP_LOGIN_REQUIRED' => '<span class="multishipLoginNotice">Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.</span>',
 
     // -----
+    // The multiship address ceiling, MODULE_MULTISHIP_MAX_ADDRESSES. %u is that number.
+    //
+    // Here rather than in lang.multiship_address.php because the limit is enforced by an
+    // observer during core's address_book_process -- that is where the insert happens, and
+    // therefore the only place the limit can actually be enforced rather than suggested.
+    // A page-specific file would not be loaded there.
+    //
+    'ERROR_MULTISHIP_ADDRESS_MAX' => 'You have reached the limit of %u saved delivery addresses. Remove one from your address book if you need to add another.',
+
+    // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
     // is the route back to the address grid. It replaces a link that used to be rendered
     // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;

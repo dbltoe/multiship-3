@@ -25,7 +25,8 @@ $define = [
 
     'TEXT_MULTISHIP_ADDRESS_CANCEL' => 'Back to Delivery Addresses',
 
-    // %u is the plugin's own ceiling, MODULE_MULTISHIP_MAX_ADDRESSES.
-    'ERROR_MULTISHIP_ADDRESS_MAX' => 'You have reached the limit of %u saved delivery addresses. Remove one from your address book if you need to add another.',
+    // ERROR_MULTISHIP_ADDRESS_MAX is deliberately NOT here. The limit is enforced by an
+    // observer during address_book_process, where this page's language file is not loaded,
+    // so it lives in extra_definitions/lang.multiship_common.php instead.
 ];
 return $define;

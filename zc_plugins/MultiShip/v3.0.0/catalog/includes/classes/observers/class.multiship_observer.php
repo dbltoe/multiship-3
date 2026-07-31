@@ -27,6 +27,7 @@ class multiship_observer extends base
                     'NOTIFIER_CART_ADD_CART_START',
                     
                     /* /includes/modules/pages/address_book_process/header_php.php */
+                    'NOTIFY_ADDRESS_BOOK_PROCESS_VALIDATION',
                     'NOTIFY_MODULE_ADDRESS_BOOK_ADDED_ADDRESS_BOOK_RECORD',
 
                     /* page header_php.php's */
@@ -70,6 +71,39 @@ class multiship_observer extends base
             //
             // Guarded on isChosen() so an ordinary address-book addition is untouched.
             //
+            // -----
+            // Enforce the multiship address ceiling where the insert actually happens.
+            //
+            // multiship_address checks the limit before drawing its form, but that form
+            // posts to core's address_book_process -- so a back button, a second tab or a
+            // bookmarked form reaches the insert without passing the check. The limit was
+            // advisory rather than enforced, and an eleventh address went in against a
+            // setting of ten.
+            //
+            // This notifier fires before the insert, which is where the decision belongs.
+            // Redirecting here rather than setting the $error flag by reference is
+            // deliberate: an error would fall through to core's own limit check further
+            // down the page, which would send the customer to their address book with
+            // "address book full" -- a different limit, and the wrong explanation.
+            //
+            // Adds only. Editing or deleting an existing address cannot increase the count,
+            // and core excludes both from its own check for the same reason.
+            //
+            case 'NOTIFY_ADDRESS_BOOK_PROCESS_VALIDATION':
+                if (!$_SESSION['multiship']->isChosen() || isset($_GET['edit']) || isset($_GET['delete'])) {
+                    break;
+                }
+
+                $multiship_address_max = (defined('MODULE_MULTISHIP_MAX_ADDRESSES')) ? (int)MODULE_MULTISHIP_MAX_ADDRESSES : 10;
+                if (count(zen_get_customer_address_book_entries($_SESSION['customer_id'])) < $multiship_address_max) {
+                    break;
+                }
+
+                $_SESSION['multiship']->debugNote('address add refused: at the multiship limit of ' . $multiship_address_max . '.');
+                $GLOBALS['messageStack']->add_session('multiship', sprintf(ERROR_MULTISHIP_ADDRESS_MAX, $multiship_address_max), 'caution');
+                zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
+                break;
+
             case 'NOTIFY_MODULE_ADDRESS_BOOK_ADDED_ADDRESS_BOOK_RECORD':
                 if ($_SESSION['multiship']->isChosen()) {
                     $_SESSION['multiship']->debugNote('address added during multiship; returning to the address grid.');
