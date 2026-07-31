@@ -33,7 +33,21 @@ class multiship_observer extends base
                 'NOTIFY_ADMIN_ORDERS_UPDATE_ORDER_START',       //-Added by multiship!
                 'NOTIFY_ADMIN_ORDERS_EDIT_BEGIN',
                 'NOTIFY_ADMIN_ORDERS_EXTRA_STATUS_INPUTS',      //-Added by multiship!
-                
+
+                // -----
+                // How the per-address product breakdown reaches the order-detail page in v3.0.0.
+                //
+                // lat9's version had a patched core orders.php include
+                // includes/modules/multiship_orders_products.php directly. An encapsulated plugin
+                // ships no core files, so that module had no way in and the admin showed who the
+                // order was going to without ever showing what each person was to receive.
+                //
+                // Core emits this notifier immediately below the purchased-products table, with
+                // by-reference content it then echoes -- exactly the position the patch occupied.
+                //
+                'NOTIFY_ADMIN_ORDERS_CONTENT_UNDER_PRODUCTS',
+
+
                 //-Issued by /admin/includes/functions/general.php::zen_remove_order
                 'NOTIFIER_ADMIN_ZEN_REMOVE_ORDER'
             )
@@ -164,6 +178,10 @@ class multiship_observer extends base
             case 'NOTIFY_ADMIN_ORDERS_EXTRA_STATUS_INPUTS':
                 $this->addMultiShipStatusFields($p1, $p2);
                 break;
+
+            case 'NOTIFY_ADMIN_ORDERS_CONTENT_UNDER_PRODUCTS':
+                $p2 .= $this->getMultiShipProductsContent((int)($p1['oID'] ?? 0));
+                break;
       
             default:
                 break;
@@ -224,6 +242,42 @@ class multiship_observer extends base
                 );
             }
         }
+    }
+
+    // -----
+    // Renders the per-address product breakdown for the order-detail page.
+    //
+    // includes/modules/multiship_orders_products.php echoes its markup rather than returning
+    // it -- it was written to be included inline by a patched orders.php -- so it is buffered
+    // here instead of being rewritten. Keeping it echo-based also keeps it identical in shape
+    // to invoice_multiship.php and packingslip_multiship.php, which are still included the
+    // ordinary way by this plugin's own admin pages.
+    //
+    // The module reads $order, $oID, $db and $currencies from its enclosing scope. $oID
+    // arrives with the notification; the rest are admin globals, established well before the
+    // products table this content sits beneath is rendered.
+    //
+    // Path is relative to this file rather than DIR_WS_MODULES: the module lives inside the
+    // plugin, and nothing in the admin resolves arbitrary plugin includes by name.
+    //
+    protected function getMultiShipProductsContent(int $oID): string
+    {
+        $order = $GLOBALS['order'] ?? null;
+        if ($oID <= 0 || !is_object($order) || empty($order->info['multiship_info'])) {
+            return '';
+        }
+
+        $module = __DIR__ . '/../../modules/multiship_orders_products.php';
+        if (!file_exists($module)) {
+            return '';
+        }
+
+        $db = $GLOBALS['db'];
+        $currencies = $GLOBALS['currencies'];
+
+        ob_start();
+        include $module;
+        return (string)ob_get_clean();
     }
 
     // -----
