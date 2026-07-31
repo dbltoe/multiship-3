@@ -35,9 +35,40 @@ if (empty($_SESSION['multiship'])
 ) {
     return;
 }
+
+// -----
+// The page heading is corrected at the same time.
+//
+// Core sets HEADING_TITLE to "Step 1 of 3 - Delivery Information" while its own breadcrumb
+// for the same page reads "Shipping Method" -- an inconsistency of core's own, which
+// removing the delivery block sharpens: the heading then names content that is no longer
+// there. It also tells a customer returning from the address grid that they are back at
+// step 1, which is the thing that made them think their work was lost.
+//
+// -----
+// Matched by its current text rather than by a selector: core gives the h1
+// id="checkoutShippingHeading" while ZCA Bootstrap uses class="pageHeading" with no id,
+// and a third template will do something else again. Matching HEADING_TITLE finds it
+// wherever it lives, and replaces nothing if a template has changed the wording.
+//
+$multiship_heading_old = defined('HEADING_TITLE') ? HEADING_TITLE : '';
+$multiship_heading_new = defined('MULTISHIP_SHIPPING_HEADING') ? MULTISHIP_SHIPPING_HEADING : '';
 ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var oldHeading = <?php echo json_encode($multiship_heading_old); ?>;
+    var newHeading = <?php echo json_encode($multiship_heading_new); ?>;
+
+    if (oldHeading !== '' && newHeading !== '') {
+        var headings = document.getElementsByTagName('h1');
+        for (var h = 0; h < headings.length; h++) {
+            if (headings[h].textContent.trim() === oldHeading.trim()) {
+                headings[h].textContent = newHeading;
+                break;
+            }
+        }
+    }
+
     // ZCA Bootstrap wraps heading, address, text and button in one card; core keeps the
     // heading and address separate, with the explanatory text as the next sibling.
     var containers = ['shippingInformation-card', 'checkoutShipto', 'checkoutShippingHeadingAddress'];

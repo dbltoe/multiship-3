@@ -128,6 +128,20 @@ $define = [
     'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. If you need to make changes to them, %2$s. Otherwise, verify your shipping method below, then click <strong>%3$s</strong>.',
     'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
 
+    // -----
+    // Replaces checkout_shipping's own heading while multiple addresses are in play.
+    //
+    // Core sets HEADING_TITLE to "Step 1 of 3 - Delivery Information" while its own
+    // breadcrumb for the same page reads "Shipping Method". The breadcrumb is the accurate
+    // one, and once this plugin removes the delivery-address block the heading describes
+    // content that is no longer on the page at all.
+    //
+    // HEADING_TITLE is a constant and cannot be redefined, and overriding it through
+    // extra_definitions would change it for single-address orders too, so it is swapped
+    // client-side alongside the block removal.
+    //
+    'MULTISHIP_SHIPPING_HEADING' => 'Step 2 of 3 - Choose Your Shipping Method',
+
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
     'TEXT_GRAND_TOTAL' => 'Grand Total:',
