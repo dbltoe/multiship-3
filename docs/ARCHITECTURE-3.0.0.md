@@ -328,6 +328,66 @@ Also confirmed: two entries for the same person — a PO box and a street addres
 distinguishable in the Send To dropdown, because it labels options with
 `zen_address_label()`, the full formatted address, rather than the name alone.
 
+## 8. Shipping: what works, what does not
+
+### One method for the whole order — a real limitation
+
+Multiship applies a **single** shipping method to every sub-order.
+`$_SESSION['shipping']['id']` is one value, `getShippingId()` returns one value, and
+`orders_multiship` has no shipping-method column.
+
+That is wrong for a catalogue where different items need different carriers. A telescoping
+flag pole may only go UPS while a flag could go USPS. Today the customer picks USPS,
+USPS declines to quote for the sub-order containing the pole, `addressValidation()` flags
+that address, and they get the no-ship icon telling them the address is not supported by
+the selected method. Detected and surfaced — but their only remedies are to move the item
+or put the *whole* order on UPS.
+
+Worth being precise about where the waste actually is. Items going to the **same** address
+travel in the same parcel, so one carrier for them is correct, not wasteful. The loss only
+appears **across** addresses: a flag going to one address could have used USPS while the
+pole going to another needed UPS.
+
+The proper fix is therefore a shipping method **per sub-order**, since the constraint is
+"this method must carry everything going to this address". That needs a shipping-method
+column on `orders_multiship`, per-address method selection in the grid with each address
+quoting its own carriers, and rework of `getShippingId()`, `checkoutInitialize()` and order
+creation — all of which currently assume one method. A version's work, not a patch.
+
+**Proposed interim step** (dbltoe): a configuration setting naming which shipping methods
+are available for multiple-address orders, mirroring `MODULE_MULTISHIP_PAYMENT_METHODS`
+which already does this for payment. A store owner knows their own catalogue, so one that
+sells oversized goods can simply exclude USPS from multiship orders and no customer ever
+chooses a method destined to fail. Cheap, consistent with the existing design, and it does
+not pretend to be the per-sub-order fix.
+
+### Heavy sub-orders are handled, by core
+
+A concern that turns out to be already solved. `includes/classes/shipping.php:214-217`
+splits a consignment into multiple boxes once it exceeds `SHIPPING_MAX_WEIGHT`:
+
+```php
+if ($shipping_weight > SHIPPING_MAX_WEIGHT) { // Split into many boxes
+    $zc_boxes = zen_round(($shipping_weight / SHIPPING_MAX_WEIGHT), 2);
+    $shipping_num_boxes = ceil($zc_boxes);
+```
+
+`checkoutInitialize()` creates a fresh `shipping` object per address (line 1148) against
+that sub-order's own weight, so three items totalling 72 lb going to one address are boxed
+independently of everything else in the order. Per-address quoting makes this work rather
+than breaking it — and it is more accurate than a single-address order, where the whole
+cart weight is boxed together.
+
+### Outside the plugin's reach
+
+If a store owner has not entered product weights, or has not set dimensions, shipping is
+wrong — for every order, not only multiship ones. Nothing here can compensate for absent
+data, and it should not try: a guessed weight is worse than a visibly wrong one.
+
+Multiship does make bad data **more visible**, since a wrong weight is quoted separately
+against each address rather than being absorbed into one total. That is a diagnostic, not a
+defect.
+
 ### Still unverified
 
 The multiship path itself. Choosing multiple addresses, assigning them per item,

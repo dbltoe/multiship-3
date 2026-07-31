@@ -78,6 +78,28 @@ files if you are maintaining a fork.
 
 ---
 
+## Before you enable this: product weights
+
+Multiship quotes shipping **separately for each address**, so it exposes gaps in your
+product data that a single-address order hides.
+
+If a product has no weight, its shipping is wrong. That is already true of every order on
+your store, but a single-address order absorbs the error into one total where nobody
+notices. Split the same cart across three addresses and the same missing weight produces
+three visibly wrong quotes.
+
+The same applies to dimensions, which newer carrier modules use for dimensional weight.
+
+Nothing in this plugin can compensate for missing data, and it deliberately does not try —
+a guessed weight is worse than a visibly wrong one, because it looks right. If you are
+about to enable multiship, it is worth auditing weights on anything bulky first.
+
+One thing you do **not** need to worry about: a sub-order heavier than your carrier's
+limit. Zen Cart splits a consignment into multiple boxes once it exceeds
+`SHIPPING_MAX_WEIGHT`, and because multiship quotes each address independently, that
+calculation is done per address. Three heavy items going to one recipient are boxed on
+their own weight, not the whole order's.
+
 ## Styling the action links
 
 The plugin's forward links carry classes so they can be rendered as buttons from your own
