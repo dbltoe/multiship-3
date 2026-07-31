@@ -114,12 +114,19 @@ $define = [
     // is for rather than apologising for it. %1$u is the number of addresses, %2$s a link
     // back to the grid for anyone who wants to change them.
     //
-    // Names what is below and what to do with it. An earlier draft said "check it below",
-    // which left the customer to work out whether "it" meant their addresses, the shipping
-    // cost, or the order -- at the moment they are already unsure why they are on a page
-    // they thought they had finished.
-    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. The shipping choices below now cover all of them &mdash; pick one, then carry on to payment. Or %2$s.',
-    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back and change your addresses',
+    // -----
+    // Reassure, then branch, then give one instruction. An earlier draft said "check it
+    // below", which left the customer to work out whether "it" was their addresses, the
+    // shipping cost or the order -- at the moment they are already unsure why they are on
+    // a page they thought they had finished.
+    //
+    // %1$u addresses, %2$s the link back to the grid, %3$s the label on the page's own
+    // submit button. That last one is passed in as BUTTON_CONTINUE_ALT rather than written
+    // here as "Continue", so the message always names the button the customer can actually
+    // see -- including when the store has renamed it or is running another language.
+    //
+    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. If you need to make changes to them, %2$s. Otherwise, verify your shipping method below, then click <strong>%3$s</strong>.',
+    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
 
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 

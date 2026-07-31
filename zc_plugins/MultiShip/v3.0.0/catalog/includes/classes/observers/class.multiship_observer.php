@@ -149,7 +149,10 @@ class multiship_observer extends base
                         sprintf(
                             MULTISHIP_ADDRESSES_SET,
                             $_SESSION['multiship']->addressCount(),
-                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>'
+                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>',
+                            // The page's own submit label, so the message names the button
+                            // the customer can see rather than assuming it says Continue.
+                            defined('BUTTON_CONTINUE_ALT') ? BUTTON_CONTINUE_ALT : 'Continue'
                         ),
                         'caution'
                     );
