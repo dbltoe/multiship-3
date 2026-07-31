@@ -27,6 +27,28 @@ $multiple_shipping_active = $_SESSION['multiship']->isSelected();
 if ($multiple_shipping_active) {
     $offer_multiple_shipping = false;
     $multiple_shipping_address_count = $_SESSION['multiship']->numShippingAddresses();
+
+    // -----
+    // Take away the Change Address button while multiple addresses are in play.
+    //
+    // That button leads to checkout_shipping_address, which sets a single sendto and
+    // silently ends the multiship order the customer has just spent time building. It sits
+    // directly beneath text telling them their order ships to the one address shown, which
+    // is wrong for an order going to several -- so the button reads as the way to fix an
+    // apparent mistake, and destroys their work instead.
+    //
+    // Core sets $displayAddressEdit at line 210 of its own checkout_shipping header, and
+    // index.php loads this file afterwards (listModulePagesFiles merges plugin page modules
+    // after core's), so clearing it here holds. Both template_default and ZCA Bootstrap
+    // guard the button with it.
+    //
+    // This removes the button, not the address block above it: the heading, the single
+    // address and TEXT_CHOOSE_SHIPPING_DESTINATION are unguarded markup in the store's own
+    // template and out of a plugin's reach. The messageStack notice added by
+    // multiship_observer speaks to that. Hiding them with CSS was considered and rejected --
+    // it would leave text a screen reader still announces, which is worse than visible.
+    //
+    $displayAddressEdit = false;
     
     if (isset($_SESSION['multiship_new_shipping'])) {
         $messageStack->add('checkout_shipping', MULTISHIP_CHOOSE_DIFFERENT_SHIPPING, 'error');
