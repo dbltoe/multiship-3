@@ -18,15 +18,16 @@ td.sendto .fa { color: red; }
    Column widths. The item name is the longest thing on the row and was being squeezed by a
    Send To column sized for the whole address. Price is given only what it needs and
    separated from the name so the two stop running together. */
-#multishipTable th.item, #multishipTable td:first-child { width: 55%; padding-right: 1.5em; }
-#multishipTable th.price, #multishipTable td.msipPrice { width: 12%; white-space: nowrap; padding-right: 1.5em; }
-#multishipTable th.sendto, #multishipTable td.sendto { width: 33%; }
+#multishipTable th.item, #multishipTable td:first-child { width: 40%; padding-right: 1.5em; }
+#multishipTable th.price, #multishipTable td.msipPrice { width: 10%; white-space: nowrap; padding-right: 1.5em; }
+#multishipTable th.sendto, #multishipTable td.sendto { width: 50%; }
 
 /* -----
-   The menu need not be wide enough for the whole address: opening it shows each option in
-   full regardless, so reserving that width in the closed state only starves the item name.
-   Also stops a long address forcing the table wider than the page on a phone. */
-#multishipTable td.sendto select { width: 100%; max-width: 22em; }
+   The closed menu still has to distinguish one address from another -- a customer who can
+   read the name but not whether it is the home or the office address cannot check their
+   own work. With the side columns hidden on this page there is room to show enough of it,
+   so the cap is generous; opening the menu shows every option in full regardless. */
+#multishipTable td.sendto select { width: 100%; max-width: 34em; }
 
 /* -----
    Save Addresses and the cart/shopping note sit on one line, button left, note right.

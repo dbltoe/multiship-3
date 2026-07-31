@@ -5,6 +5,19 @@
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 $zco_notifier->notify('NOTIFY_HEADER_START_CHECKOUT_MULTISHIP');
+
+// -----
+// Hide the side columns, the way core's own checkout pages do.
+//
+// This page is a wide table -- item, price and a menu holding a full postal address -- and
+// every column of sidebar is width taken from the address the customer is trying to read.
+// A truncated option they cannot tell from another is the difference between sending a
+// parcel home and sending it to the office.
+//
+// ??= rather than =, so a store that has already decided this for itself keeps its choice.
+//
+$flag_disable_right ??= true;
+$flag_disable_left ??= true;
 require DIR_WS_MODULES . zen_get_module_directory('require_languages.php');
 
 // -----

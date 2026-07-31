@@ -19,6 +19,14 @@
 //
 $zco_notifier->notify('NOTIFY_HEADER_START_MULTISHIP_CHOICE');
 
+// -----
+// Hide the side columns, as core's checkout pages do. This page asks one question and
+// should not compete with a sidebar for the customer's attention. ??= leaves a store that
+// has already decided this alone.
+//
+$flag_disable_right ??= true;
+$flag_disable_left ??= true;
+
 require DIR_WS_MODULES . zen_get_module_directory('require_languages.php');
 
 if ($_SESSION['cart']->count_contents() <= 0) {
