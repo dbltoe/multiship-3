@@ -627,15 +627,29 @@ class multiship extends base
         // Set the order's current total, tax (and tax groups, used by ot_tax for its display) and shipping_cost
         // based on the totals for each multi-ship sub-order.
         //
-        $order->info['total'] = $this->totals['ot_total'];
-        $order->info['tax'] = $this->totals['ot_tax'];
-        $order->info['shipping_cost'] = $this->totals['ot_shipping'];
-        
+        // -----
+        // $this->totals only carries a key for an order-total module that actually produced
+        // a value (see the accumulation loop in updateTotals), so a missing key means that
+        // module contributed nothing -- zero -- not that something went wrong. A store with
+        // no tax configured has no 'ot_tax' at all, which raised an undefined-key warning
+        // here under PHP 8 every time an address was validated.
+        //
+        // ?? 0 rather than a guard, matching what this class already does everywhere else
+        // it reads these same keys.
+        //
+        $order->info['total'] = $this->totals['ot_total'] ?? 0;
+        $order->info['tax'] = $this->totals['ot_tax'] ?? 0;
+        $order->info['shipping_cost'] = $this->totals['ot_shipping'] ?? 0;
+
         // -----
         // Loop through each of the sub-orders to update the order's multi-ship tax groups.
         //
         $order->info['tax_groups'] = array();
         foreach ($this->details as $addr_id => $info) {
+            // A sub-order shipping somewhere untaxed has no tax groups to merge.
+            if (empty($info['info']['tax_groups']) || !is_array($info['info']['tax_groups'])) {
+                continue;
+            }
             foreach ($info['info']['tax_groups'] as $tax_group_name => $tax_group_value) {
                 if (!isset($order->info['tax_groups'][$tax_group_name])) {
                     $order->info['tax_groups'][$tax_group_name] = 0;
@@ -921,7 +935,10 @@ class multiship extends base
             $html_email['PRODUCTS_TITLE'] = SHIPPING_TO_MULTIPLE_ADDRESSES;
             $html_email['PRODUCTS_DETAIL'] = $products_html; 
 
-            $grand_total = $currencies->format ($this->totals['ot_total']);
+            // Same reasoning as updateOrdersTotalsAndTaxes: a missing key means that module
+            // contributed nothing. This one builds the order confirmation email, so an
+            // undefined key here would warn while the customer's receipt was being written.
+            $grand_total = $currencies->format($this->totals['ot_total'] ?? 0);
             $html_email['ORDER_TOTALS'] = '<hr />' . sprintf ($table_format, sprintf ($order_totals_format, TEXT_GRAND_TOTAL, $grand_total));
             $email_order .= EMAIL_SEPARATOR . "\n" . TEXT_GRAND_TOTAL . ' ' . $grand_total . "\n\n";
 
