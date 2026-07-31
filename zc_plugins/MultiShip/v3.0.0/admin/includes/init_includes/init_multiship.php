@@ -33,7 +33,24 @@ if (($current_page == FILENAME_ORDERS_INVOICE . '.php' || $current_page == FILEN
 // ship-to addresses, deny that request (with message to the admin), since that edit would
 // destroy the order's multiple addresses' recording.
 //
-if (defined('FILENAME_EDIT_ORDERS') && $current_page == FILENAME_EDIT_ORDERS && !empty($_GET['oID'])) {
+// -----
+// Compared with the extension stripped from both sides, because the two names are not
+// written the same way.
+//
+// admin/includes/application_bootstrap.php sets
+//     $PHP_SELF = isset($_GET['cmd']) ? basename($_GET['cmd'] . '.php') : $PHP_SELF;
+// so on the 2.x admin's single entry point, index.php?cmd=edit_orders, $current_page is
+// "edit_orders.php". FILENAME_ constants carry no extension -- this plugin's own
+// FILENAME_INVOICE_MULTISHIP is 'invoice_multiship' -- so a direct comparison against
+// FILENAME_EDIT_ORDERS never matched and this block never ran. Edit Orders was free to open
+// a multiship order and destroy the very recording this exists to protect.
+//
+// The invoice and packing-slip test above appends '.php' to get the same result. Normalising
+// instead of appending keeps this correct whichever way Edit Orders defines its constant.
+//
+if (defined('FILENAME_EDIT_ORDERS') && !empty($_GET['oID'])
+    && pathinfo($current_page, PATHINFO_FILENAME) === pathinfo(FILENAME_EDIT_ORDERS, PATHINFO_FILENAME)
+) {
     if ($multiship->isMultiShipOrder($_GET['oID'])) {
         $messageStack->add_session(MULTISHIP_ORDER_CANT_EDIT, 'error');
         zen_redirect(zen_href_link(FILENAME_ORDERS, 'oID=' . (int)$_GET['oID'] . '&amp;action=edit'));
