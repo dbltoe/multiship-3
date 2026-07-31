@@ -202,6 +202,8 @@ class multiship_observer extends base
     
     protected function updateMultiShipOrders($oID)
     {
+        $suborder_changed = false;
+
         if (isset($_POST['multiship_status']) && is_array($_POST['multiship_status']) && is_array($_POST['multiship_current_status'])) {
             foreach ($_POST['multiship_status'] as $multiship_id => $multiship_status) {
                 $multiship_id = (int)$multiship_id;
@@ -212,7 +214,7 @@ class multiship_observer extends base
                         $GLOBALS['comments'] .= "\n";
                     }
                     $GLOBALS['comments'] .= sprintf(MULTISHIP_SUBORDER_STATUS_CHANGED, zen_db_prepare_input($_POST['multiship_shipping_name'][$multiship_id]), $GLOBALS['orders_status_array'][$current_status], $GLOBALS['orders_status_array'][$multiship_status]);
-              
+
                     $GLOBALS['db']->Execute(
                         "UPDATE " . TABLE_ORDERS_MULTISHIP . "
                             SET orders_status = $multiship_status,
@@ -221,8 +223,39 @@ class multiship_observer extends base
                             AND orders_id = $oID
                           LIMIT 1"
                     );
+                    $suborder_changed = true;
                 }
             }
+        }
+
+        // -----
+        // Make sure a sub-order change is actually recorded.
+        //
+        // The UPDATEs above have already run by the time core decides whether anything
+        // happened, and that decision does not consider them. zen_update_orders_history()
+        // proceeds only when
+        //     ($orders_new_status != -1 && $orders_current_status != $orders_new_status) || !empty($email_message)
+        // (functions_osh_update.php:87), and $email_message is populated only when
+        // $email_include_message is true -- which orders.php:266 takes from the "append
+        // comments to email" checkbox. Appending to $GLOBALS['comments'] therefore counts for
+        // nothing on its own.
+        //
+        // So an admin who changed only recipients' statuses, leaving the order's own status
+        // alone, got "Warning: Nothing to change. The order was not updated." while the
+        // sub-orders had in fact been changed: no orders_status_history row, no record of who
+        // changed what or when, and a message stating the opposite of what happened.
+        //
+        // Setting this makes the comment count, so core writes the history row it would
+        // otherwise skip and reports success.
+        //
+        // It does have one visible consequence, and it is deliberate. If the admin ticked
+        // "notify customer" but not "append comments", the email will now carry the
+        // sub-order lines. That is the customer being told their delivery's status changed,
+        // which is the point of changing it -- and with "notify customer" unticked no email
+        // is sent either way, since that is gated separately on $_POST['notify'].
+        //
+        if ($suborder_changed) {
+            $GLOBALS['email_include_message'] = true;
         }
     }
     
