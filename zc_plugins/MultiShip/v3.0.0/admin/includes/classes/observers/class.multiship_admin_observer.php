@@ -81,22 +81,32 @@ class multiship_observer extends base
                        FROM " . TABLE_ORDERS_MULTISHIP . " 
                       WHERE orders_id = $orders_id"
                 );
+                // -----
+                // Carried inside $order->info rather than as $order->multiship_info.
+                //
+                // The order class declares its properties (public array $info = []), and PHP 8.2
+                // deprecates creating one that was never declared -- "Creation of dynamic property
+                // order::$multiship_info is deprecated". A plugin cannot add a property to a core
+                // class, but $info is already an array we are permitted to extend, and
+                // is_multiship_order below has always lived there. Same storage, no deprecation,
+                // and it removes a dependency on core never declaring that name itself.
+                //
                 $class->info['is_multiship_order'] = !$multiship_orders->EOF;
-                $class->multiship_info = array();
+                $class->info['multiship_info'] = array();
                 while (!$multiship_orders->EOF) {
                     $multiship_id = $multiship_orders->fields['orders_multiship_id'];
                     unset($multiship_orders->fields['orders_multiship_id']);
-                    $class->multiship_info[$multiship_id]['info'] = $multiship_orders->fields;
-          
+                    $class->info['multiship_info'][$multiship_id]['info'] = $multiship_orders->fields;
+
                     $multiship_totals = $db->Execute(
-                        "SELECT title, text, value, class 
-                           FROM " . TABLE_ORDERS_MULTISHIP_TOTAL . " 
-                          WHERE orders_multiship_id = $multiship_id 
+                        "SELECT title, text, value, class
+                           FROM " . TABLE_ORDERS_MULTISHIP_TOTAL . "
+                          WHERE orders_multiship_id = $multiship_id
                        ORDER BY sort_order"
                     );
-                    $class->multiship_info[$multiship_id]['totals'] = array();
+                    $class->info['multiship_info'][$multiship_id]['totals'] = array();
                     while (!$multiship_totals->EOF) {
-                        $class->multiship_info[$multiship_id]['totals'][] = $multiship_totals->fields;
+                        $class->info['multiship_info'][$multiship_id]['totals'][] = $multiship_totals->fields;
                         $multiship_totals->MoveNext();
                     }
                     unset ($multiship_totals);
@@ -201,7 +211,8 @@ class multiship_observer extends base
     protected function addMultiShipStatusFields($order, &$extra_status_fields)
     {
         if (!empty($order->info['is_multiship_order'])) {
-            foreach ($order->multiship_info as $multiship_id => $multiship_info) {
+            $orders_statuses = $this->getOrderStatusPulldownList();
+            foreach ($order->info['multiship_info'] as $multiship_id => $multiship_info) {
                 $hidden_fields = zen_draw_hidden_field("multiship_current_status[$multiship_id]", $multiship_info['info']['orders_status']);
                 $hidden_fields .= zen_draw_hidden_field("multiship_shipping_name[$multiship_id]", $multiship_info['info']['name']);
                 $extra_status_fields[] = array(
@@ -209,12 +220,53 @@ class multiship_observer extends base
                         'text' => sprintf(MULTISHIP_SUBORDER_STATUS, '<em>' . $multiship_info['info']['name'] . '</em>'),
                         'parms' =>  'style="font-weight: 700;"'
                     ),
-                    'input' => zen_draw_pull_down_menu("multiship_status[$multiship_id]", $GLOBALS['orders_statuses'], $multiship_info['info']['orders_status'], 'class="form-control"') . $hidden_fields
+                    'input' => zen_draw_pull_down_menu("multiship_status[$multiship_id]", $orders_statuses, $multiship_info['info']['orders_status'], 'class="form-control"') . $hidden_fields
                 );
             }
         }
     }
-  
+
+    // -----
+    // The order-status list in the shape zen_draw_pull_down_menu() wants -- an array of
+    // ['id' => .., 'text' => ..].
+    //
+    // This used to read $GLOBALS['orders_statuses']. Zen Cart 2.x builds that list in
+    // zen_getOrdersStatuses(), and orders.php unpacks only the 'orders_status_array' member
+    // (an id => name map, the wrong shape) while leaving 'orders_statuses' behind --
+    // invoice.php and packingslip.php unpack it, orders.php does not. So the global was
+    // never set on the one page this runs on, and the pull-down was handed null: an
+    // undefined-variable warning followed by "foreach() argument must be of type
+    // array|object" from inside html_output.php, once per sub-order.
+    //
+    // Asking for the list directly removes the dependency on which admin page happens to
+    // have unpacked what. The fallback covers a v2.0.0 store predating the helper.
+    //
+    protected function getOrderStatusPulldownList(): array
+    {
+        if (function_exists('zen_getOrdersStatuses')) {
+            $statuses = zen_getOrdersStatuses();
+            if (!empty($statuses['orders_statuses'])) {
+                return $statuses['orders_statuses'];
+            }
+        }
+
+        $orders_statuses = [];
+        $status_query = $GLOBALS['db']->Execute(
+            "SELECT orders_status_id, orders_status_name
+               FROM " . TABLE_ORDERS_STATUS . "
+              WHERE language_id = " . (int)$_SESSION['languages_id'] . "
+           ORDER BY orders_status_id"
+        );
+        foreach ($status_query as $status) {
+            $orders_statuses[] = [
+                'id' => $status['orders_status_id'],
+                'text' => $status['orders_status_name'] . ' [' . $status['orders_status_id'] . ']',
+            ];
+        }
+        return $orders_statuses;
+    }
+
+
     protected function logError($message) 
     {
         $event_info = ($this->eventID !== '') ? (' (' . $this->eventID . ')') : '';

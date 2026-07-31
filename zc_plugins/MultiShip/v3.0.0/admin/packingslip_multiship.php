@@ -52,9 +52,9 @@ while (!$orders_status->EOF) {
 <?php
 $billing_name = $order->billing['name'];
 $billing_street_address = $order->billing['street_address'];
-$num_suborders = count($order->multiship_info);
+$num_suborders = count($order->info['multiship_info']);
 $suborders_processed = 0;
-foreach ($order->multiship_info as $multiship_id => $multiship_info) {
+foreach ($order->info['multiship_info'] as $multiship_id => $multiship_info) {
 ?>
 <table border="0" width="100%" cellspacing="0" cellpadding="2">
   <tr>

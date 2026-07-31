@@ -139,7 +139,7 @@ if ($order->billing['name'] != $order->delivery['name'] || $order->billing['stre
 $currency = $order->info['currency'];
 $currency_value = $order->info['currency_value'];
 $decimal_places = $currencies->get_decimal_places($currency);
-foreach ($order->multiship_info as $multiship_id => $multiship_info) {
+foreach ($order->info['multiship_info'] as $multiship_id => $multiship_info) {
     $taxable_check = $db->Execute(
         "SELECT `value` 
            FROM " . TABLE_ORDERS_MULTISHIP_TOTAL . "

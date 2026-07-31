@@ -4,7 +4,7 @@
 // Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
-foreach ($order->multiship_info as $multiship_id => $multiship_info) {
+foreach ($order->info['multiship_info'] as $multiship_id => $multiship_info) {
     $taxable_check = $db->Execute(
         "SELECT `value` 
            FROM " . TABLE_ORDERS_MULTISHIP_TOTAL . "
