@@ -41,8 +41,9 @@ td.sendto .fa { color: red; }
 
 /* -----
    The way out of multiship is offered first, then the way on through it, so the button a
-   finishing customer wants is the last thing on the page. */
-.multiship-decline { clear: both; padding: 0.75em 0 0.25em; }
+   finishing customer wants is the last thing on the page. Centred to sit with the button
+   below it, the two reading as one block of closing choices rather than two strays. */
+.multiship-decline { clear: both; text-align: center; padding: 0.75em 0 0.25em; }
 
 /* -----
    The label wraps across lines at this width, so centre it -- ragged-left text inside a
