@@ -74,12 +74,20 @@ $define = [
     // therefore the only place the limit can actually be enforced rather than suggested.
     // A page-specific file would not be loaded there.
     //
-    // Names the limit as Multi-Ship's, not the addresses. They are ordinary address-book
-    // entries usable on any order; only the ceiling belongs to this plugin. Saying "10
-    // saved Multi-Ship addresses" would imply a separate kind of address that does not
-    // exist, and would also collide with the store's own address-book limit, which is a
-    // different number for a different purpose.
-    'ERROR_MULTISHIP_ADDRESS_MAX' => 'You have reached the Multi-Ship limit of %u saved delivery addresses. Remove one from your address book if you need to add another.',
+    // Names the limit, not the addresses. They are ordinary address-book entries usable on
+    // any order; only the ceiling belongs to this plugin, so "%u saved multiple shipping
+    // addresses" would imply a kind of address that does not exist.
+    //
+    // Saying whose limit it is matters: a customer who has seen "a maximum of 5 address
+    // book entries allowed" on their account page now meets a limit of 10, with no way to
+    // know those are different rules.
+    //
+    // "multiple shipping" rather than the plugin's name, because no other customer-facing
+    // string here uses that name -- the interstitial says "send items to different
+    // addresses", the grid says "going to more than one address" -- and a refusal is the
+    // worst moment to introduce a term the customer has never met.
+    //
+    'ERROR_MULTISHIP_ADDRESS_MAX' => 'You have reached the multiple shipping limit of %u delivery addresses. Remove one from your address book if you need to add another.',
 
     // -----
     // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
