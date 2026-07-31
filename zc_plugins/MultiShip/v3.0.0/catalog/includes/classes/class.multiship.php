@@ -353,6 +353,41 @@ class multiship extends base
     }
 
     // -----
+    // Whether every shippable unit in the cart now has an address against it.
+    //
+    // isSelected() is not the same question: it only asks whether two *different* addresses
+    // are in play, so it is true for a half-finished order. This compares what has been
+    // assigned with what is in the cart, and is what tells checkout_shipping whether the
+    // customer is coming back finished or still has work to do.
+    //
+    public function allItemsAssigned()
+    {
+        if (empty($this->cart) || !is_array($this->cart)) {
+            return false;
+        }
+
+        $assigned = 0;
+        foreach ($this->cart as $address_id => $products) {
+            foreach ($products as $prid => $count) {
+                if ($prid === 'has_physical') {
+                    continue;
+                }
+                $assigned += (int)$count;
+            }
+        }
+
+        return ($assigned >= $this->cartPhysicalItemsCount());
+    }
+
+    // -----
+    // How many distinct addresses this order is going to, for telling the customer so.
+    //
+    public function addressCount()
+    {
+        return (empty($this->cart) || !is_array($this->cart)) ? 0 : count($this->cart);
+    }
+
+    // -----
     // Whether the customer has already answered the ship-to-multiple-addresses question,
     // whichever way they answered it.
     //

@@ -131,7 +131,29 @@ class multiship_observer extends base
                 // are assigned, so a redirect would trap any customer who opened the grid
                 // and left everything going to one address.
                 //
-                if ($_SESSION['multiship']->isChosen()) {
+                // -----
+                // Two different customers arrive here, and telling them the same thing
+                // fails one of them.
+                //
+                // One is on the way *to* the grid and needs pointing at it. The other has
+                // just finished there and is being sent back through a page headed Step 1
+                // -- which reads as though their work was lost, especially if it repeats
+                // "go and set your addresses". They are here because checkoutInitialize()
+                // recalculates shipping for the addresses they chose, and this is the only
+                // page it runs on, so the message tells them that rather than leaving them
+                // to guess they are starting over.
+                //
+                if ($_SESSION['multiship']->isChosen() && $_SESSION['multiship']->allItemsAssigned()) {
+                    $GLOBALS['messageStack']->add(
+                        'checkout_shipping',
+                        sprintf(
+                            MULTISHIP_ADDRESSES_SET,
+                            $_SESSION['multiship']->addressCount(),
+                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>'
+                        ),
+                        'caution'
+                    );
+                } elseif ($_SESSION['multiship']->isChosen()) {
                     $GLOBALS['messageStack']->add(
                         'checkout_shipping',
                         sprintf(

@@ -102,6 +102,21 @@ $define = [
     'MULTISHIP_RETURN_TO_ADDRESSES' => 'This order is going to more than one address. Choose a shipping method below, then click %s to set a delivery address for each item.',
     'MULTISHIP_RETURN_TO_ADDRESSES_LINK' => 'Continue to Addresses',
 
+    // -----
+    // Shown to a customer arriving back at the shipping step with every item addressed.
+    //
+    // Without it the page reads as though their work was lost and they are starting over:
+    // it is headed Step 1, it is the page they already completed, and the message above --
+    // which tells them to go and set addresses -- would be actively wrong.
+    //
+    // They are here because checkoutInitialize(), which recalculates shipping for the
+    // addresses they just chose, runs only on this page. So the message says what the page
+    // is for rather than apologising for it. %1$u is the number of addresses, %2$s a link
+    // back to the grid for anyone who wants to change them.
+    //
+    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved and your shipping has been worked out for them. Check it below, then carry on to payment &mdash; or %2$s if you want to change anything.',
+    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
+
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
     'TEXT_GRAND_TOTAL' => 'Grand Total:',
