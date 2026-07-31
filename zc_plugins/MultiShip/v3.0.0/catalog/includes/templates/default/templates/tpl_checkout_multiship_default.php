@@ -88,10 +88,14 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
     // beyond the submit that was already happening here. Customers without JavaScript never
     // reach this path at all; they set every row and press Update.
     //
+    // The last row has no next row, so it points at the controls below the grid -- which is
+    // where that customer is going anyway. Without this it targeted an anchor that does not
+    // exist and the browser chose for itself.
     $multishipNextRow = (int)$multishipRowIndex + 1;
+    $multishipNextAnchor = ($multishipNextRow < count($productsArray)) ? 'multishipRow' . $multishipNextRow : 'multishipControls';
     $multishipOnChange =
         'ok2leave();'
-        . ' this.form.action = this.form.action.split(\'#\')[0] + \'#multishipRow' . $multishipNextRow . '\';'
+        . ' this.form.action = this.form.action.split(\'#\')[0] + \'#' . $multishipNextAnchor . '\';'
         . ' this.form.submit();';
 ?>
             <td class="sendto"><?php
@@ -122,16 +126,24 @@ if ($products_onetime_charges) {
 $multiship_cart_link = '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_SHOPPING_CART, '', 'SSL') . '">' . TEXT_MULTISHIP_CHANGE_QUANTITIES_CART . '</a>';
 $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_DEFAULT) . '">' . TEXT_MULTISHIP_CHANGE_QUANTITIES_SHOP . '</a>';
 ?>
-    <div id="multishipQuantityNote" class="content"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
-
+<div id="multishipControls">
 <?php
 // -----
-// Kept, though the address menus submit on change, because that submit needs JavaScript.
-// Without this a customer with scripting disabled could choose addresses and have no way
-// to save them. Named for what it now does, rather than the quantity Update it replaced.
+// Save Addresses on the left, the cart/shopping note beside it on the right.
+//
+// The button is kept even though the address menus submit on change, because that submit
+// needs JavaScript: without it a customer with scripting disabled could choose addresses
+// and have no way to save them. Named for what it now does, rather than the quantity
+// Update it replaced.
+//
+// alert alert-info gives the note the store's own informational styling on Bootstrap
+// templates; checkout_multiship.css carries a plain fallback for templates that have no
+// such classes, so it never renders as bare text.
 //
 ?>
     <div class="buttonRow back"><?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?></div>
+    <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
+    <div class="clearBoth"></div>
 <?php
 // -----
 // One position, two states. While items are unanswered the customer gets a reminder where
@@ -153,5 +165,7 @@ if ($multiship_unassigned === 0) {
 }
 ?>
     <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
+    <div class="clearBoth"></div>
+</div>
     </form>
 </div>

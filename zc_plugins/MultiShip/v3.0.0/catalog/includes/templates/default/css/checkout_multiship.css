@@ -1,13 +1,48 @@
-#checkoutMultishipDefault select { width: auto; }
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on checkout_multiship. Deliberately layout only: colours come from the
+   store's own template so the page looks native, except where a fallback is needed for
+   templates that provide no alert styling of their own. */
+
 #checkoutMultishipNewAddress, #onetime_charges, #checkoutMultishipShipping { padding-top: 0.5em; padding-bottom: 0.3em; }
 #checkoutMultishipShipping { border-bottom: 1px solid #414141; margin-bottom: 0.3em; padding: 1em 0; }
 #checkoutMultishipInstructions { padding: 1em 0; }
 #multishipTable { width: 100%; padding: 0.3em; }
 #multishipTableHeading { font-weight: bold; }
 #multishipTableHeading > div, .multishipTableItem > div { display: table-cell; padding: 0.3em; border-bottom: 1px solid #414141; }
-.qty input { width: 1em; }
 #multishipTable tr:nth-child(even) { background-color: #ebebeb; }
-/*#multishipTable tr:nth-child(odd) { background-color: #f0f0f0; } */
 .onetime_charge, #onetime_charges { color: red; }
 .virtual { display: none; }
 td.sendto .fa { color: red; }
+
+/* -----
+   Column widths. The item name is the longest thing on the row and was being squeezed by a
+   Send To column sized for the whole address. Price is given only what it needs and
+   separated from the name so the two stop running together. */
+#multishipTable th.item, #multishipTable td:first-child { width: 55%; padding-right: 1.5em; }
+#multishipTable th.price, #multishipTable td.msipPrice { width: 12%; white-space: nowrap; padding-right: 1.5em; }
+#multishipTable th.sendto, #multishipTable td.sendto { width: 33%; }
+
+/* -----
+   The menu need not be wide enough for the whole address: opening it shows each option in
+   full regardless, so reserving that width in the closed state only starves the item name.
+   Also stops a long address forcing the table wider than the page on a phone. */
+#multishipTable td.sendto select { width: 100%; max-width: 22em; }
+
+/* -----
+   Save Addresses and the cart/shopping note sit on one line, button left, note right.
+   The alert alert-info classes give the note the store's informational styling on
+   Bootstrap templates; these rules are the fallback for templates that have no such
+   classes, and are overridden harmlessly where they do. */
+#multishipControls { padding-top: 0.5em; }
+#multishipQuantityNote { float: right; max-width: 60%; margin: 0 0 0.5em 1em; padding: 0.5em 0.75em; }
+#multishipQuantityNote:not(.alert) { border: 1px solid #757575; border-radius: 6px; }
+.multishipIncomplete { font-weight: bold; }
+.clearBoth { clear: both; }
+
+@media (max-width: 767px) {
+    #multishipTable th.item, #multishipTable td:first-child,
+    #multishipTable th.price, #multishipTable td.msipPrice,
+    #multishipTable th.sendto, #multishipTable td.sendto { width: auto; padding-right: 0.5em; }
+    #multishipTable td.sendto select { max-width: 100%; }
+    #multishipQuantityNote { float: none; max-width: 100%; margin-left: 0; }
+}

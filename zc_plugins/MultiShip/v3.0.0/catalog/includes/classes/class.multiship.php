@@ -209,6 +209,21 @@ class multiship extends base
 
         if (!$this->selected) {
             $this->sessionCleanup();
+
+            // -----
+            // Keep whatever the customer has assigned so far, even though it is not yet
+            // "multiship" by the test above -- which requires two *different* addresses.
+            //
+            // Rows are no longer pre-filled with the primary address, so a customer working
+            // down the grid posts one address, then two, and so on. Without this the first
+            // selection was discarded as not-multiship, the row re-rendered unassigned, and
+            // no amount of clicking ever accumulated a second address. sessionCleanup()
+            // above clears the derived details and totals, which are genuinely stale; the
+            // assignments themselves are the customer's work and are put back here.
+            //
+            if ($multiship_values !== []) {
+                $this->cart = $multiship_values;
+            }
         } else {
             if ($_SESSION['cart']->get_content_type() != 'mixed') {
                 $this->cart = $multiship_values;
