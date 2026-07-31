@@ -114,8 +114,12 @@ $define = [
     // is for rather than apologising for it. %1$u is the number of addresses, %2$s a link
     // back to the grid for anyone who wants to change them.
     //
-    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved and your shipping has been worked out for them. Check it below, then carry on to payment &mdash; or %2$s if you want to change anything.',
-    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
+    // Names what is below and what to do with it. An earlier draft said "check it below",
+    // which left the customer to work out whether "it" meant their addresses, the shipping
+    // cost, or the order -- at the moment they are already unsure why they are on a page
+    // they thought they had finished.
+    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. The shipping choices below now cover all of them &mdash; pick one, then carry on to payment. Or %2$s.',
+    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back and change your addresses',
 
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
