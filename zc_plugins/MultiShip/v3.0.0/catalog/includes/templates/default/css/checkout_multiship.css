@@ -37,8 +37,20 @@ td.sendto .fa { color: red; }
 #multishipControls { padding-top: 0.5em; }
 #multishipQuantityNote { float: right; max-width: 60%; margin: 0 0 0.5em 1em; padding: 0.5em 0.75em; }
 #multishipQuantityNote:not(.alert) { border: 1px solid #757575; border-radius: 6px; }
-.multishipIncomplete { font-weight: bold; }
 .clearBoth { clear: both; }
+
+/* -----
+   The way out of multiship is offered first, then the way on through it, so the button a
+   finishing customer wants is the last thing on the page. */
+.multiship-decline { clear: both; padding: 0.75em 0 0.25em; }
+
+/* -----
+   The label wraps across lines at this width, so centre it -- ragged-left text inside a
+   button reads as a rendering fault rather than a deliberate shape. Centring the block too
+   keeps the button under the statement above it rather than adrift at one edge. */
+#multishipContinue { clear: both; text-align: center; padding: 0.5em 0 1em; }
+#multishipContinue a { text-align: center; }
+#multishipContinue.multishipIncomplete { font-weight: bold; }
 
 @media (max-width: 767px) {
     #multishipTable th.item, #multishipTable td:first-child,

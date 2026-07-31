@@ -144,27 +144,28 @@ $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(F
     <div class="buttonRow back"><?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?></div>
     <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
     <div class="clearBoth"></div>
+    <div class="multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
 <?php
 // -----
-// One position, two states. While items are unanswered the customer gets a reminder where
-// the button will be; once none are, the button takes its place.
+// One position, two states, and it sits last: the way out of multiship is offered before
+// the way on through it, so the button the customer wants is the final thing on the page
+// rather than something to scroll back up for.
 //
-// The reminder lives here rather than in the messageStack at the top of the page because
-// the customer is working at the bottom of a long grid -- a message they scrolled past
-// before they started is not a reminder. Sharing the position also means the space never
-// sits empty next to Update, which read as though the two were related.
+// While items are unanswered the reminder occupies this spot instead. It lives here rather
+// than in the messageStack at the top of the page because the customer is working at the
+// bottom of a long grid, and a message they scrolled past before starting is not a
+// reminder.
 //
 if ($multiship_unassigned === 0) {
 ?>
-    <div class="buttonRow forward"><?php echo $resume_checkout_anchor; ?></div>
+    <div id="multishipContinue"><?php echo $resume_checkout_anchor; ?></div>
 <?php
 } else {
 ?>
-    <div class="buttonRow forward multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned); ?></div>
+    <div id="multishipContinue" class="multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned); ?></div>
 <?php
 }
 ?>
-    <div class="buttonRow forward multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
     <div class="clearBoth"></div>
 </div>
     </form>
