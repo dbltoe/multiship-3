@@ -64,8 +64,37 @@ class multiship_early_observer extends base
             // switched into one of those flows. Multiship is never available to guests, so
             // OPC must stay in charge of them.
             //
+            // -----
+            // The page test is not redundant with the flag, and here is why.
+            //
+            // OPC decides once per request, from its observer's constructor at [97], before
+            // any page code has run. checkout_multiship calls chooseMultiship() itself -- a
+            // customer can arrive there from the interstitial on the same request that sets
+            // the intent -- so on the first load of that page the flag is still unset when
+            // this is asked, OPC stays enabled, and its observer attaches for the whole
+            // request. Twenty lines later that page does `new order()`, which fires
+            // NOTIFY_ORDER_CART_AFTER_ADDRESSES_SET, and OPC answers it with
+            // updateOrderAddresses() -- writing tax country and zone from $_SESSION['sendto'],
+            // the customer's own default address, in the middle of building an order bound
+            // for somebody else. dbltoe caught it in OPC's log: one updateOrderAddresses pair
+            // with no "forced to disabled" beside it, then "forced to disabled" on every
+            // request after.
+            //
+            // Harmless on a store with no tax, which is where it was found. On a taxed store
+            // it is OPC setting a tax basis this plugin then has to overwrite per address,
+            // and the fix costs a string comparison.
+            //
+            // multiship_choice is deliberately not in the list. A customer sitting on the
+            // interstitial has not decided anything yet and may be about to decline; OPC
+            // stays in charge until they commit.
+            //
             case 'NOTIFY_OPC_SET_DISABLED':
-                if (!empty($_SESSION['multiship_chosen']) && !multiship::inExpressOrGuestCheckout()) {
+                $on_a_multiship_page = isset($_GET['main_page']) && in_array(
+                    $_GET['main_page'],
+                    [FILENAME_CHECKOUT_MULTISHIP, FILENAME_MULTISHIP_ADDRESS],
+                    true
+                );
+                if ((!empty($_SESSION['multiship_chosen']) || $on_a_multiship_page) && !multiship::inExpressOrGuestCheckout()) {
                     $p2 = true;
                 }
                 break;
