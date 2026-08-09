@@ -256,14 +256,28 @@ $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(F
             <div id="multishipSaveNote"><?php echo TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE; ?></div>
         </div>
     </noscript>
-    <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
-    <div class="clearBoth"></div>
-    <div class="multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
 <?php
 // -----
-// One position, two states, and it sits last: the way out of multiship is offered before
-// the way on through it, so the button the customer wants is the final thing on the page
-// rather than something to scroll back up for.
+// Leaving multiship comes before returning to the cart, and the order is the point.
+//
+// Both links take the customer off this page and one of them is not what it looks like:
+// "Return to Your Cart" reads, to someone scanning for a way out, like starting over --
+// but it keeps the multiship decision, so they arrive at the cart still in it. Putting the
+// genuine exit first means a customer looking for one finds the right link before they
+// find the misleading one.
+//
+// The wording was fixed too -- both used to open "changed your mind" -- but position is
+// the part that helps someone scanning rather than reading.
+//
+?>
+    <div class="multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
+    <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
+    <div class="clearBoth"></div>
+<?php
+// -----
+// One position, two states, and it sits last: both ways off this page are offered before
+// the way on through it, so the button a finishing customer wants is the final thing on the
+// page rather than something to scroll back up for.
 //
 // While items are unanswered the reminder occupies this spot instead. It lives here rather
 // than in the messageStack at the top of the page because the customer is working at the
