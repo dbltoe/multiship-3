@@ -11,23 +11,23 @@
    without color-mix(), then the derived value, which those browsers ignore as invalid.
    The fallbacks are the values this file used to hardcode, so nothing regresses.
 
-   ZCA Bootstrap, the template this was built against, is Bootstrap 3.4 and exposes no
-   custom properties -- there is no --bs-border-color to inherit, which is why the colour
-   is derived from text rather than read from the theme.
+   ZCA Bootstrap, the template this was built against, exposes no custom properties at all --
+   there is no --bs-border-color to inherit, which is why colour is derived from text rather
+   than read from the theme. (Its stylesheet header says "BOOTSTRAP v3.4.0", but that is the
+   ZCA template's own version string: the markup it emits is Bootstrap 4 -- card, p-3,
+   float-right, custom-control.)
 
    Three properties are exposed for a store owner who wants to be explicit. Set them
    anywhere that wins the cascade, e.g. in the template's own stylesheet:
 
        :root {
            --multiship-rule:   #d0d0d0;   rules and borders
-           --multiship-stripe: #f6f6f6;   alternating table rows
            --multiship-alert:  #9b1c15;   surcharges and the cannot-ship marker
        }
 */
 
 :root {
     --multiship-rule: #414141;
-    --multiship-stripe: #ebebeb;
     /* Fallback only, for browsers without color-mix(). Measures 8.17:1 on white and 2.13:1
        on a dark surface -- which is exactly why the derived value below exists. */
     --multiship-alert: #9b1c15;
@@ -36,7 +36,6 @@
 @supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
     :root {
         --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
-        --multiship-stripe: color-mix(in srgb, currentColor 6%, transparent);
 
         /* -----
            The alert colour is derived too, and for a sharper reason than the other two.
@@ -108,7 +107,10 @@
 #multishipTable { width: 100%; padding: 0.3em; }
 #multishipTableHeading { font-weight: bold; }
 #multishipTableHeading > div, .multishipTableItem > div { display: table-cell; padding: 0.3em; border-bottom: 1px solid var(--multiship-rule); }
-#multishipTable tr:nth-child(even) { background-color: var(--multiship-stripe); }
+/* No striping here. The table carries Bootstrap's "table-striped", so a Bootstrap store
+   stripes it the way it stripes every other table. A rule here would fight that and win --
+   page CSS loads after the template's -- leaving this one grid striped differently from the
+   rest of the site, which is the opposite of the intent. */
 .onetime_charge, #onetime_charges { color: var(--multiship-alert); }
 .virtual { display: none; }
 td.sendto .fa { color: var(--multiship-alert); }

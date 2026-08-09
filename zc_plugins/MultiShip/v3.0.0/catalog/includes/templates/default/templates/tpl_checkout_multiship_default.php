@@ -118,7 +118,24 @@ foreach ($quotes as $multishipQuote) {
     </fieldset>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
     <div id="checkoutMultishipNewAddress"><?php echo TEXT_NEED_ANOTHER_ADDRESS; ?><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_MULTISHIP_ADDRESS, '', 'SSL'); ?>"><?php echo TEXT_ENTER_NEW_ADDRESS; ?></a></div>
-    <table id="multishipTable">
+<?php
+// -----
+// Classed the way the store classes its own tables.
+//
+// ZCA Bootstrap puts "table" and its variants on every table it draws -- its order-history
+// table is "orderTableDisplay table table-bordered table-striped" -- so a bare <table> here
+// was the one table on the site that did not look like the site.
+//
+// Inert on a template that does not know those names, exactly like the custom-control
+// classes on the shipping choices and the alert alert-info on the note below.
+//
+// The zebra striping that used to be in checkout_multiship.css has gone with this: leaving
+// it in would have fought table-striped for the same rows and won, since page CSS loads
+// after the template's, so the grid would have kept its own striping on a store whose other
+// tables stripe differently. Letting the template do it is the point.
+//
+?>
+    <table id="multishipTable" class="table table-striped">
         <tr>
             <th class="item"><?php echo HEADING_ITEM; ?></th>
             <th class="price"><?php echo HEADING_PRICE; ?></th>
