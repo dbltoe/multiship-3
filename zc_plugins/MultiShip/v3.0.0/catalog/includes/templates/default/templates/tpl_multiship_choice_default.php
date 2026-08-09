@@ -17,25 +17,38 @@
 
 <?php echo zen_draw_form('multiship_choice', zen_href_link(FILENAME_MULTISHIP_CHOICE, '', 'SSL'), 'post'); ?>
 
-    <hr class="multishipChoiceRule">
+<?php
+// -----
+// The three answers sit side by side on a wide screen, each with its explanation beneath.
+//
+// They were a vertical stack separated by rules, which on a large monitor left one short
+// button per screenful of empty space -- and made three options that should be weighed
+// against each other into a list to be read in order. Three abreast is what the page is
+// actually asking: pick one of these.
+//
+// The horizontal rules went with the stack. They separated one full-width row from the
+// next; between columns they would be drawing lines across the reading direction. The grid
+// gap separates them now, and the narrow layout brings a rule back above each option.
+//
+// Wrapped in a container of their own rather than laying out #multishipChoice directly, so
+// the heading and the introduction above stay full width and only the answers are columned.
+//
+?>
+    <div id="multishipChoiceOptions">
+        <div class="multishipChoiceOption">
+            <button type="submit" name="multiship_choice" value="yes" class="button multishipChoiceYes"><?php echo BUTTON_MULTISHIP_CHOICE_YES; ?></button>
+            <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_YES_HELP; ?></p>
+        </div>
 
-    <div class="multishipChoiceOption">
-        <button type="submit" name="multiship_choice" value="yes" class="button multishipChoiceYes"><?php echo BUTTON_MULTISHIP_CHOICE_YES; ?></button>
-        <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_YES_HELP; ?></p>
-    </div>
+        <div class="multishipChoiceOption">
+            <button type="submit" name="multiship_choice" value="no" class="button multishipChoiceNo"><?php echo BUTTON_MULTISHIP_CHOICE_NO; ?></button>
+            <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_NO_HELP; ?></p>
+        </div>
 
-    <hr class="multishipChoiceRule">
-
-    <div class="multishipChoiceOption">
-        <button type="submit" name="multiship_choice" value="no" class="button multishipChoiceNo"><?php echo BUTTON_MULTISHIP_CHOICE_NO; ?></button>
-        <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_NO_HELP; ?></p>
-    </div>
-
-    <hr class="multishipChoiceRule">
-
-    <div class="multishipChoiceOption">
-        <button type="submit" name="multiship_choice" value="shop" class="button multishipChoiceShop"><?php echo BUTTON_MULTISHIP_CHOICE_SHOP; ?></button>
-        <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_SHOP_HELP; ?></p>
+        <div class="multishipChoiceOption">
+            <button type="submit" name="multiship_choice" value="shop" class="button multishipChoiceShop"><?php echo BUTTON_MULTISHIP_CHOICE_SHOP; ?></button>
+            <p class="multishipChoiceHelp"><?php echo TEXT_MULTISHIP_CHOICE_SHOP_HELP; ?></p>
+        </div>
     </div>
 
 </form>
