@@ -58,8 +58,8 @@ $multishipShippingOnChange =
     . ' if (window.multishipRemember) { window.multishipRemember(); }'
     . ' this.form.submit();';
 ?>
-    <div id="checkoutMultishipShipping">
-        <h2 id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></h2>
+    <fieldset id="checkoutMultishipShipping">
+        <legend id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></legend>
 <?php
 // -----
 // No price against the method, deliberately.
@@ -95,7 +95,7 @@ foreach ($quotes as $multishipQuote) {
     }
 }
 ?>
-    </div>
+    </fieldset>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
     <div id="checkoutMultishipNewAddress"><?php echo TEXT_NEED_ANOTHER_ADDRESS; ?><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_MULTISHIP_ADDRESS, '', 'SSL'); ?>"><?php echo TEXT_ENTER_NEW_ADDRESS; ?></a></div>
     <table id="multishipTable">

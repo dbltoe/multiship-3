@@ -69,10 +69,33 @@
 /* -----
    The shipping-method choice, which now lives on this page rather than on checkout_shipping.
 
-   Each method is one row: control, name, then cost pushed to the right so the prices form a
-   column the customer can compare down. The label fills the row so the whole line is a click
-   target, not just the few pixels of the radio. */
-#multishipShippingHeading { margin: 0 0 0.5em; font-size: 1.1em; }
+   A fieldset with a legend, not a div with a heading. Radio buttons are a group and need a
+   group label: without one a screen reader announces "Flat Rate", "USPS Ground Advantage"
+   with nothing saying what is being chosen. A legend is read out with each option.
+
+   It was an <h2> first, and on dbltoe's store it rendered as "an unmarked link not seen
+   until the mouse is hovered over it" -- some rule in that template, Bootstrap's own or a
+   customisation, taking it somewhere invisible. So every property a theme is likely to have
+   an opinion about is stated here rather than inherited. Bootstrap 3 in particular gives
+   legend a full-width block, a 21px font, its own colour and a bottom border, all of which
+   are undone below. */
+/* Restates the bottom rule set further up: a bare "border: 0" to strip the fieldset's own
+   frame would come later in the file and wipe it. min-width guards against a fieldset's
+   default min-content sizing squeezing the layout. */
+#checkoutMultishipShipping { border: 0; border-bottom: 1px solid var(--multiship-rule); min-width: 0; }
+#multishipShippingHeading {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    margin: 0 0 0.5em;
+    padding: 0;
+    border: 0;
+    font-size: 1.1em;
+    font-weight: bold;
+    line-height: inherit;
+    color: inherit;
+    text-decoration: none;
+}
 .multishipShipMethod { display: flex; align-items: baseline; gap: 0.5em; padding: 0.35em 0; }
 .multishipShipMethod label { display: flex; flex: 1; gap: 0.5em; cursor: pointer; margin: 0; font-weight: normal; }
 .multishipShipName { flex: 1; }
