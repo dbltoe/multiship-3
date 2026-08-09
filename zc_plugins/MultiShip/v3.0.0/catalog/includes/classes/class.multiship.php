@@ -1358,7 +1358,27 @@ class multiship extends base
                     $this->removeProduct($prid);
                     $GLOBALS['messageStack']->add_session('header', sprintf(MULTISHIP_PRODUCT_DECREASE_SHIP_PRIMARY, $products_name), 'caution');
                 } elseif ($new_quantity > $in_cart_quantity) {
-                    $this->cart[$_SESSION['customer_default_address_id']][$prid] += ($new_quantity - $in_cart_quantity);
+                    // -----
+                    // The extra units go to the customer's primary address, which is what the
+                    // message below tells them. += reads before it writes, though, and neither
+                    // level of that array is guaranteed to exist.
+                    //
+                    // Nothing is held against the default address in the normal case: a
+                    // customer who has sent every item somewhere else has no bucket for their
+                    // own address at all. Adding more of something already in the cart then
+                    // logged two warnings from this one line -- one for the missing address,
+                    // one for the missing product inside it -- and PHP carried on from null,
+                    // so the arithmetic happened to come out right and nothing looked wrong
+                    // on screen. dbltoe found it in the log, not in the cart.
+                    //
+                    // Initialised the way _checkAddProductMessage() does a few lines below,
+                    // which has always guarded this properly.
+                    //
+                    $default_address_id = $_SESSION['customer_default_address_id'];
+                    $this->cart[$default_address_id] ??= [];
+                    $this->cart[$default_address_id][$prid] ??= 0;
+                    $this->cart[$default_address_id][$prid] += ($new_quantity - $in_cart_quantity);
+
                     $GLOBALS['messageStack']->add_session('header', sprintf(MULTISHIP_PRODUCT_INCREASE_SHIP_PRIMARY, $products_name), 'caution');
                 }
             }
