@@ -217,6 +217,31 @@ class multiship_early_observer extends base
                     break;
                 }
 
+                // -----
+                // Only shown when the cart offers a way out that bypasses the interstitial.
+                //
+                // Where Checkout is the only way off this page, every customer is asked the
+                // question properly a moment later. Saying it here as well pre-empts an
+                // interstitial they are about to see, on a page that is already busy, and
+                // dbltoe was right to ask whether it earns its place: it does not.
+                //
+                // PayPal Express is what it was written for and the one this plugin can
+                // detect -- same test used two lines below to append the Express warning.
+                //
+                // The notifier exists because that test cannot cover the rest. Apple Pay,
+                // Google Pay, Amazon Pay and their kin all put a button on the cart that
+                // posts straight out, and getting this wrong is silent: the customer leaves
+                // by a route that fixes one delivery address and never learns the choice
+                // existed. A store running one of those can set $show to true and have the
+                // notice back.
+                //
+                $show_cart_notice = (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True');
+                $this->notify('NOTIFY_MULTISHIP_CART_NOTICE_NEEDED', [], $show_cart_notice);
+                if ($show_cart_notice !== true) {
+                    $_SESSION['multiship']->debugNote('cart page: no express checkout on this cart, so the offer waits for the interstitial.');
+                    break;
+                }
+
                 if (!defined('SHIP_TO_MULTIPLE_CART_NOTICE')) {
                     $_SESSION['multiship']->debugNote('cart page: SHIP_TO_MULTIPLE_CART_NOTICE is not defined; the extra_definitions language file has not loaded.');
                     break;

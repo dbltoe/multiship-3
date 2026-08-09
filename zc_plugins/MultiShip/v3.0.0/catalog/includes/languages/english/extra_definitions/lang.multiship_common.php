@@ -13,14 +13,20 @@ $define = [
     'SHIP_TO_MULTIPLE_HERE' => '* HERE *',   //-Used as the anchor text for the links (%s), inserted above.
 
     // -----
-    // Shown on the shopping-cart page when the cart qualifies and the question has not
-    // yet been put. Deliberately carries NO link: the interstitial reached via Checkout
-    // is the single entry point, and a link here would let a customer skip it.
+    // Shown on the shopping-cart page when the cart qualifies, the question has not yet
+    // been put, AND the cart offers a way out that bypasses the interstitial.
     //
-    // It exists mainly for customers who leave the cart by some route other than the
-    // Checkout button -- PayPal Express Checkout in particular, which posts straight to
-    // PayPal from the cart page and never reaches checkout_shipping, so the interstitial
-    // can never be shown to them.
+    // That last condition is the whole reason it exists. Customers who leave by the
+    // Checkout button are asked properly a moment later; for them this only pre-empts a
+    // page they are about to see. It is for the ones who leave another way -- PayPal
+    // Express Checkout above all, whose button is included straight into the cart template
+    // and posts to PayPal without ever reaching checkout_shipping.
+    //
+    // See NOTIFY_MULTISHIP_CART_NOTICE_NEEDED in the early observer, which decides that and
+    // lets a store running some other instant checkout ask for the notice too.
+    //
+    // Deliberately carries NO link: the interstitial reached via Checkout is the single
+    // entry point, and a link here would let a customer skip it.
     //
     'SHIP_TO_MULTIPLE_CART_NOTICE' => 'Sending these items to more than one address? Choose <strong>Checkout</strong> below and we will help you send each item where it needs to go.',
 
