@@ -56,19 +56,33 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
     };
 
     function restore() {
-        var saved = null;
+        // -----
+        // The stored value is a marker, not a destination.
+        //
+        // Its presence says "this load followed a choice on this page", which is what stops
+        // any of the below happening on a first arrival -- a customer landing here should
+        // see the top of the page, the shipping choices and the instructions, not be thrown
+        // into the middle of the grid.
+        //
+        // An earlier version scrolled back to the stored position, on the reasoning that
+        // moving the customer is an interruption. On a page whose entire job is working down
+        // a list it is the opposite: they have just answered one row and the next is what
+        // they want. Restoring the old position left them looking at the row they had
+        // finished with, and dbltoe reported exactly that -- selecting a shipping method
+        // "highlights the first address block but does not take you there", and address one
+        // "does not take you to address 2".
+        //
+        var marked = null;
         try {
-            saved = window.sessionStorage.getItem(KEY);
+            marked = window.sessionStorage.getItem(KEY);
             window.sessionStorage.removeItem(KEY);
         } catch (e) {
             return;
         }
-        if (saved === null) {
+        if (marked === null) {
             return;
         }
 
-        // Before the scroll, so moving focus cannot fight it: focusing an off-screen
-        // control scrolls to it, which is the jump this file exists to remove.
         var menus = document.querySelectorAll('#multishipTable select[name="address[]"]');
         var target = null;
         for (var i = 0; i < menus.length; i++) {
@@ -79,35 +93,25 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
         }
 
         // -----
-        // Nothing left unanswered: the work is done and the only thing remaining is to
-        // leave the page, so go to that button rather than staying put.
-        //
-        // This is the one case where moving is right. Everywhere else the customer is
-        // mid-task and being moved is an interruption; here they have finished, and the
-        // control that finishes it can easily be below the fold on a long grid. Keeping
-        // the position would just highlight a button they cannot see -- which is what
-        // dbltoe found: "highlights the Continue with Checkout button which may be hidden
-        // from view and the highlight never seen by the customer".
+        // Nothing left unanswered: the work is done and the only thing left is to leave, so
+        // go to the button that does it. It can easily be below the fold on a long grid.
         //
         if (target === null) {
-            var finish = document.querySelector('#multishipContinue a') ||
-                         document.querySelector('#multishipControls input[name="save"]');
-            if (finish !== null) {
-                if (typeof finish.scrollIntoView === 'function') {
-                    finish.scrollIntoView({ block: 'center' });
-                }
-                if (typeof finish.focus === 'function') {
-                    finish.focus({ preventScroll: true });
-                }
-            }
+            target = document.querySelector('#multishipContinue a') ||
+                     document.querySelector('#multishipControls input[name="save"]');
+        }
+        if (target === null) {
             return;
         }
 
+        // Scroll first, then focus without scrolling again -- focus() would otherwise land
+        // the element wherever the browser chooses rather than where this puts it.
+        if (typeof target.scrollIntoView === 'function') {
+            target.scrollIntoView({ block: 'center' });
+        }
         if (typeof target.focus === 'function') {
             target.focus({ preventScroll: true });
         }
-
-        window.scrollTo(0, parseInt(saved, 10) || 0);
     }
 
     if (document.readyState === 'loading') {

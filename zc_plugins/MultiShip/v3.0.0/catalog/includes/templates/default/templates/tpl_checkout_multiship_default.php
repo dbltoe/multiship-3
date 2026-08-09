@@ -230,7 +230,10 @@ $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(F
 // such classes, so it never renders as bare text.
 //
 ?>
-    <div class="buttonRow back"><?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?></div>
+    <div id="multishipSaveAddresses">
+        <?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?>
+        <div id="multishipSaveNote"><?php echo TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE; ?></div>
+    </div>
     <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
     <div class="clearBoth"></div>
     <div class="multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>

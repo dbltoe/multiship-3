@@ -104,6 +104,20 @@ $define = [
     // to save them without JavaScript, since the menus otherwise submit on change.
     'BUTTON_MULTISHIP_SAVE_ADDRESSES' => 'Save Addresses',
 
+    // -----
+    // Says what the button is for, because for most customers the answer is "nothing".
+    //
+    // Every address menu saves the moment it is changed, so a customer with JavaScript never
+    // needs this button at all. It exists for the customer who does not: without it they
+    // could fill in the whole grid and have no way to record any of it.
+    //
+    // Unlabelled, it reads as the thing you must press to keep your work -- which invites
+    // people to hunt for it, and makes anyone who has not pressed it wonder whether their
+    // choices took. Saying plainly that the work is already saved is the point; the button
+    // is the safety net, not the mechanism.
+    //
+    'TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE' => 'You do not normally need this. Each address is saved as soon as you choose it &mdash; this button is here in case your browser has JavaScript turned off.',
+
     'TEXT_QUANTITIES_CHANGED' => 'One or more product quantities have been changed, but not yet updated.  If you leave this page, those changes will not be saved.  To save those quantity changes, stay on the page and click the update button.',
 
     'ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD' => 'One or more of the shipping addresses you previously chose cannot be used for the currently-selected shipping method; see the selections below marked with %1$s.<br /><br />Either modify the marked shipping addresses or click the link below to change the shipping method for your order.',

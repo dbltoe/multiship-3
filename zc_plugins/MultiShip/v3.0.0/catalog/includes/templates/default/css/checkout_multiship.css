@@ -100,7 +100,12 @@
    fight that -- an earlier version set display:flex on the row and flex:1 on the label,
    which left the control undrawn and the choices findable only by hovering. On a template
    without those classes the native radio and label render normally and need no help. */
-.multishipShipMethod { padding: 0.35em 0; }
+/* Top and bottom only, never padding-left. Bootstrap gives .custom-control a
+   padding-left of 1.5rem and then draws the control with the label's ::before at
+   left: -1.5rem -- so the padding is the space the radio sits in. The shorthand
+   "padding: 0.35em 0" zeroed it, and page CSS loads after the template's, so ours won and
+   the buttons rendered off the left edge of the page. */
+.multishipShipMethod { padding-top: 0.35em; padding-bottom: 0.35em; }
 .multishipShipMethod label { cursor: pointer; margin: 0; font-weight: normal; }
 .multishipShipError { color: var(--multiship-alert); padding: 0.35em 0; }
 #checkoutMultishipInstructions { padding: 1em 0; }
@@ -131,12 +136,21 @@ td.sendto .fa { color: var(--multiship-alert); }
 #multishipTable td.sendto select { width: 100%; max-width: 34em; }
 
 /* -----
-   Save Addresses and the cart/shopping note sit on one line, button left, note right.
-   The alert alert-info classes give the note the store's informational styling on
-   Bootstrap templates; these rules are the fallback for templates that have no such
-   classes, and are overridden harmlessly where they do. */
+   The closing controls stack down the middle rather than sitting side by side.
+
+   Save Addresses and this note used to share a line, button left and note floated right.
+   On a narrower desktop that put the button off at one edge where it got lost, and the note
+   beside it read as a caption to the button rather than as its own thing. Stacked and
+   centred, each is read in turn: save, then how to change quantities, then how to leave
+   multiship, then the way on.
+
+   The alert alert-info classes give the note the store's informational styling on Bootstrap
+   templates; these rules are the fallback for templates that have no such classes, and are
+   overridden harmlessly where they do. */
 #multishipControls { padding-top: 0.5em; }
-#multishipQuantityNote { float: right; max-width: 60%; margin: 0 0 0.5em 1em; padding: 0.5em 0.75em; }
+#multishipSaveAddresses { text-align: center; padding-bottom: 0.75em; }
+#multishipSaveNote { padding-top: 0.4em; font-size: 0.9em; }
+#multishipQuantityNote { max-width: 44em; margin: 0 auto 0.5em; padding: 0.5em 0.75em; text-align: center; }
 #multishipQuantityNote:not(.alert) { border: 1px solid var(--multiship-rule); border-radius: 6px; }
 .clearBoth { clear: both; }
 
@@ -159,5 +173,7 @@ td.sendto .fa { color: var(--multiship-alert); }
     #multishipTable th.price, #multishipTable td.msipPrice,
     #multishipTable th.sendto, #multishipTable td.sendto { width: auto; padding-right: 0.5em; }
     #multishipTable td.sendto select { max-width: 100%; }
-    #multishipQuantityNote { float: none; max-width: 100%; margin-left: 0; }
+    /* Full width on a phone, still centred. The old rule here zeroed margin-left to undo a
+       float that no longer exists; leaving it would have knocked the note off centre. */
+    #multishipQuantityNote { max-width: 100%; }
 }
