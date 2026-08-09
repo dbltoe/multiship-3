@@ -12,26 +12,56 @@ Verified against the `zencart/zencart` **2.3** branch (HEAD `0db1041`, 2026-07-2
 1. Installing the plugin *is* the decision to use it — no store-wide enable toggle.
 2. The mod never activates unless the cart holds more than one shippable unit
    (either 2+ items, or one item with quantity > 1).
-3. Only then is "ship to multiple addresses" offered, on the **shopping cart page**.
-4. Choosing it sends unregistered customers to register first, then into the
-   mod's **own** checkout pages. Registered customers go straight there.
-5. All multiship-specific work happens in the mod's own pages.
-6. On confirmation, control returns to the standard Zen Cart checkout process.
+3. Only then is "ship to multiple addresses" offered, on a mod-owned interstitial
+   reached when the customer clicks Checkout.
+4. Choosing it sends unregistered customers to register first, then to the mod's
+   address grid. Registered customers go straight there.
+5. Checkout is **three steps**, the same count as an ordinary Zen Cart order.
+6. Only one of those three is a mod page. Payment and confirmation stay core's,
+   with the mod correcting what they say about delivery.
 
 ## 2. Decisions
 
 | Decision | Choice |
 |---|---|
 | How the question is put | A mod-owned Yes/No interstitial on entry to checkout, asked once |
-| Secondary hint | An optional offer on the cart page via `messageStack` |
-| Mod-owned pages | Shipping selection + confirmation |
-| Core-owned pages | `checkout_payment`, `checkout_process`, `checkout_success` |
+| Secondary hint | A cart-page `messageStack` notice, **only** where an express-checkout button can bypass the interstitial |
+| Mod-owned pages | `multiship_choice`, `checkout_multiship`, `multiship_address` |
+| Core-owned pages | `checkout_payment`, `checkout_confirmation`, `checkout_process`, `checkout_success` |
 | Enable toggle | Dropped; installation implies enabled |
 | Correctness guards | **Kept** (see §5) |
 
-`checkout_shipping` already requires login, so the offer must appear *before* login
-for requirement 3 to be meaningful. That is why the cart page is the only placement
-consistent with the design.
+The offer must appear *before* login for requirement 4 to be meaningful, and it does:
+core fires `NOTIFY_HEADER_START_CHECKOUT_SHIPPING` **ahead of its own login check**, so
+an observer on that notifier can redirect to the interstitial while the customer is
+still anonymous. An unregistered customer who answers "yes" is then sent to register;
+one who answers "no" carries on into whatever checkout the store normally runs.
+
+This supersedes an earlier reading recorded here, that `checkout_shipping` requires
+login and therefore the cart page was "the only placement consistent with the design".
+The premise was wrong about *when* the login check happens. The cart notice survives,
+but only for the case the interstitial genuinely cannot cover — see §3.
+
+### The three steps
+
+| Step | Page | Owner |
+|---|---|---|
+| 1 | `checkout_multiship` — shipping method **and** an address per item | mod |
+| 2 | `checkout_payment` | core |
+| 3 | `checkout_confirmation` | core, delivery block replaced |
+
+`multiship_choice` sits before step 1 and is not numbered, because it is a question
+rather than a step. `multiship_address` is reached from step 1 and returns to it.
+
+The shipping method used to be chosen on core's `checkout_shipping`, with a further
+page to confirm it — five pages in total. Both questions moved onto the grid, which
+was the point: the method has to be known before per-address quoting can happen, and
+asking for it on the page that does the quoting removes two pages and a round trip.
+
+`checkout_shipping` is consequently **no longer part of the multiship flow at all**.
+An early-observer redirect sends anyone with multiship chosen from that page to the
+grid, which also closes a hole: a customer could otherwise return to the cart, click
+Checkout again, and reach payment with multiship chosen and no addresses assigned.
 
 ## 3. Why this needs no template changes
 
@@ -53,10 +83,55 @@ Page modules resolve the same way: `PageLoader::findModulePageDirectory()` searc
 `zc_plugins/<name>/<ver>/catalog/includes/modules/pages/<mainPage>`, and
 `listModulePagesFiles()` merges plugin page modules with core ones.
 
-The cart-page offer avoids templates entirely: an observer on
-`NOTIFY_HEADER_END_SHOPPING_CART` adds a message to the `shopping_cart` messageStack,
+The cart-page notice avoids templates entirely: an observer on
+`NOTIFY_HEADER_START_SHOPPING_CART` adds a message to the `shopping_cart` messageStack,
 which every template renders (verified in `template_default`, `responsive_classic`,
 and ZCA Bootstrap 3.8.0 `tpl_shopping_cart_default.php:33`).
+
+That notice is now **conditional**, and the condition is the whole reason it still
+exists. Once the question moved to an interstitial that every customer entering
+checkout must pass, a second offer on the cart was redundant — for customers who
+reach checkout by clicking Checkout. Express-checkout buttons do not: PayPal Express
+on the cart page takes the customer straight to PayPal, past the interstitial, and
+they never get asked. So the notice is raised only when such a button is present:
+
+```php
+$show_cart_notice = (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True');
+$this->notify('NOTIFY_MULTISHIP_CART_NOTICE_NEEDED', [], $show_cart_notice);
+```
+
+The notifier lets another express-checkout plugin claim the same treatment without
+this plugin having to enumerate them. On a store with no express button the cart is
+left alone entirely, which is the common case and the quieter one.
+
+### The trap this plugin keeps falling into
+
+Encapsulation silently kills any feature delivered by a file that core resolves **by
+fixed name or hardcoded path**. Template resolution (above) is only the best-known
+instance. Confirmed cases, all of which worked before encapsulation and silently
+stopped afterwards:
+
+| What broke | Why | Fix |
+|---|---|---|
+| Admin order detail's per-address products | `multiship_orders_products.php` included by nobody | `NOTIFY_ADMIN_ORDERS_CONTENT_UNDER_PRODUCTS` |
+| Account order-history breakdown | `main_template_vars.php` resolved by fixed name | `NOTIFY_MAIN_TEMPLATE_VARS_END` |
+| Confirmation-page breakdown | reached by overriding `tpl_checkout_confirmation_default.php` | own `jscript_` file, DOM replacement |
+| `checkout_success` breakdown | reached by overriding `tpl_account_history_info_default.php`, which core's success page includes | own `header_php_` + `jscript_` pair |
+| Edit Orders block | `$current_page` carries `.php`, `FILENAME_EDIT_ORDERS` does not | compare with `pathinfo(..., PATHINFO_FILENAME)` |
+
+The failure mode is always the same and always quiet: no error, no log entry, just a
+feature that is no longer there. **Anything the legacy plugin delivered by shipping a
+file with a core-owned name has to be re-checked**, because nothing will announce that
+it stopped working.
+
+A second lesson, learned twice on the DOM-replacement fixes: an element id that is
+right on one template is worth nothing on the next. Core's confirmation delivery block
+is `#checkoutShipto`, ZCA's is `#deliveryAddress-card`; core's account-history block is
+`#myAccountShipInfo` and ZCA's is something else again. The `checkout_success` script
+therefore falls back to matching the *heading text*, taken from the same language
+constant the template printed, and then to a chain of insertion points — because a
+breakdown in an awkward place beats no breakdown at all on a receipt for an order that
+is already paid for.
 
 ### Why the question is a page, not a modal
 
@@ -128,15 +203,49 @@ OPC's own `guestCheckoutEnabled()` is gated on the same `isEnabled` flag the §4
 bypass clears, so a multiship order could not be taken through OPC guest checkout
 in any case; this guard covers guest flows that reach the store by other routes,
 and makes the restriction an invariant rather than a property of the offer alone.
-The same three tests are duplicated in `multiship_opc_observer`, because it answers
-at `[90]` while `isEnabled()` does not run until `[130]`.
+The same three tests are duplicated in `multiship_early_observer`, which is attached at
+`[90]` and answers `NOTIFY_OPC_SET_DISABLED` when OPC fires it from its own constructor
+at `[97]` — well before `isEnabled()` runs at `[130]`. Relying on `isEnabled()` there
+would also clear the intent flag as a side effect, which is why the tests are repeated
+rather than delegated.
 
-The existing trigger in `class.multiship.php` already implements §1.2 exactly:
+That handler answers **two** questions, not one, and the second was missed at first:
 
 ```php
-$this->can_offer = ($this->cartPhysicalItemsCount() > 1 && empty($_SESSION['COWOA'])
-    && empty($_SESSION['customer_guest_id']) && zen_count_shipping_modules() > 0);
+$on_a_multiship_page = isset($_GET['main_page']) && in_array(
+    $_GET['main_page'],
+    [FILENAME_CHECKOUT_MULTISHIP, FILENAME_MULTISHIP_ADDRESS],
+    true
+);
+if ((!empty($_SESSION['multiship_chosen']) || $on_a_multiship_page) && !multiship::inExpressOrGuestCheckout()) {
+    $p2 = true;
+}
 ```
+
+OPC decides once per request, before any page code runs. `checkout_multiship` sets the
+intent flag *itself*, so on the first load of that page the flag is still unset when
+this is asked, OPC stays enabled for the whole request, and the `new order()` a few
+lines later fires `NOTIFY_ORDER_CART_AFTER_ADDRESSES_SET` — which OPC answers by writing
+tax country and zone from `$_SESSION['sendto']`, in the middle of building an order
+bound for somebody else. Hence the page test: a page that exists only because multiship
+is happening is not somewhere OPC has any business being enabled, whatever the session
+flag says at `[97]`. `multiship_choice` is deliberately excluded — a customer on the
+interstitial has decided nothing yet.
+
+### Two different shipping-module tests, deliberately
+
+`offerAvailable()` — which decides whether to raise the question — tests
+`MODULE_SHIPPING_INSTALLED`, configuration readable from anywhere:
+
+```php
+$has_shipping_modules = (defined('MODULE_SHIPPING_INSTALLED') && MODULE_SHIPPING_INSTALLED !== '');
+```
+
+`checkoutInitialize()` still uses `zen_count_shipping_modules()`, and that is correct
+for *it*: by the time it runs the modules are instantiated, and it needs to know how
+many actually loaded rather than how many are configured. The two are not
+interchangeable, and the comment at the top of `offerAvailable()` says so, because the
+copy in the other direction is exactly the bug §7 records.
 
 `cartPhysicalItemsCount()` sums quantity across physical items only, so virtual and
 downloadable products are already excluded, as are COWOA and PayPal-guest checkouts.
@@ -154,11 +263,29 @@ Done:
   reduced to per-request admin behaviour only
 - `MODULE_MULTISHIP_ENABLE` retired; `isEnabled()` now starts enabled and only the
   correctness guards of §5 can disable it
+- Checkout reduced from five pages to three (§2); `checkout_shipping` removed from the
+  flow entirely, with an early-observer redirect closing the side door into payment
+- Confirmation-page breakdown, delivered by DOM replacement rather than the template
+  override the legacy version relied on
+- `checkout_success` breakdown and delivery-address correction — a page the plugin had
+  never touched, rebuilt from the database because the session is gone by then
+- Admin order detail, invoice, packing slip and account order history all re-reached
+  through notifiers after encapsulation silently broke each of them
+- The Edit Orders block made to actually fire; it never had
+- `MODULE_MULTISHIP_MAX_ADDRESSES` added, so a multiship order is not capped by the
+  store-wide address-book limit
+- The shipped `readme.html` rewritten for the encapsulated plugin
 
 Outstanding:
 
-- The mod-owned confirmation page; the legacy version relied on core template
-  overrides that are no longer shipped
+- **A quantity discount across a split is untested.** A product with a
+  `products_discount_quantity` tier, enough units to reach it, split so no single
+  address reaches it alone: does the discount survive, and does it survive *once*
+  rather than per sub-order? This is the last unverified money path and needs store
+  data to stage.
+- Two dead template files, `tpl_checkout_shipping_multiship.php` and
+  `tpl_checkout_confirmation_multiship_address.php`, plus any language constants they
+  orphan. Nothing includes either; both are lat9 override leftovers.
 - **Accessibility pass, deferred by decision** — deliberately postponed until the
   flow works end to end. To be set by dbltoe, whose field this is. Known items so far:
 
@@ -171,10 +298,12 @@ Outstanding:
   Manager listing, so it is a page store owners will actually open. Two Level A
   failures found by inspection:
 
-  - no `lang` attribute on `<html>` (3.1.1 Language of Page)
-  - six `<h1>` elements in the sequence
-    `h1 h1 h2 h2 h1 h1 h1 h2 h1 h2 h2 h1` — the document has no single top-level
-    heading and its outline does not nest (1.3.1 Info and Relationships)
+  - ~~no `lang` attribute on `<html>`~~ — **fixed**, `lang="en"` added
+  - still open: six `<h1>` elements, now in the sequence
+    `h1 h1 h2 h2 h1 h1 h2 h2 h1 h2 h2 h1 h2 h2 h1` — the document has no single
+    top-level heading and its outline does not nest (1.3.1 Info and Relationships).
+    Fixing it means demoting every section heading and restyling `style.css` to
+    match, which is why it was not folded into the content rewrite.
 
   Otherwise cleaner than expected: no images, so no missing `alt`; no tables; no
   "click here" link text; no inline styles; no `<font>` or `<center>`. Contrast and
@@ -193,12 +322,16 @@ Outstanding:
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
 
-## 7. Not yet verified
+## 7. Verification
 
-All 40 PHP files pass `php -l` under **PHP 8.5.9**, matching the version on the
-test site. The five `lang.*.php` files were additionally *executed* under `E_ALL`
-and each returns a well-formed `string => string` array with the same key count as
-the `define()`-based file it replaced (23 / 12 / 11 / 19 / 18).
+Retitled: this section was headed "Not yet verified" when almost nothing had been run.
+Most of what follows is now a record of what *was* verified and how. What genuinely
+remains unverified is listed in §6 — one item, the quantity discount.
+
+All 53 PHP files pass `php -l` under **PHP 8.5.9**, matching the version on the test
+site. The `lang.*.php` files were additionally *executed* under `E_ALL` and each returns
+a well-formed `string => string` array with the same key count as the `define()`-based
+file it replaced.
 
 ### Verified on a live store
 
@@ -400,11 +533,30 @@ Multiship does make bad data **more visible**, since a wrong weight is quoted se
 against each address rather than being absorbed into one total. That is a diagnostic, not a
 defect.
 
-### Still unverified
+### The multiship path itself, now verified live
 
-The multiship path itself. Choosing multiple addresses, assigning them per item,
-per-address shipping quotes, OPC actually standing down for a chosen multiship
-order, order creation, and the confirmation page — which is not built yet.
+Superseding an earlier note here that none of it had been exercised. Orders have been
+placed end to end on the test store, against live USPS quoting, with One Page Checkout
+installed. What the multiship log shows for a representative three-address order:
+
+```
+(checkout_multiship) Initialize step 1 (33) ... Quote received: 20.90
+(checkout_multiship) Initialize step 1 (26) ... Quote received: 16.40
+(checkout_multiship) Initialize step 1 (28) ... Quote received: 12.25
+(checkout_process)   ot_shipping 49.55, ot_subtotal 119.97, ot_total 169.52
+```
+
+20.90 + 16.40 + 12.25 = 49.55, and that figure is identical at every stage from the
+grid through payment, confirmation and `createOrderFixupTotal`. Confirmed alongside it:
+per-address quoting, addresses persisting across the grid, OPC standing down for the
+session, `orders_multiship` and `orders_multiship_total` written correctly, and the
+admin loop — detail, invoice, packing slip, per-sub-order status change and its email.
+
+This mattered more than a normal regression check. The recalculation moved pages when
+the flow went from five steps to three, so the split producing *wrong money* was the
+failure that outranked everything cosmetic. It does not.
+
+Still unverified: the quantity-discount case in §6.
 
 The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
 `executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
