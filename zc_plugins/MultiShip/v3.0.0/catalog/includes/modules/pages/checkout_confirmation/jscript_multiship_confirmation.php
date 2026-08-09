@@ -51,6 +51,20 @@ if ($multiship_breakdown_html === '') {
 }
 ?>
 <script>
+// -----
+// Marks the document as a multiship confirmation, immediately.
+//
+// checkout_confirmation.css is loaded by page name, so it arrives on every confirmation
+// page whether the order is going to one address or five. The layout rules in it are only
+// right for the second kind -- a store's ordinary single-address checkout should be left
+// exactly as its template drew it -- so every one of them is scoped to this class.
+//
+// Set here in the head rather than in the DOMContentLoaded handler below, and on
+// documentElement rather than body: both exist by now, and waiting would let the page paint
+// once in the template's layout and again in ours.
+//
+document.documentElement.className += ' multishipConfirmation';
+
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 

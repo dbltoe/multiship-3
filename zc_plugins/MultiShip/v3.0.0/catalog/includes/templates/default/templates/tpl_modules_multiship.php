@@ -7,7 +7,24 @@
 if (isset($multiship_info) && is_array($multiship_info)) {
     foreach ($multiship_info as $address_id => $currentInfo) {
 ?>
-<div class="multishipOrder"><?php echo TEXT_SHIPPING_TO . $currentInfo['address']; ?>
+<?php
+// -----
+// Name first, address second and quieter.
+//
+// The name is what a customer actually checks against here. They chose these addresses a
+// few minutes ago and verified each one when it went into their address book, so the full
+// postal address restated in full for every recipient is bulk that hides the one word they
+// are scanning for.
+//
+// The address is kept rather than dropped, because name alone is not always enough to tell
+// two entries apart: dbltoe has a PO box and a street address for the same person, which is
+// exactly the case this page has to let a customer catch. Quieter, not absent.
+//
+$multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
+?>
+<div class="multishipOrder">
+    <span class="multishipOrderName"><?php echo TEXT_SHIPPING_TO . $multishipRecipientName; ?></span>
+    <span class="multishipOrderAddress"><?php echo $currentInfo['address']; ?></span>
     <table id="cartContentsDisplay">
         <tr class="cartTableHeading">
             <th scope="col" id="ccQuantityHeading"><?php echo TABLE_HEADING_QUANTITY; ?></th>

@@ -1,10 +1,18 @@
 /* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
-   Auto-loads on checkout_confirmation when the order is going to several addresses.
+   Auto-loads on checkout_confirmation.
 
-   The box around each recipient takes its rule from currentColor, so it follows whatever
-   the store's template has set the text to rather than stating a grey of its own. Written
-   twice: the plain colour first for browsers without color-mix(), then the derived value.
-   Override --multiship-rule in the template's own stylesheet to be explicit. */
+   -----
+   Everything below the colour block is scoped to .multishipConfirmation.
+
+   This file is loaded by page name, so it arrives on every confirmation page whether the
+   order is going to one address or five. A store's ordinary single-address checkout must be
+   left exactly as its own template drew it -- rearranging that would be this plugin
+   redecorating a page it has no business in. The class is set by
+   jscript_multiship_confirmation.php, in the head, and only when the order is genuinely
+   going to several addresses.
+
+   The colour variables below are unscoped because they are only ever read by .multishipOrder,
+   which does not exist on a single-address page. */
 
 :root {
     --multiship-rule: #757575;
@@ -17,21 +25,83 @@
 }
 
 /* -----
-   Keeping the breakdown out of the template's column layout.
+   The page laid out for what it now contains.
 
-   ZCA Bootstrap wraps this whole page in <div class="card-columns">, which is CSS
-   multi-column. Bootstrap gives its own .card children break-inside: avoid; the block this
-   plugin puts in place of the delivery address is not a .card, so the columns were free to
-   split it wherever they liked -- dbltoe found the second of three recipients cut in half,
-   part in one column and part in the next.
+   ZCA Bootstrap puts the four blocks of this page -- billing and payment, delivery,
+   special instructions, products -- into .card-columns, which is CSS multi-column: content
+   flows down one column and wraps into the next, in whatever order it happens to fill. That
+   works for four cards of similar size. It does not work once one of them is a full
+   breakdown of five deliveries, and dbltoe found the second of three recipients cut in half
+   between two columns.
 
-   column-span takes it out of the column flow entirely, which is what it wants: it is a
-   full-width table of items, shipping and totals, and squeezed into a third of the page it
-   would be unreadable even unsplit.
+   Replaced with an explicit grid, because the blocks are no longer interchangeable. Billing
+   and payment spans the top; the deliveries span their own full-width row beneath, which is
+   what a table of items, shipping and totals needs; instructions and products sit side by
+   side below that.
 
-   break-inside on each recipient is the fallback. Where column-span is not honoured the
-   block stays in the columns, but at least each recipient stays whole -- the difference
-   between a narrow layout and a wrong one. */
+   column-count must be cleared explicitly -- Bootstrap sets it on .card-columns, and a grid
+   container with a column-count still tries to fragment its children. */
+.multishipConfirmation .card-columns {
+    column-count: initial;
+    -webkit-column-count: initial;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.multishipConfirmation #billingAddress-card,
+.multishipConfirmation #multishipConfirmationBreakdown {
+    grid-column: 1 / -1;
+}
+
+.multishipConfirmation #orderComment-card {
+    grid-column: 1;
+}
+
+.multishipConfirmation #cartContents-card {
+    grid-column: 2;
+}
+
+/* -----
+   Final Step and Confirm Order, together and centred.
+
+   ZCA gives that toolbar justify-content-between, which pins the wording hard left and the
+   button hard right. On a wide screen they end up at opposite ends with a gulf between --
+   "Final Step is floating around in there for some reason". They are one instruction and
+   the control it describes, so they are stacked and centred as a single closing block. */
+.multishipConfirmation #checkoutConfirmationDefault-btn-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    text-align: center;
+    margin-top: 1.5em;
+}
+
+/* -----
+   One column on anything narrower than a small desktop. Two columns of order detail on a
+   tablet leaves neither readable, and the products table needs the width more than the
+   layout needs the symmetry. */
+@media (max-width: 991px) {
+    .multishipConfirmation .card-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .multishipConfirmation #orderComment-card,
+    .multishipConfirmation #cartContents-card {
+        grid-column: 1 / -1;
+    }
+}
+
+/* -----
+   Each recipient.
+
+   column-span is kept for templates that do not use .card-columns and so never get the grid
+   above: on those the breakdown is still inside whatever column context the page provides,
+   and this takes it out. break-inside is the last line of defence -- where neither applies,
+   at least a recipient is not split down the middle. */
 #multishipConfirmationBreakdown {
     column-span: all;
     -webkit-column-span: all;
@@ -45,4 +115,21 @@
     break-inside: avoid;
     page-break-inside: avoid;
     -webkit-column-break-inside: avoid;
+}
+
+/* -----
+   Who the parcel is going to, read before the address that confirms it.
+
+   The name is what a customer checks against: they chose these addresses a few minutes ago
+   and verified each one when it went into their address book. The full address is kept, one
+   line and quieter, because a customer holding two addresses for the same person -- a PO box
+   and a street address, which dbltoe has -- cannot tell one from the other by name alone. */
+.multishipOrderName {
+    font-weight: bold;
+}
+
+.multishipOrderAddress {
+    display: block;
+    font-size: 0.9em;
+    opacity: 0.8;
 }
