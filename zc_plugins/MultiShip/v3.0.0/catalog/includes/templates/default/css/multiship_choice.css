@@ -1,4 +1,38 @@
 /* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
-   Auto-loads on multiship_choice; the page otherwise inherits the store template. */
+   Auto-loads on multiship_choice; the page otherwise inherits the store template.
 
-#multishipChoice { text-align: center; }
+   -----
+   Held to a readable width.
+
+   This page is a question and three answers -- almost nothing but text, with no product
+   grid or sidebar to give it shape. Left to fill the viewport it stretched across the whole
+   of a wide monitor: dbltoe called it "IMax syndrome". Lines that long are genuinely hard to
+   read, because the eye loses its place returning to the start of the next one; typography
+   has put the comfortable range at roughly 45 to 75 characters for a century and a browser
+   window is not a reason to abandon it.
+
+   em rather than px, so the measure follows the store's own font size. A template with
+   larger body text gets a proportionally wider column and the same number of characters per
+   line, which is the thing being limited.
+
+   Only the width is set here. Colour, font and button styling all come from the store, as
+   everywhere else in this plugin. */
+
+#multishipChoice {
+    max-width: 46em;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* The help text under each button is the longest thing on the page, so it is held tighter
+   still -- a short line under a button reads as belonging to it. */
+.multishipChoiceHelp {
+    max-width: 34em;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.multishipChoiceOption {
+    padding: 0.5em 0 1em;
+}

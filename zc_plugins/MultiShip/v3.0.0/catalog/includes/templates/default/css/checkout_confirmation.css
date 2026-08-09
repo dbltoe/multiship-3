@@ -16,4 +16,33 @@
     }
 }
 
-.multishipOrder { border: 1px solid var(--multiship-rule); border-radius: 6px; margin-top: 10px; padding: 5px; }
+/* -----
+   Keeping the breakdown out of the template's column layout.
+
+   ZCA Bootstrap wraps this whole page in <div class="card-columns">, which is CSS
+   multi-column. Bootstrap gives its own .card children break-inside: avoid; the block this
+   plugin puts in place of the delivery address is not a .card, so the columns were free to
+   split it wherever they liked -- dbltoe found the second of three recipients cut in half,
+   part in one column and part in the next.
+
+   column-span takes it out of the column flow entirely, which is what it wants: it is a
+   full-width table of items, shipping and totals, and squeezed into a third of the page it
+   would be unreadable even unsplit.
+
+   break-inside on each recipient is the fallback. Where column-span is not honoured the
+   block stays in the columns, but at least each recipient stays whole -- the difference
+   between a narrow layout and a wrong one. */
+#multishipConfirmationBreakdown {
+    column-span: all;
+    -webkit-column-span: all;
+}
+
+.multishipOrder {
+    border: 1px solid var(--multiship-rule);
+    border-radius: 6px;
+    margin-top: 10px;
+    padding: 5px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+}
