@@ -29,3 +29,48 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isSelected()) {
 // the button is drawn centred once instead of being drawn right and then moved.
 document.documentElement.className += ' multishipPayment';
 </script>
+<?php
+// -----
+// The rule lives here rather than in a checkout_payment.css, because that file could not
+// reach this page.
+//
+// Page stylesheets are resolved by html_header_css_loader.php with
+//     $template->get_template_dir('^' . $value . '.css', DIR_WS_TEMPLATE, $current_page_base, 'css')
+// which returns *one* directory. The active template's css/ is step 3 of that lookup and a
+// plugin's is step 4, so the two are mutually exclusive rather than additive: on any store
+// whose template ships its own checkout_payment.css -- which ZCA Bootstrap does, since a
+// payment page needs styling for its method list -- the plugin's file is never loaded at all.
+// No error, no warning, just a button still floating right. dbltoe reported exactly that, and
+// confirmed the markup was the .buttonRow.forward this was already written to target.
+//
+// The plugin's own pages are not exposed to this. No template ships CSS for a page it has
+// never heard of, so checkout_multiship.css and its siblings always win at step 4. It is only
+// the stylesheets named after *core* pages that can be shadowed.
+//
+// Emitting from here works because html_header.php loads the CSS at line 75 and the jscript_
+// files at line 88, so this arrives after every stylesheet and wins on cascade order at equal
+// specificity, without needing !important.
+//
+// Still scoped to the class above. The gate at the top of this file already means nothing is
+// emitted for a customer who is not multishipping, so the scoping is belt and braces -- but it
+// leaves a store owner something to target if they want the button back where it was.
+//
+?>
+<style>
+.multishipPayment .buttonRow.forward {
+    float: none;
+    clear: both;
+    text-align: center;
+    padding: 0.5em 0 1em;
+}
+
+.multishipPayment [id$="-btn-toolbar"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    text-align: center;
+    margin-top: 1.5em;
+}
+</style>
