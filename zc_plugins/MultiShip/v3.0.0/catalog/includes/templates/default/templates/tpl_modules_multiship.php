@@ -107,12 +107,18 @@ $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
 </div>
 <?php
     }  // END foreach loop
-?>
-<hr />
-<div class="orderTotals grandTotal">
-    <div class="totalBox larger forward"><?php echo $currencies->format($multiship_grand_total); ?></div>
-    <div class="lineTitle larger forward"><?php echo TEXT_GRAND_TOTAL; ?></div>
-</div>
-<br class="clearBoth" />
-<?php
 }
+// -----
+// No grand total here. It belongs to whichever page is including this.
+//
+// This partial is rendered in two places and they do not agree about it. The account
+// order-history page shows nothing else after it, so the grand total is the only place that
+// page states what the order came to -- it adds its own, immediately after including this.
+// checkout_confirmation has core's order totals in the products card a few inches below,
+// which is where a customer expects to find the figure and where they will compare it
+// against what they are charged; a second one at the end of the breakdown just gave dbltoe
+// the same number twice.
+//
+// Per-address totals stay here. Those are this partial's own business and appear nowhere
+// else.
+//

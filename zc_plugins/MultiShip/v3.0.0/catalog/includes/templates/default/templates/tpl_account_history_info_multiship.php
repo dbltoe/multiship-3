@@ -50,6 +50,26 @@ if (!empty($order->info['shipping_method'])) {
 <?php
 require $template->get_template_dir('tpl_modules_multiship.php', DIR_WS_TEMPLATE, $current_page_base, 'templates') . '/tpl_modules_multiship.php';
 
+// -----
+// The grand total, which this page has to supply itself.
+//
+// It used to live inside tpl_modules_multiship.php, but that partial is rendered on
+// checkout_confirmation too, where core's order totals sit in the products card just below
+// and the customer got the same figure twice. It is the including page's business, not the
+// partial's -- and here it matters, because nothing else on this page states what the order
+// came to. Downloads and status history follow, and neither carries a total.
+//
+if (!empty($multiship_info) && is_array($multiship_info)) {
+?>
+<hr />
+<div class="orderTotals grandTotal">
+    <div class="totalBox larger forward"><?php echo $currencies->format($multiship_grand_total); ?></div>
+    <div class="lineTitle larger forward"><?php echo TEXT_GRAND_TOTAL; ?></div>
+</div>
+<br class="clearBoth" />
+<?php
+}
+
 /**
  * Used to display any downloads associated with the cutomers account
  */
