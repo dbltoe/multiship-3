@@ -1,0 +1,46 @@
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on checkout_payment.
+
+   -----
+   Everything here is scoped to .multishipPayment, and that matters more on this page than
+   anywhere else in the plugin.
+
+   This file is loaded by page name, so it arrives on every payment page whether the customer
+   is shipping to one address or five. checkout_payment is not a multiship page -- it is the
+   payment page every customer of the store sees, and restyling it for all of them because
+   some of them are splitting an order would be this plugin redecorating somebody else's
+   checkout. The class is set by jscript_multiship_payment.php, in the head, and only when
+   multiship is actually selected.
+
+   -----
+   The closing button, centred.
+
+   Steps one and three of this checkout -- the address grid and the confirmation -- both close
+   with their controls centred. This is the middle step and the only one that is entirely
+   core's page, and it was the odd one out with its button in the right margin.
+
+   Two selectors because two templates have to be covered and neither can be assumed. Core
+   wraps the button in .buttonRow.forward, a float. ZCA Bootstrap uses a btn-toolbar with
+   justify-content-between, whose id is built from the template name -- matched on the suffix
+   rather than guessed at in full, the same lesson the checkout_success delivery block taught:
+   an id that is right on one template is worth nothing on the next.
+
+   float is cleared explicitly. text-align has no effect on a floated element, so without this
+   the core case would not move at all. */
+
+.multishipPayment .buttonRow.forward {
+    float: none;
+    clear: both;
+    text-align: center;
+    padding: 0.5em 0 1em;
+}
+
+.multishipPayment [id$="-btn-toolbar"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    text-align: center;
+    margin-top: 1.5em;
+}
