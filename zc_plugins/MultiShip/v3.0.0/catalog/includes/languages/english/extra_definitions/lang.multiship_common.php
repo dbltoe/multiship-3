@@ -138,6 +138,26 @@ $define = [
     'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
 
     // -----
+    // Shown on checkout_payment to a customer whose order is going to several addresses.
+    //
+    // That page shows one address and invites them to change it. It is the billing address
+    // and core's own wording says so three times -- but a customer who has just sent seven
+    // items to five addresses, and is now at the point of paying, sees one address where
+    // there were five and reads it as the split having been lost.
+    //
+    // So this says both halves: the deliveries are intact, and this address is not one of
+    // them. %1$u is the number of delivery addresses.
+    //
+    // "will not affect where anything is delivered" is the sentence that matters. The
+    // Change Address button here leads to checkout_payment_address, which writes only
+    // $_SESSION['billto'] and touches no multiship state at all -- unlike the button of the
+    // same name on checkout_shipping, which sets a single sendto and ends the multiship
+    // order. Same label, opposite consequence, so the difference is stated rather than left
+    // for the customer to risk finding out.
+    //
+    'MULTISHIP_PAYMENT_BILLING_ONLY' => 'Your %1$u delivery addresses are saved and unchanged. The address below is your <strong>billing</strong> address, where your payment is registered &mdash; changing it will not affect where anything is delivered.',
+
+    // -----
     // Replaces checkout_shipping's own heading while multiple addresses are in play.
     //
     // Core sets HEADING_TITLE to "Step 1 of 3 - Delivery Information" while its own

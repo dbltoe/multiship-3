@@ -219,6 +219,37 @@ class multiship_observer extends base
                     zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
                 }
                 $_SESSION['multiship']->fixupSessionShippingCost();
+
+                // -----
+                // Say that the split survived, and that the address on this page is not part
+                // of it.
+                //
+                // A customer who has just spent time sending seven items to five addresses
+                // arrives at the paying step and is shown exactly one address, with text
+                // inviting them to change it. Nothing on the page mentions their deliveries.
+                // The address is the billing one and core's wording says so three times, but
+                // at the moment of paying, one address where there were five reads as the
+                // split having been lost.
+                //
+                // Verified before writing this: checkout_payment_address, where that button
+                // leads, writes $_SESSION['billto'] and nothing else -- it never touches
+                // sendto, the shipping method or any multiship state. So the fear is
+                // unfounded and the answer is to say so, not to take the button away. It is
+                // the customer's only route to correcting a billing address, and unlike the
+                // Change Address button on checkout_shipping it destroys nothing.
+                //
+                if ($_SESSION['multiship']->isChosen()
+                    && $_SESSION['multiship']->allItemsAssigned()
+                    && defined('MULTISHIP_PAYMENT_BILLING_ONLY')
+                    && !empty($GLOBALS['messageStack'])
+                    && is_object($GLOBALS['messageStack'])
+                ) {
+                    $GLOBALS['messageStack']->add(
+                        'checkout_payment',
+                        sprintf(MULTISHIP_PAYMENT_BILLING_ONLY, $_SESSION['multiship']->addressCount()),
+                        'caution'
+                    );
+                }
                 break;
                 
             // -----
