@@ -36,9 +36,23 @@ echo zen_draw_form('multiship_address', zen_href_link(FILENAME_ADDRESS_BOOK_PROC
 
 <?php require $template->get_template_dir('tpl_modules_address_book_details.php', DIR_WS_TEMPLATE, $current_page_base, 'templates') . '/tpl_modules_address_book_details.php'; ?>
 
-    <div class="buttonRow forward"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT); ?></div>
+<?php
+// -----
+// Centred, not floated to the corners.
+//
+// These carried core's "forward" and "back" -- float right and float left -- which put the
+// button that finishes the page in the right margin and the way out in the left, with the
+// form between them. Every other page this plugin owns closes with its controls centred one
+// under the other, and dbltoe asked for the same here.
+//
+// "buttonRow" is kept so a store that has styled its button rows still reaches these; only
+// the float classes are dropped, because centring is what was asked for and a float would
+// win against it.
+//
+?>
+    <div class="buttonRow multishipAddressSubmit"><?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_UPDATE_ALT); ?></div>
 </form>
 
-<div class="buttonRow back"><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'); ?>"><?php echo TEXT_MULTISHIP_ADDRESS_CANCEL; ?></a></div>
+<div class="buttonRow multishipAddressCancel"><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'); ?>"><?php echo TEXT_MULTISHIP_ADDRESS_CANCEL; ?></a></div>
 
 </div>
