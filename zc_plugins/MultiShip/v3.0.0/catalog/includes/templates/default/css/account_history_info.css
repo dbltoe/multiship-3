@@ -48,15 +48,26 @@
 }
 
 .multishipOrderWho {
+    flex: 1 1 12em;
     min-width: 0;
 }
 
+/* nowrap so the three stay on one line as a group -- with a title as long as
+   "USPS (Ground Advantage):" they wrap one-per-line at the first excuse, which is the
+   stacked layout this was meant to get away from. The header around them still wraps.
+   Below 600px there is no line to keep them on. */
 .multishipOrderTotals {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
     gap: 0.25em 1.25em;
     margin-left: auto;
+}
+
+@media (max-width: 600px) {
+    .multishipOrderTotals {
+        flex-wrap: wrap;
+    }
 }
 
 .multishipTotalItem {

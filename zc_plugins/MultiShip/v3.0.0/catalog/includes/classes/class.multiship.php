@@ -1420,12 +1420,38 @@ class multiship extends base
     // -----
     // Provides the plugin's debug-log processing.
     //
-    protected function debugLog($message, $include_date = false) 
+    protected function debugLog($message, $include_date = false)
     {
         if ($this->debug) {
-            $header = ($include_date === false) ? '' : (PHP_EOL . date('Y-m-d H:i:s: '));
-            $header .= '(' . $GLOBALS['current_page_base'] . ') ';
-            error_log("$header$message" . PHP_EOL, 3, $this->logfile);
+            self::writeLogLine($message, $include_date, $this->logfile);
         }
+    }
+
+    // -----
+    // The same log, written from where there is no object to write it with.
+    //
+    // checkout_success runs after checkout_process has called sessionCleanup(), so
+    // $_SESSION['multiship'] is gone by then -- correctly, the order is placed. That page
+    // still rebuilds the breakdown from the database and still needs to be able to say what
+    // it found, and until now anything happening after cleanup was simply invisible.
+    //
+    // Derives the setting and the filename exactly as the constructor does, so a line written
+    // from here is indistinguishable from one written by the object.
+    //
+    public static function writeDebugLog($message, $include_date = false)
+    {
+        if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
+            self::writeLogLine($message, $include_date, DIR_FS_LOGS . '/multiship_' . date('Ymd') . '.log');
+        }
+    }
+
+    // -----
+    // One formatter for both, so the instance and static paths cannot drift apart.
+    //
+    private static function writeLogLine($message, $include_date, $logfile)
+    {
+        $header = ($include_date === false) ? '' : (PHP_EOL . date('Y-m-d H:i:s: '));
+        $header .= '(' . ($GLOBALS['current_page_base'] ?? 'unknown') . ') ';
+        error_log("$header$message" . PHP_EOL, 3, $logfile);
     }
 }

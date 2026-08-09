@@ -24,6 +24,18 @@
 $multiship_info = [];
 $is_multiship_order = false;
 
+// -----
+// Logged because the first attempt at this page did nothing at all and there was no way to
+// tell which of three things had happened: the file never ran, the query found no sub-orders,
+// or the breakdown was built and the script could not find anywhere to put it. Written
+// through the static logger, since the session object is gone by now.
+//
+multiship::writeDebugLog(
+    'checkout_success: orders_id ' . (empty($orders_id) ? 'NOT SET' : (int)$orders_id)
+    . ', order object ' . ((isset($order) && is_object($order)) ? 'present' : 'MISSING') . '.',
+    true
+);
+
 if (!empty($orders_id) && isset($order) && is_object($order)) {
     $multiship_orders_id = (int)$orders_id;
 
@@ -94,6 +106,10 @@ if (!empty($orders_id) && isset($order) && is_object($order)) {
     }
     unset($multiship);
 }
+
+multiship::writeDebugLog(
+    'checkout_success: ' . count($multiship_info) . ' sub-order(s) rebuilt from the database.'
+);
 
 // -----
 // No grand total. Core's order totals are rendered on this page directly beneath the

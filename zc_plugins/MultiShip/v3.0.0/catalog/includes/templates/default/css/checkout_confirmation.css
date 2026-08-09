@@ -157,16 +157,34 @@
     gap: 0.25em 1.5em;
 }
 
+/* Shrinks so the totals keep their line, rather than holding full width and pushing them
+   off it. A long recipient name wraps within itself instead. */
 .multishipOrderWho {
+    flex: 1 1 12em;
     min-width: 0;
 }
 
+/* -----
+   The three totals stay on one line as a group.
+
+   nowrap, not wrap: with a shipping title as long as "USPS (Ground Advantage):" they will
+   wrap one-per-line at the first excuse, and one-per-line is the stacked layout this was
+   meant to get away from. The header around them still wraps, so when there genuinely is no
+   room beside the name the whole group drops to its own line intact.
+
+   Below 600px there is no line to keep them on, and stacked is the honest answer. */
 .multishipOrderTotals {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
     gap: 0.25em 1.25em;
     margin-left: auto;
+}
+
+@media (max-width: 600px) {
+    .multishipOrderTotals {
+        flex-wrap: wrap;
+    }
 }
 
 .multishipTotalItem {
