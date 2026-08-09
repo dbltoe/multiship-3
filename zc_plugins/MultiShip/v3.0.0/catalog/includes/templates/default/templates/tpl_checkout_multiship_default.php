@@ -16,13 +16,6 @@ if ($messageStack->size('shopping_cart') > 0) {
     echo $messageStack->output('shopping_cart'); 
 }
 // -----
-// Two anchors, not one. Both go to checkout_shipping, but they mean different things --
-// one changes the shipping method, the other says the addresses are finished -- and a
-// single shared label could only ever be vague enough to cover both, which is how this
-// came to say "* HERE *" twice.
-//
-$change_shipping_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . TEXT_SHIPPING_METHOD_CHANGE_LINK . '</a>';
-// -----
 // Rendered as a button, so leaving this page looks like every other step of checkout --
 // the same control the cart uses to start checkout and the confirmation page uses to place
 // the order. A text link here read as an aside rather than the way forward.
@@ -39,15 +32,61 @@ $change_shipping_anchor = '<a class="multishipActionLink" href="' . $checkout_sh
 if (function_exists('zca_button_link')) {
     // button_checkout is the class ZCA's own shopping cart passes for its Checkout button,
     // so this picks up that exact styling rather than merely being some button.
-    $resume_checkout_anchor = zca_button_link($checkout_shipping_link, TEXT_CONTINUE_CHECKOUT_LINK, 'button_checkout multishipActionLink');
+    $resume_checkout_anchor = zca_button_link($multiship_continue_link, TEXT_CONTINUE_CHECKOUT_LINK, 'button_checkout multishipActionLink');
 } else {
-    $resume_checkout_anchor = '<a class="multishipActionLink" href="' . $checkout_shipping_link . '">' . zen_image_button(BUTTON_IMAGE_CHECKOUT, BUTTON_CHECKOUT_ALT) . '</a>';
+    $resume_checkout_anchor = '<a class="multishipActionLink" href="' . $multiship_continue_link . '">' . zen_image_button(BUTTON_IMAGE_CHECKOUT, BUTTON_CHECKOUT_ALT) . '</a>';
 }
 ?>
-    <div id="checkoutMultishipShipping"><?php echo TEXT_CURRENT_SHIPPING_METHOD; ?><strong><?php echo $_SESSION['shipping']['title']; ?></strong>. <?php echo sprintf(TEXT_SHIPPING_METHOD_CHANGE, $change_shipping_anchor); ?></div>
+    <?php echo zen_draw_form('checkout_multiship', zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL')); ?>
+<?php
+// -----
+// The shipping method is chosen here now, not on checkout_shipping.
+//
+// This block used to read "Your current shipping method: X. Not the one you want? Change
+// Shipping Method." -- a link back to a page the customer had already been through, which
+// is what made the flow five pages. Both questions this page can answer are now on it:
+// how the order travels, and where each item goes.
+//
+// It comes before the grid because it governs it. The method decides which addresses can
+// be served, and the warning icons in the grid below are answers to it.
+//
+// Changing it re-submits, exactly as the address menus do, because every address has to be
+// re-quoted against the new method. The same remember/restore keeps the customer's place.
+//
+$multishipShippingOnChange =
+    'ok2leave();'
+    . ' if (window.multishipRemember) { window.multishipRemember(); }'
+    . ' this.form.submit();';
+?>
+    <div id="checkoutMultishipShipping">
+        <h2 id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></h2>
+<?php
+foreach ($quotes as $multishipQuote) {
+    if (isset($multishipQuote['error'])) {
+?>
+        <div class="multishipShipError"><?php echo $multishipQuote['module'] . ': ' . $multishipQuote['error']; ?></div>
+<?php
+        continue;
+    }
+    foreach (($multishipQuote['methods'] ?? []) as $multishipMethod) {
+        $multishipMethodValue = $multishipQuote['id'] . '_' . $multishipMethod['id'];
+        $multishipMethodId = 'ship-' . preg_replace('/[^A-Za-z0-9_-]/', '', $multishipMethodValue);
+        $multishipMethodChecked = (isset($_SESSION['shipping']['id']) && $_SESSION['shipping']['id'] === $multishipMethodValue);
+?>
+        <div class="multishipShipMethod">
+            <?php echo zen_draw_radio_field('shipping', $multishipMethodValue, $multishipMethodChecked, 'id="' . $multishipMethodId . '" onchange="' . $multishipShippingOnChange . '"'); ?>
+            <label for="<?php echo $multishipMethodId; ?>">
+                <span class="multishipShipName"><?php echo $multishipQuote['module'] . ' &ndash; ' . $multishipMethod['title']; ?></span>
+                <span class="multishipShipCost"><?php echo $currencies->format(zen_add_tax($multishipMethod['cost'], ($multishipQuote['tax'] ?? 0))); ?></span>
+            </label>
+        </div>
+<?php
+    }
+}
+?>
+    </div>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
     <div id="checkoutMultishipNewAddress"><?php echo TEXT_NEED_ANOTHER_ADDRESS; ?><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_MULTISHIP_ADDRESS, '', 'SSL'); ?>"><?php echo TEXT_ENTER_NEW_ADDRESS; ?></a></div>
-    <?php echo zen_draw_form('checkout_multiship', zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL')); ?>
     <table id="multishipTable">
         <tr>
             <th class="item"><?php echo HEADING_ITEM; ?></th>

@@ -89,15 +89,104 @@ if (isset($_GET['action']) && $_GET['action'] === 'decline') {
 //
 $_SESSION['multiship']->chooseMultiship();
 
-// if no shipping method has been selected, redirect the customer to the shipping method selection page
-if (!isset($_SESSION['shipping'])) {
+// -----
+// The shipping method is chosen here, on this page, rather than on checkout_shipping.
+//
+// This page used to redirect to checkout_shipping when no method was set, which is what
+// made the multiship flow five pages long: pick a method, choose addresses, go back and
+// confirm the method, pay, confirm. Two of those five were the same page, and the customer
+// was asked to choose shipping before anyone knew where the order was going.
+//
+// Asking both questions here makes the flow three steps -- this page, payment,
+// confirmation -- matching the store's ordinary checkout, and puts the shipping choice
+// after the destinations are known rather than before.
+//
+// checkout_payment does not care where the customer came from. Its entry guards are all
+// state-based: a shipping method in the session, and $_SESSION['cartID'] matching the cart
+// (header_php.php lines 33 and 41). Both are satisfied below.
+//
+// This is also what makes the choice possible here at all. zen_count_shipping_modules()
+// counts *instantiated* module globals, not installed ones, so it reads zero on any page
+// that has not built the shipping class -- the same trap that once made offerAvailable()
+// always return false. Building it here is what gives this page real quotes.
+//
+require_once DIR_WS_CLASSES . 'http_client.php';   // UPS and friends need it
+require_once DIR_WS_CLASSES . 'order.php';
+require_once DIR_WS_CLASSES . 'shipping.php';
+
+// -----
+// Quotes are taken against one address, the way core does it -- the method list is the
+// carriers that will serve this customer, not a per-address answer. Serviceability of each
+// chosen address against the selected method is a separate question, and addressValidation()
+// below still asks it per address.
+//
+if (empty($_SESSION['sendto'])) {
+    $_SESSION['sendto'] = $_SESSION['customer_default_address_id'];
+}
+$order = new order();
+$shipping_modules = new shipping();
+
+// -----
+// A posted method. Mirrors core's handling at checkout_shipping/header_php.php:145-174,
+// including re-quoting the chosen method rather than trusting the posted cost.
+//
+if (isset($_POST['shipping']) && strpos($_POST['shipping'], '_') !== false) {
+    [$multiship_ship_module, $multiship_ship_method] = explode('_', $_POST['shipping']);
+    $multiship_quote = $shipping_modules->quote($multiship_ship_method, $multiship_ship_module);
+    if (!isset($multiship_quote[0]['error'])
+        && isset($multiship_quote[0]['methods'][0]['title'], $multiship_quote[0]['methods'][0]['cost'])
+    ) {
+        $_SESSION['shipping'] = [
+            'id' => $_POST['shipping'],
+            'title' => $multiship_quote[0]['module'] . ' (' . $multiship_quote[0]['methods'][0]['title'] . ')',
+            'cost' => $multiship_quote[0]['methods'][0]['cost'],
+        ];
+    }
+}
+
+$quotes = $shipping_modules->quote();
+
+// -----
+// Drop a stored method that is no longer offered -- a zone restriction or a disabled module
+// can retire one between visits. Core does the same check at line 187.
+//
+if (isset($_SESSION['shipping']['id'])) {
+    $multiship_valid_methods = [];
+    foreach ($quotes as $multiship_quote_entry) {
+        if (is_array($multiship_quote_entry['methods'] ?? null)) {
+            foreach ($multiship_quote_entry['methods'] as $multiship_quote_method) {
+                $multiship_valid_methods[] = $multiship_quote_entry['id'] . '_' . $multiship_quote_method['id'];
+            }
+        }
+    }
+    if (!in_array($_SESSION['shipping']['id'], $multiship_valid_methods, true)) {
+        $messageStack->add('multiship', ERROR_PLEASE_RESELECT_SHIPPING_METHOD, 'error');
+        unset($_SESSION['shipping']);
+    }
+}
+
+// -----
+// Nothing chosen yet: take the cheapest, as core does, so the page always has a method to
+// quote each address against. The customer sees it selected and can change it.
+//
+if (empty($_SESSION['shipping']['id']) && zen_count_shipping_modules() >= 1) {
+    $_SESSION['shipping'] = $shipping_modules->cheapest();
+}
+
+// -----
+// No shipping at all: hand back to core rather than showing a page that cannot work. Same
+// destination as before this page took the choice over, so nothing is worse than it was.
+//
+if (empty($_SESSION['shipping'])) {
     $zco_notifier->notify('CHECKOUT_MULTISHIP_SHIPPING_NOT_SELECTED');
     zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
 }
-if (isset($_SESSION['shipping']['id']) && $_SESSION['shipping']['id'] == 'free_free' && defined('MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING_OVER') && $_SESSION['cart']->get_content_type() != 'virtual' && $_SESSION['cart']->show_total() < MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING_OVER) {
-    $zco_notifier->notify('CHECKOUT_MULTISHIP_FREE_SHIPPING_MISMATCH');
-    zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
-}
+
+// -----
+// checkout_payment bounces to checkout_shipping unless this matches the cart, as its
+// tamper check. checkout_shipping sets it; standing in for that page means setting it here.
+//
+$_SESSION['cartID'] = $_SESSION['cart']->cartID;
 
 // -----
 // Addressing a corner-case scenario.  If a customer has entered some multiple ship-to addresses
@@ -174,6 +263,26 @@ if (isset($_POST['securityToken'])) {
         $_SESSION['multiship']->setMultiship($multiship_chosen_addresses, $multiship_chosen_prids);
     }
 }
+
+// -----
+// Recalculate the per-address costs and the order totals.
+//
+// This is the piece that had to come with the shipping choice. checkoutInitialize() quotes
+// every chosen address against the selected method and builds the totals that
+// updateOrdersTotalsAndTaxes() later writes into the order -- and it was only ever called
+// from header_php_checkout_shipping_multiship.php. Leaving it there while the customer no
+// longer visits that page would have produced an order with no multiship totals at all:
+// the split would exist, the money would not.
+//
+// It runs on every load of this page, which is exactly what checkout_shipping did with it,
+// so the totals are ready before the customer reaches payment -- Continue is an ordinary
+// link, with no request of ours in between.
+//
+// Only possible here because the shipping class was built above. checkoutInitialize() tests
+// zen_count_shipping_modules(), which counts instantiated modules and would otherwise read
+// zero and take the sessionCleanup() branch.
+//
+$_SESSION['multiship']->checkoutInitialize();
 
 $multiship_selected = $_SESSION['multiship']->isSelected();
 
@@ -330,7 +439,20 @@ for ($i = 0, $n = count($productsArray); $i < $n; $i++) {
 // have already scrolled past is not a reminder.
 //
 
-$checkout_shipping_link = ($invalid_address_present) ? zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'address_correction', 'SSL') : zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL');
+// -----
+// Where "Continue with Checkout" goes: payment, directly.
+//
+// It used to return to checkout_shipping, which then wanted the method confirmed before
+// passing the customer on -- the second visit to that page, and the step dbltoe described
+// as "having to confirm the shipping we already decided on". The method is now chosen on
+// this page, so there is nothing left for checkout_shipping to ask.
+//
+// The address_correction branch is unchanged. A method that cannot serve one of the chosen
+// addresses still sends the customer back here to sort it out, not onward.
+//
+$multiship_continue_link = ($invalid_address_present)
+    ? zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'address_correction', 'SSL')
+    : zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL');
 
 if ($invalid_address_present) {
     $messageStack->add('multiship', sprintf(ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD, MULTISHIP_ICON_NO_SHIP), 'error');

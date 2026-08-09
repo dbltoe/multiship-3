@@ -285,8 +285,12 @@ class multiship extends base
             // -----
             // Pull in the order and shipping classes.
             //
-            require DIR_WS_CLASSES . 'order.php';
-            require DIR_WS_CLASSES . 'shipping.php';
+            // require_once, not require. checkout_multiship now builds the order and
+            // shipping classes in its own header so it can offer the shipping choice, and
+            // neither class file guards against being included twice -- a plain require
+            // here would be a redeclaration fatal on the very page this runs on.
+            require_once DIR_WS_CLASSES . 'order.php';
+            require_once DIR_WS_CLASSES . 'shipping.php';
             
             list($module, $method) = explode('_', $_SESSION['shipping']['id']);
             $saved_sendto = $_SESSION['sendto'];

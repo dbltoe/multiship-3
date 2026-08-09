@@ -65,6 +65,19 @@
 
 #checkoutMultishipNewAddress, #onetime_charges, #checkoutMultishipShipping { padding-top: 0.5em; padding-bottom: 0.3em; }
 #checkoutMultishipShipping { border-bottom: 1px solid var(--multiship-rule); margin-bottom: 0.3em; padding: 1em 0; }
+
+/* -----
+   The shipping-method choice, which now lives on this page rather than on checkout_shipping.
+
+   Each method is one row: control, name, then cost pushed to the right so the prices form a
+   column the customer can compare down. The label fills the row so the whole line is a click
+   target, not just the few pixels of the radio. */
+#multishipShippingHeading { margin: 0 0 0.5em; font-size: 1.1em; }
+.multishipShipMethod { display: flex; align-items: baseline; gap: 0.5em; padding: 0.35em 0; }
+.multishipShipMethod label { display: flex; flex: 1; gap: 0.5em; cursor: pointer; margin: 0; font-weight: normal; }
+.multishipShipName { flex: 1; }
+.multishipShipCost { white-space: nowrap; font-weight: bold; }
+.multishipShipError { color: var(--multiship-alert); padding: 0.35em 0; }
 #checkoutMultishipInstructions { padding: 1em 0; }
 #multishipTable { width: 100%; padding: 0.3em; }
 #multishipTableHeading { font-weight: bold; }

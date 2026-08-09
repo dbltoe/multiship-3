@@ -27,21 +27,25 @@ $define = [
     'TEXT_DECLINE_MULTISHIP' => 'Changed your mind? %s to send this whole order to a single address.',
     'TEXT_DECLINE_MULTISHIP_LINK' => 'Use the Normal Checkout',
 
-    'TEXT_CURRENT_SHIPPING_METHOD' => 'Your current shipping method: ',
+    // -----
+    // Heading over the shipping-method choice, which now lives on this page.
+    //
+    // TEXT_CURRENT_SHIPPING_METHOD, TEXT_SHIPPING_METHOD_CHANGE and
+    // TEXT_SHIPPING_METHOD_CHANGE_LINK are gone with the block they described -- this page
+    // used to state the method and link back to checkout_shipping to change it, which is
+    // what made the flow five pages long.
+    //
+    'TEXT_MULTISHIP_SHIPPING_HEADING' => 'How should this order travel?',
 
     // -----
-    // Link text on this page names its destination rather than saying "here".
+    // Raised when a stored method is no longer on offer -- a zone restriction or a disabled
+    // module can retire one between visits.
     //
-    // Screen-reader users commonly navigate by pulling up a list of every link on the
-    // page, where the surrounding sentence is not read out. "HERE" and "here" tell such a
-    // user nothing, and this page previously used both for two links that go to different
-    // places. WCAG 2.4.4 (Link Purpose in Context) is the relevant criterion.
+    // Core has its own wording for this, but it lives in lang.checkout_shipping.php, which
+    // is not loaded on this page. Referencing it here would be a fatal on the one request
+    // it was needed, so this plugin carries its own.
     //
-    // Sentences are phrased so the link reads as a control rather than running on as
-    // prose, which is also what makes it look clickable to everyone else.
-    //
-    'TEXT_SHIPPING_METHOD_CHANGE' => 'Not the one you want? %s.',
-    'TEXT_SHIPPING_METHOD_CHANGE_LINK' => 'Change Shipping Method',
+    'ERROR_PLEASE_RESELECT_SHIPPING_METHOD' => 'The shipping method you chose is no longer available for this order. Please choose another below.',
 
     'HEADING_ITEM' => 'Item',
     'HEADING_PRICE' => 'Price',
