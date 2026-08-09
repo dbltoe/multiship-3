@@ -114,6 +114,75 @@ whose template already provides a file of the same name.
 
 ---
 
+## The image at the top of your emails
+
+A multiship order sends more email than a single-address one. Each sub-order has its own
+status, so a customer who split an order across three addresses gets three "your order has
+shipped" emails rather than one. Whatever sits at the top of those emails appears once per
+parcel.
+
+On most stores, what sits there is a file the owner has never seen.
+
+### What it is
+
+Zen Cart ships `email/header.jpg` — a 550×110 banner — and puts it at the top of every HTML
+email the store sends, including the order-status emails this plugin's sub-orders trigger.
+It is referenced as `$EMAIL_LOGO_FILE` in the templates in that same `email/` directory, and
+the path is assembled in `includes/classes/Email.php` as:
+
+```
+DIR_WS_CATALOG . 'email/' . EMAIL_LOGO_FILENAME
+```
+
+The constants controlling it are in `includes/languages/english/lang.email_extras.php`:
+
+| Constant | Default |
+|---|---|
+| `EMAIL_LOGO_FILENAME` | `header.jpg` |
+| `EMAIL_LOGO_WIDTH` | `550` |
+| `EMAIL_LOGO_HEIGHT` | `110` |
+| `EMAIL_LOGO_ALT_TEXT` | `Brand Logo` |
+| `EMAIL_LOGO_ALT_TITLE_TEXT` | `Zen Cart! The Art of E-commerce` |
+
+Read that last row again. Until it is changed, every HTML email your store sends carries
+Zen Cart's own branding in the image tooltip, over your logo, under your domain.
+
+### Why you may never have noticed
+
+Two switches both have to be on before anyone sees it:
+
+1. **The store** — Admin → Configuration → E-Mail Options → *Send E-Mails in HTML format*
+   (`EMAIL_USE_HTML`). With this off, every email is plain text and the image is never
+   referenced.
+2. **The customer** — each account carries its own email-format preference. A customer set
+   to Plain Text gets plain text no matter what the store setting says.
+
+So a store can run for years with the stock banner going out to the subset of customers who
+have HTML enabled, while the owner, testing with a plain-text account, sees nothing.
+
+### What to do about it
+
+The change that needs no code is to replace `email/header.jpg` with your own artwork at the
+same dimensions. Nothing else has to be touched — same filename, same size, done.
+
+If your logo is a different shape, adjust `EMAIL_LOGO_WIDTH` and `EMAIL_LOGO_HEIGHT` too, and
+fix the alt and title text while you are there. Override them the same way as the
+order-comments heading above rather than editing the base language file, so a Zen Cart
+upgrade cannot put Zen Cart's branding back.
+
+If you would rather send no banner at all, an empty or transparent image at those dimensions
+is safer than deleting the file, which leaves a broken image icon.
+
+### What this plugin does about it
+
+Nothing, deliberately. Multiship sends no email of its own — it lets Zen Cart's order-status
+machinery do the sending, so a sub-order email looks exactly like every other email your
+store sends, header and all. If you have set that banner up, these emails use it. If you have
+not, these emails are no worse than the rest of your mail, and the fix above fixes all of
+them at once rather than just ours.
+
+---
+
 ## Login page focus
 
 If a customer chooses multiple addresses before signing in, they are sent to log in and
