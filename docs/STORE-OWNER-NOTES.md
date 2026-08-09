@@ -68,7 +68,6 @@ The plugin already has places for it, and they appear only when multiship is act
 | Constant | Where it appears |
 |---|---|
 | `SHIP_TO_MULTIPLE_CART_ACTIVE` | shopping cart, once multiship is chosen |
-| `MULTISHIP_RETURN_TO_ADDRESSES` | `checkout_shipping`, alongside the link to the address grid |
 | `TEXT_MULTISHIP_INSTRUCTIONS` | the address grid itself |
 | `TEXT_MULTISHIP_CHOICE_INTRO` | the Yes/No interstitial |
 
@@ -102,11 +101,16 @@ their own weight, not the whole order's.
 
 ## Styling the action links
 
-The plugin's forward links carry classes so they can be rendered as buttons from your own
+The plugin's forward links carry a class so they can be rendered as buttons from your own
 stylesheet — customers reported not recognising plain inline links as the way forward:
 
-- `.multishipContinueLink` — "Continue to Addresses", on `checkout_shipping`
-- `.multishipActionLink` — the links on the address grid
+- `.multishipActionLink` — the links on the address grid, on the new-address page, and in
+  the cart-page notice
+
+`.multishipContinueLink` was removed in v3.0.0 along with the message that carried it.
+It only ever appeared on `checkout_shipping`, and that page is no longer part of the
+multiship flow — a customer who has chosen multiple addresses is now sent straight to the
+address grid.
 
 Put the rules in your template's own `stylesheet.css`. A stylesheet shipped by a plugin
 resolves *behind* the active template's `css` directory, so it will not load on any store

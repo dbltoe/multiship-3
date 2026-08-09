@@ -278,9 +278,10 @@ Done:
 
 Outstanding:
 
-- Two dead template files, `tpl_checkout_shipping_multiship.php` and
-  `tpl_checkout_confirmation_multiship_address.php`, plus any language constants they
-  orphan. Nothing includes either; both are lat9 override leftovers.
+- ~~Two dead template files~~ — **done.** `tpl_checkout_shipping_multiship.php` and
+  `tpl_checkout_confirmation_multiship_address.php` removed, along with the unreachable
+  `NOTIFY_HEADER_START_CHECKOUT_SHIPPING` case in `multiship_observer` and the four
+  language constants only it used.
 - **Accessibility pass, deferred by decision** — deliberately postponed until the
   flow works end to end. To be set by dbltoe, whose field this is. Known items so far:
 

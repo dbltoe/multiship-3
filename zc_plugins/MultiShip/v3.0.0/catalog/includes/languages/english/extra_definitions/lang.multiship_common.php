@@ -5,12 +5,8 @@
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
 $define = [
-    'SHIP_TO_MULTIPLE_ADDRESSES' => 'Ship to multiple addresses',
     'SHIPPING_TO_MULTIPLE_ADDRESSES' => 'Shipping to multiple addresses, see below.',
 
-    'SHIP_TO_MULTIPLE_ADDRESSES_LINK' => 'If you are shipping to one address, now is the time to make sure the address above is correct.<br><br>Shipping to multiple addresses?  Click %s to identify which products ship to what address.',
-    'SHIP_TO_MULTIPLE_ADDRESSES_ACTIVE' => 'Currently shipping to %1$u addresses.  Click %2$s to make any changes.',
-    'SHIP_TO_MULTIPLE_HERE' => '* HERE *',   //-Used as the anchor text for the links (%s), inserted above.
 
     // -----
     // Shown on the shopping-cart page when the cart qualifies, the question has not yet
@@ -93,50 +89,6 @@ $define = [
     // worst moment to introduce a term the customer has never met.
     //
     'ERROR_MULTISHIP_ADDRESS_MAX' => 'You have reached the multiple shipping limit of %u delivery addresses. Remove one from your address book if you need to add another.',
-
-    // -----
-    // Shown on checkout_shipping to a customer who has chosen multiple addresses. This
-    // is the route back to the address grid. It replaces a link that used to be rendered
-    // by an override of tpl_checkout_shipping_default.php, which is no longer shipped;
-    // delivering it through the messageStack keeps the plugin free of template files.
-    //
-    // The link text is title case and reads as a control rather than prose, because in
-    // lowercase it looked like part of the sentence and customers did not recognise it as
-    // the way forward. It stays descriptive rather than becoming "click here", so that it
-    // still makes sense when read out of context in a screen reader's list of links.
-    'MULTISHIP_RETURN_TO_ADDRESSES' => 'This order is going to more than one address. Choose a shipping method below, then click %s to set a delivery address for each item.',
-    'MULTISHIP_RETURN_TO_ADDRESSES_LINK' => 'Continue to Addresses',
-
-    // -----
-    // Shown to a customer arriving back at the shipping step with every item addressed.
-    //
-    // Without it the page reads as though their work was lost and they are starting over:
-    // it is headed Step 1, it is the page they already completed, and the message above --
-    // which tells them to go and set addresses -- would be actively wrong.
-    //
-    // They are here because checkoutInitialize(), which recalculates shipping for the
-    // addresses they just chose, runs only on this page. So the message says what the page
-    // is for rather than apologising for it. %1$u is the number of addresses, %2$s a link
-    // back to the grid for anyone who wants to change them.
-    //
-    // -----
-    // Reassure, then branch, then give one instruction. An earlier draft said "check it
-    // below", which left the customer to work out whether "it" was their addresses, the
-    // shipping cost or the order -- at the moment they are already unsure why they are on
-    // a page they thought they had finished.
-    //
-    // %1$u addresses, %2$s the link back to the grid.
-    //
-    // The button is described by position, not by name. An earlier version passed in
-    // BUTTON_CONTINUE_ALT so the message would name the button the customer could see;
-    // that constant is 'Continue', but core and ZCA both hand it to zen_image_submit() as
-    // alt text and ZCA labels the button from elsewhere -- on a real store it reads
-    // "Continue to Step 2". So the message named a control that was not there. Chasing
-    // whatever label a template chose is not winnable across templates; "below" is.
-    //
-    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. If you need to make changes to them, %2$s. Otherwise, verify your shipping method, then click <strong>Continue</strong> below.',
-    'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
-
     // -----
     // Shown on checkout_payment to a customer whose order is going to several addresses.
     //

@@ -30,9 +30,18 @@ class multiship_observer extends base
                     'NOTIFY_ADDRESS_BOOK_PROCESS_VALIDATION',
                     'NOTIFY_MODULE_ADDRESS_BOOK_ADDED_ADDRESS_BOOK_RECORD',
 
+                    // -----
+                    // NOTIFY_HEADER_START_CHECKOUT_SHIPPING is deliberately absent.
+                    //
+                    // This observer used to raise one of two messages there, both requiring
+                    // isChosen(). multiship_early_observer, attached at [90] against this
+                    // class's [131], now redirects unconditionally on isChosen() -- so neither
+                    // could ever be reached, and checkout_shipping is not part of the multiship
+                    // flow any more. The notifier is still handled, just by the observer that
+                    // gets there first.
+                    //
                     /* page header_php.php's */
                     'NOTIFY_HEADER_END_CHECKOUT_PROCESS',
-                    'NOTIFY_HEADER_START_CHECKOUT_SHIPPING',
                     'NOTIFY_HEADER_START_CHECKOUT_PAYMENT',
                     
                     /* /includes/modules[/YOUR_TEMPLATE]/checkout_process.php */
@@ -156,79 +165,6 @@ class multiship_observer extends base
                 }
                 break;
 
-            case 'NOTIFY_HEADER_START_CHECKOUT_SHIPPING':
-                // -----
-                // multiship_shipping_changed was set here, and read on checkout_payment to
-                // send the customer back for a recalculation. Both ends are gone; see the
-                // NOTIFY_HEADER_START_CHECKOUT_PAYMENT case below for why.
-                //
-                // -----
-                // Restore the customer's route back to the address grid.
-                //
-                // checkout_multiship requires a shipping method, so a customer arriving
-                // from the interstitial is bounced here to choose one. The link back used
-                // to be rendered by an override of tpl_checkout_shipping_default.php,
-                // which this plugin no longer ships, so without this they would be
-                // stranded on the shipping page.
-                //
-                // Delivered as a message rather than by redirecting from checkout_payment:
-                // isSelected() only becomes true once two or more *different* addresses
-                // are assigned, so a redirect would trap any customer who opened the grid
-                // and left everything going to one address.
-                //
-                // -----
-                // Two different customers arrive here, and telling them the same thing
-                // fails one of them.
-                //
-                // One is on the way *to* the grid and needs pointing at it. The other has
-                // just finished there and is being sent back through a page headed Step 1
-                // -- which reads as though their work was lost, especially if it repeats
-                // "go and set your addresses". They are here because checkoutInitialize()
-                // recalculates shipping for the addresses they chose, and this is the only
-                // page it runs on, so the message tells them that rather than leaving them
-                // to guess they are starting over.
-                //
-                if ($_SESSION['multiship']->isChosen() && $_SESSION['multiship']->allItemsAssigned()) {
-                    $GLOBALS['messageStack']->add(
-                        'checkout_shipping',
-                        sprintf(
-                            MULTISHIP_ADDRESSES_SET,
-                            $_SESSION['multiship']->addressCount(),
-                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>'
-                            // -----
-                            // The button used to be named here, passed in as
-                            // BUTTON_CONTINUE_ALT, so the message would always match what
-                            // the customer could see. It did not: BUTTON_CONTINUE_ALT is
-                            // 'Continue', and both core and ZCA pass it to
-                            // zen_image_submit() as the *alt* text -- ZCA labels the button
-                            // itself something else, and dbltoe's store renders it
-                            // "Continue to Step 2". The message named a control that was
-                            // not on the page.
-                            //
-                            // Tracking whatever a template chose to label its button is not
-                            // winnable. Position is: the message now says "click Continue
-                            // below" and points down the page instead.
-                        ),
-                        'caution'
-                    );
-                } elseif ($_SESSION['multiship']->isChosen()) {
-                    $GLOBALS['messageStack']->add(
-                        'checkout_shipping',
-                        sprintf(
-                            MULTISHIP_RETURN_TO_ADDRESSES,
-                            // -----
-                            // The class is a styling hook, not decoration. Customers were
-                            // not recognising a plain inline link as the way forward, so a
-                            // store can render it as a button from its own stylesheet --
-                            // which is the only place that reliably loads, since plugin CSS
-                            // sits behind the active template in the lookup order.
-                            //
-                            '<a class="multishipContinueLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_RETURN_TO_ADDRESSES_LINK . '</a>'
-                        ),
-                        'caution'
-                    );
-                }
-                break;
             case 'NOTIFY_HEADER_START_CHECKOUT_PAYMENT':
                 // -----
                 // The bounce back to checkout_shipping is gone, and it was hurting the wrong
