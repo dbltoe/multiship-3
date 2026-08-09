@@ -50,8 +50,20 @@ if ($multiship_breakdown_html === '') {
 }
 
 multiship::writeDebugLog('checkout_success: breakdown rendered, ' . strlen($multiship_breakdown_html) . ' bytes handed to the page.');
+
+// -----
+// A marker in the page source, only when debug is on.
+//
+// Earned its place while this page was doing nothing at all: it separates "the PHP never ran"
+// from "the PHP ran and the DOM would not take it", and View Source answers that without
+// needing access to the logs. Gated rather than removed, because that is a question worth
+// being able to ask again on the next store whose template renames everything -- and gated
+// rather than left in, because a customer's receipt is not the place for our scaffolding.
+//
+if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
+    echo '<!-- multiship: breakdown built for ' . count($multiship_info) . ' address(es), see the multiship log -->' . PHP_EOL;
+}
 ?>
-<!-- multiship: breakdown present, see the multiship log for the server side -->
 
 <script>
 // -----
