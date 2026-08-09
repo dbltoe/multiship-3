@@ -295,15 +295,31 @@ if (isset($_POST['securityToken'])) {
 // longer visits that page would have produced an order with no multiship totals at all:
 // the split would exist, the money would not.
 //
-// It runs on every load of this page, which is exactly what checkout_shipping did with it,
-// so the totals are ready before the customer reaches payment -- Continue is an ordinary
-// link, with no request of ours in between.
-//
 // Only possible here because the shipping class was built above. checkoutInitialize() tests
 // zen_count_shipping_modules(), which counts instantiated modules and would otherwise read
 // zero and take the sessionCleanup() branch.
 //
-$_SESSION['multiship']->checkoutInitialize();
+// -----
+// Guarded on isSelected(), and that guard is the whole point.
+//
+// checkoutInitialize() calls sessionCleanup() whenever the selection is not complete, and
+// sessionCleanup() does unset($this->cart) -- the address assignments themselves. selected
+// only becomes true once two *different* addresses are assigned, so on this page, where the
+// customer is building that selection one row at a time, an unguarded call destroys the work
+// as fast as they do it: choose an address, setMultiship() stores it, this wipes it, the page
+// comes back blank. That is exactly what dbltoe saw -- "none of the addresses are 'taking'
+// when selected".
+//
+// checkout_shipping could call it unguarded because a customer only reached that page after
+// finishing here. This page is where the work happens, so it has to wait for the work to be
+// finished.
+//
+// Nothing is lost by waiting. The totals are needed when the customer leaves for payment,
+// and Continue only appears once every item has an address.
+//
+if ($_SESSION['multiship']->isSelected()) {
+    $_SESSION['multiship']->checkoutInitialize();
+}
 
 $multiship_selected = $_SESSION['multiship']->isSelected();
 

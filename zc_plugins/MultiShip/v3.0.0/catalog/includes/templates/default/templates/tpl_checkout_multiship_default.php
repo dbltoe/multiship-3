@@ -61,6 +61,18 @@ $multishipShippingOnChange =
     <div id="checkoutMultishipShipping">
         <h2 id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></h2>
 <?php
+// -----
+// No price against the method, deliberately.
+//
+// A quote is the cost of sending the whole order to one address, because that is what a
+// shipping module is asked. This order is not going to one address. The real figure is the
+// sum of a separate quote per destination, and cannot be known until every item has one --
+// on dbltoe's five-address test that was $135.90 against a single-address quote of $11.30.
+//
+// Putting the small number beside the method the customer is about to choose would be
+// quoting them a price the order will not cost. The carriers are named here; the real total
+// appears once it is real.
+//
 foreach ($quotes as $multishipQuote) {
     if (isset($multishipQuote['error'])) {
 ?>
@@ -77,7 +89,6 @@ foreach ($quotes as $multishipQuote) {
             <?php echo zen_draw_radio_field('shipping', $multishipMethodValue, $multishipMethodChecked, 'id="' . $multishipMethodId . '" onchange="' . $multishipShippingOnChange . '"'); ?>
             <label for="<?php echo $multishipMethodId; ?>">
                 <span class="multishipShipName"><?php echo $multishipQuote['module'] . ' &ndash; ' . $multishipMethod['title']; ?></span>
-                <span class="multishipShipCost"><?php echo $currencies->format(zen_add_tax($multishipMethod['cost'], ($multishipQuote['tax'] ?? 0))); ?></span>
             </label>
         </div>
 <?php
