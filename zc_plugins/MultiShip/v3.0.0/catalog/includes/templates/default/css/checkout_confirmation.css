@@ -133,3 +133,29 @@
     font-size: 0.9em;
     opacity: 0.8;
 }
+
+/* -----
+   Each recipient's totals on one line.
+
+   Stacked, they were three full-width rows per recipient -- which is how core lays out the
+   totals for a whole order, and fine when it happens once. Here it happens for every
+   recipient, and a single item to a single address came to about nine rows.
+
+   Ranged right, matching where totals sit on every other page of a Zen Cart checkout, and
+   wrapping to as many lines as they need on a narrow screen rather than being squeezed. */
+.multishipOrderTotals {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4em 1.5em;
+    padding-top: 0.4em;
+}
+
+.multishipTotalItem {
+    white-space: nowrap;
+}
+
+.multishipTotalValue {
+    font-weight: bold;
+    padding-left: 0.35em;
+}

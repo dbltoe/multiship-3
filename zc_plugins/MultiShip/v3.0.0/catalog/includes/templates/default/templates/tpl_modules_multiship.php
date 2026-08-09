@@ -84,19 +84,35 @@ $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
         }  // end for loopthru all products 
 ?>
     </table>
-    <hr />
 <?php
+// -----
+// This recipient's totals on one line, not three.
+//
+// Each total used to be its own full-width row with a clearing break after it, which is how
+// core lays out the totals for a whole order -- reasonable when it happens once at the
+// bottom of a page. Here it happens for every recipient, and with the heading, the table
+// header and the item rows it came to about nine rows for a single item going to a single
+// address. dbltoe reported the scrolling on a three-address order; on ten it would be
+// unusable.
+//
+// Sub-Total, Shipping and Total side by side reads as a summary of the block above rather
+// than as three separate statements, and it costs two rows per recipient. The horizontal
+// rule went with them: the box around each recipient already separates one from the next,
+// and a rule inside it was dividing something that did not need dividing.
+//
+// The classes core puts on each total are kept, so a store that has styled ot_shipping or
+// ot_total keeps that styling.
+//
         if (MODULE_ORDER_TOTAL_INSTALLED) {
 ?>
-    <div class="orderTotals">
+    <div class="multishipOrderTotals">
 <?php
-            foreach ($currentInfo['totals'] as $currentTotal) { 
+            foreach ($currentInfo['totals'] as $currentTotal) {
 ?>
-        <div class="<?php echo $currentTotal['class']; ?>">
-            <div class="totalBox larger forward"><?php echo $currentTotal['text']; ?></div>
-            <div class="lineTitle larger forward"><?php echo $currentTotal['title']; ?></div>
-        </div>
-        <br class="clearBoth" />
+        <span class="multishipTotalItem <?php echo $currentTotal['class']; ?>">
+            <span class="multishipTotalTitle"><?php echo $currentTotal['title']; ?></span>
+            <span class="multishipTotalValue"><?php echo $currentTotal['text']; ?></span>
+        </span>
 <?php
             }
 ?>

@@ -18,3 +18,37 @@
 
 .multishipOrder { border: 1px solid var(--multiship-rule); border-radius: 6px; margin-top: 10px; padding: 5px; }
 #orderHistoryInfoHeader { width: 100%; text-align: center; }
+
+/* -----
+   The same recipient layout the confirmation page uses.
+
+   tpl_modules_multiship.php is rendered on both pages, so these rules have to exist in both
+   stylesheets -- page CSS is loaded by page name and neither file sees the other. Kept
+   deliberately identical: a customer who checked their order at confirmation and comes back
+   to it in their account should recognise what they are looking at. */
+.multishipOrderName {
+    font-weight: bold;
+}
+
+.multishipOrderAddress {
+    display: block;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.multishipOrderTotals {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4em 1.5em;
+    padding-top: 0.4em;
+}
+
+.multishipTotalItem {
+    white-space: nowrap;
+}
+
+.multishipTotalValue {
+    font-weight: bold;
+    padding-left: 0.35em;
+}

@@ -6,9 +6,17 @@
 //
 $define = [
     'NAVBAR_TITLE_1' => 'Checkout',
-    'NAVBAR_TITLE_2' => 'Choose Multiple Shipping Addresses',
+    'NAVBAR_TITLE_2' => 'Shipping Method and Addresses',
 
-    'HEADING_TITLE' => 'Choose a Shipping Address for Each Item',
+    // -----
+    // Names both questions, because the page now asks both.
+    //
+    // It read "Choose a Shipping Address for Each Item" when addresses were all it did. The
+    // shipping method moved onto this page to get the flow down to three steps, and a
+    // heading that mentions only half of what is on screen tells a customer the other half
+    // is something they have wandered into by mistake.
+    //
+    'HEADING_TITLE' => 'Choose a Shipping Method and Addresses',
     // -----
     // Stated, not asked. This only renders once every item has an address, so "All
     // finished?" was a question whose answer was always yes -- and "Return to Checkout"
