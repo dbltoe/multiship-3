@@ -73,6 +73,23 @@ $multishipShippingOnChange =
 // quoting them a price the order will not cost. The carriers are named here; the real total
 // appears once it is real.
 //
+// -----
+// The markup mirrors the store template's own, rather than being invented here.
+//
+// ZCA Bootstrap draws its shipping methods as
+//     <div class="custom-control custom-radio"> <input class="custom-control-input"> <label
+//     class="custom-control-label">
+// which is Bootstrap's pattern: the native control is taken out of the flow and the visible
+// one is drawn by the label's pseudo-elements. Hand-rolled markup gets neither -- which is
+// how this page ended up with choices dbltoe could only find by hovering: "the shipping
+// choices under the title that are unmarked selections/links".
+//
+// Those class names cost nothing on a template that has never heard of them: unknown classes
+// style nothing and the native radio shows normally. Same tactic as the alert alert-info on
+// the note below. Adopting the store's own pattern is also the point -- a checkout page that
+// draws its controls differently from every other page of the store is exactly what makes a
+// customer wonder whether they are still on the same site.
+//
 foreach ($quotes as $multishipQuote) {
     if (isset($multishipQuote['error'])) {
 ?>
@@ -85,11 +102,14 @@ foreach ($quotes as $multishipQuote) {
         $multishipMethodId = 'ship-' . preg_replace('/[^A-Za-z0-9_-]/', '', $multishipMethodValue);
         $multishipMethodChecked = (isset($_SESSION['shipping']['id']) && $_SESSION['shipping']['id'] === $multishipMethodValue);
 ?>
-        <div class="multishipShipMethod">
-            <?php echo zen_draw_radio_field('shipping', $multishipMethodValue, $multishipMethodChecked, 'id="' . $multishipMethodId . '" onchange="' . $multishipShippingOnChange . '"'); ?>
-            <label for="<?php echo $multishipMethodId; ?>">
-                <span class="multishipShipName"><?php echo $multishipQuote['module'] . ' &ndash; ' . $multishipMethod['title']; ?></span>
-            </label>
+        <div class="multishipShipMethod custom-control custom-radio">
+            <?php echo zen_draw_radio_field('shipping', $multishipMethodValue, $multishipMethodChecked, 'id="' . $multishipMethodId . '" class="custom-control-input" onchange="' . $multishipShippingOnChange . '"'); ?>
+            <label class="custom-control-label checkboxLabel" for="<?php echo $multishipMethodId; ?>"><?php
+                echo $multishipQuote['module'] . ' &ndash; ' . $multishipMethod['title'];
+                if (!empty($multishipQuote['icon'])) {
+                    echo ' ' . $multishipQuote['icon'];
+                }
+            ?></label>
         </div>
 <?php
     }
