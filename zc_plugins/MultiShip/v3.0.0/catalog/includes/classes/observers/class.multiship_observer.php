@@ -78,18 +78,6 @@ class multiship_observer extends base
                 break;
 
             // -----
-            // These two notifications work in concert with the jscript_checkout_shipping_multiship.php script's
-            // processing.  If Multi-Ship is enabled, that jQuery processing adds an additional field to the to-be-posted
-            // form and submits the form on any change of the shipping selection. If the checkout_shipping page's 
-            // header finds the selection OK, it records the selection in the session and re-directs to checkout_payment.
-            //
-            // If, on entry to the checkout_shipping page, the jQuery-added variable is set, a session
-            // variable is set to be interrogated on the checkout_payment page.  If that variable is set on
-            // entry to checkout_payment, this processing redirects back to checkout_shipping to allow the
-            // Multiple Ship-to addresses' processing to perform any shipping-cost recalculations based on that
-            // shipping-selection change.
-            //
-            // -----
             // A multiship customer who has just added an address belongs back at the
             // address grid, not at their account address book.
             //
@@ -141,11 +129,11 @@ class multiship_observer extends base
                 break;
 
             case 'NOTIFY_HEADER_START_CHECKOUT_SHIPPING':
-                unset($_SESSION['multiship_shipping_changed']);
-                if (!empty($_POST['multiship_changed'])) {
-                    $_SESSION['multiship_shipping_changed'] = true;
-                }
-
+                // -----
+                // multiship_shipping_changed was set here, and read on checkout_payment to
+                // send the customer back for a recalculation. Both ends are gone; see the
+                // NOTIFY_HEADER_START_CHECKOUT_PAYMENT case below for why.
+                //
                 // -----
                 // Restore the customer's route back to the address grid.
                 //
@@ -214,10 +202,35 @@ class multiship_observer extends base
                 }
                 break;
             case 'NOTIFY_HEADER_START_CHECKOUT_PAYMENT':
-                if (isset($_SESSION['multiship_shipping_changed'])) {
-                    unset($_SESSION['multiship_shipping_changed']);
-                    zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
-                }
+                // -----
+                // The bounce back to checkout_shipping is gone, and it was hurting the wrong
+                // customers.
+                //
+                // It existed because checkout_shipping used to be where a multiship customer
+                // chose their method: change it there and the per-address costs had to be
+                // recalculated, so arriving at payment with multiship_shipping_changed set
+                // sent them back one page to have that happen. The method moved onto the
+                // address grid to get the flow down to three steps, and the grid recalculates
+                // for itself, so nothing has needed this since.
+                //
+                // What kept it alive was the wrong guard at the other end.
+                // jscript_checkout_shipping_multiship.php was gated on isEnabled(), which asks
+                // whether multiship is *available* for this cart -- not whether the customer
+                // chose it, and declineMultiship() does not change it. checkout_shipping now
+                // renders only for customers who are NOT multishipping, so that script was
+                // loading for exactly the people it was never meant for: it made core's
+                // shipping page auto-submit on every method change, posted multiship_changed,
+                // and then this redirect bounced them from payment back to shipping. One
+                // visible detour through the store's ordinary checkout, caused entirely by a
+                // plugin they had just declined.
+                //
+                // All three pieces removed together -- the script, the flag being set on
+                // checkout_shipping, and this redirect. Any one of them would have stopped the
+                // bounce; leaving the other two would have left machinery with nothing to do
+                // and a trap for whoever read it next.
+                //
+                // Found by dbltoe during release-candidate review.
+                //
                 $_SESSION['multiship']->fixupSessionShippingCost();
 
                 // -----
