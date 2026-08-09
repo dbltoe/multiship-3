@@ -1,18 +1,78 @@
-/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
-   Auto-loads on checkout_multiship. Deliberately layout only: colours come from the
-   store's own template so the page looks native, except where a fallback is needed for
-   templates that provide no alert styling of their own. */
+﻿/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on checkout_multiship.
+
+   Layout is ours; colour is the store's. This page is reached mid-checkout, and a
+   customer who feels handed to a different site to finish their order has been given a
+   reason to stop. So nothing here states a colour of its own where it can derive one.
+
+   Rules and shading are mixed from currentColor, which is whatever the store's template
+   has set the text to -- so they follow a light theme, a dark theme or a branded one
+   without being told about it. Each is written twice: a plain colour first for browsers
+   without color-mix(), then the derived value, which those browsers ignore as invalid.
+   The fallbacks are the values this file used to hardcode, so nothing regresses.
+
+   ZCA Bootstrap, the template this was built against, is Bootstrap 3.4 and exposes no
+   custom properties -- there is no --bs-border-color to inherit, which is why the colour
+   is derived from text rather than read from the theme.
+
+   Three properties are exposed for a store owner who wants to be explicit. Set them
+   anywhere that wins the cascade, e.g. in the template's own stylesheet:
+
+       :root {
+           --multiship-rule:   #d0d0d0;   rules and borders
+           --multiship-stripe: #f6f6f6;   alternating table rows
+           --multiship-alert:  #9b1c15;   surcharges and the cannot-ship marker
+       }
+*/
+
+:root {
+    --multiship-rule: #414141;
+    --multiship-stripe: #ebebeb;
+    /* Fallback only, for browsers without color-mix(). Measures 8.17:1 on white and 2.13:1
+       on a dark surface -- which is exactly why the derived value below exists. */
+    --multiship-alert: #9b1c15;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    :root {
+        --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
+        --multiship-stripe: color-mix(in srgb, currentColor 6%, transparent);
+
+        /* -----
+           The alert colour is derived too, and for a sharper reason than the other two.
+           A fixed red cannot serve both a light and a dark store: #9b1c15 measures 8.17:1
+           on white and 2.13:1 on a dark surface, so a store owner switching to a dark
+           theme would silently lose the one marker on this page that means "this item
+           cannot ship there".
+
+           Mixing the red with currentColor pulls it toward the store's own text, so it
+           darkens on a light theme and lightens on a dark one. At 55% it measures about
+           6.9:1 either way (6.85 light, 6.97 dark, against typical #333-on-white and
+           #e0e0e0-on-#1a1a1a).
+
+           That is a hair under the 7:1 this plugin targets, and it is a deliberate
+           trade: no red holds 7:1 in both directions without desaturating into brown and
+           losing the meaning. Comfortably past AA in both, and far better than a fixed
+           colour that fails outright in one. A store owner wanting AAA can set
+           --multiship-alert explicitly for their own background.
+
+           Colour is not the only signal in either place it is used: the cannot-ship
+           marker is a fa-exclamation-circle icon with title text, and the surcharge line
+           is labelled. */
+        --multiship-alert: color-mix(in srgb, #e5484d 55%, currentColor);
+    }
+}
 
 #checkoutMultishipNewAddress, #onetime_charges, #checkoutMultishipShipping { padding-top: 0.5em; padding-bottom: 0.3em; }
-#checkoutMultishipShipping { border-bottom: 1px solid #414141; margin-bottom: 0.3em; padding: 1em 0; }
+#checkoutMultishipShipping { border-bottom: 1px solid var(--multiship-rule); margin-bottom: 0.3em; padding: 1em 0; }
 #checkoutMultishipInstructions { padding: 1em 0; }
 #multishipTable { width: 100%; padding: 0.3em; }
 #multishipTableHeading { font-weight: bold; }
-#multishipTableHeading > div, .multishipTableItem > div { display: table-cell; padding: 0.3em; border-bottom: 1px solid #414141; }
-#multishipTable tr:nth-child(even) { background-color: #ebebeb; }
-.onetime_charge, #onetime_charges { color: red; }
+#multishipTableHeading > div, .multishipTableItem > div { display: table-cell; padding: 0.3em; border-bottom: 1px solid var(--multiship-rule); }
+#multishipTable tr:nth-child(even) { background-color: var(--multiship-stripe); }
+.onetime_charge, #onetime_charges { color: var(--multiship-alert); }
 .virtual { display: none; }
-td.sendto .fa { color: red; }
+td.sendto .fa { color: var(--multiship-alert); }
 
 /* -----
    Column widths. The item name is the longest thing on the row and was being squeezed by a
@@ -36,7 +96,7 @@ td.sendto .fa { color: red; }
    classes, and are overridden harmlessly where they do. */
 #multishipControls { padding-top: 0.5em; }
 #multishipQuantityNote { float: right; max-width: 60%; margin: 0 0 0.5em 1em; padding: 0.5em 0.75em; }
-#multishipQuantityNote:not(.alert) { border: 1px solid #757575; border-radius: 6px; }
+#multishipQuantityNote:not(.alert) { border: 1px solid var(--multiship-rule); border-radius: 6px; }
 .clearBoth { clear: both; }
 
 /* -----

@@ -1,2 +1,20 @@
-.multishipOrder { border: 1px solid #757575; border-radius: 6px; margin-top: 10px; padding: 5px; }
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on account_history_info when the order went to several addresses.
+
+   The box around each recipient takes its rule from currentColor, so it follows whatever
+   the store's template has set the text to rather than stating a grey of its own. Written
+   twice: the plain colour first for browsers without color-mix(), then the derived value.
+   Override --multiship-rule in the template's own stylesheet to be explicit. */
+
+:root {
+    --multiship-rule: #757575;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    :root {
+        --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
+    }
+}
+
+.multishipOrder { border: 1px solid var(--multiship-rule); border-radius: 6px; margin-top: 10px; padding: 5px; }
 #orderHistoryInfoHeader { width: 100%; text-align: center; }
