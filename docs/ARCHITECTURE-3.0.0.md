@@ -281,32 +281,44 @@ behind the active template's own `css` directory at step 3, and One Page Checkou
 its own `login.css` into the template — so on any store running OPC, a plugin `login.css`
 never loads. A `login.css` was written and then removed for exactly that reason.
 
-**What the plugin ships instead:** `catalog/includes/modules/pages/login/on_load_multiship.js`.
+**What the plugin ships:**
+`catalog/includes/modules/pages/login/jscript_multiship_login_focus.php`.
 
-`index.php` builds the `<body onload="...">` attribute from `on_load_*.js` files gathered
-by `listModulePagesFiles('on_load_', '.js')`, which merges the core page directory with
-plugin page directories. Plugin contents are appended after core's, so this runs *after*
-`document.loginForm.email_address.focus()` and undoes it:
+There are **two** causes, not one, and both scroll:
 
-```js
-if (document.querySelector('.multishipLoginNotice') && document.loginForm && document.loginForm.email_address) { document.loginForm.email_address.blur(); window.scrollTo(0, 0); }
-```
+1. the `autofocus` attribute on the input, applied by the browser at parse time
+2. `on_load_main.js`, read into the body's `onload` attribute
 
-It **blurs as well as scrolls**. Scrolling alone would leave focus in a field the visitor
-cannot see, which is worse than the original problem for a keyboard or screen-reader user.
-Blurring returns the page to the state an ordinary page load would produce.
+An earlier version of this fix — `on_load_multiship.js` — ran at body `onload`, which is
+*after* both, and undid them with `blur()` and `scrollTo(0, 0)`. It worked, and it was
+visibly wrong: the page arrived, jumped down, and jumped back. A correction the customer
+can watch happen reads as a fault, not a fix. It has been removed.
 
-Three constraints govern that file, and breaking any of them corrupts every login page:
+The replacement loads in the **head**. `html_header_js_loader.php:52` gathers
+`listModulePagesFiles('jscript_', '.php')` and `require`s each file inline, so it runs
+before the form is parsed and can get in front of both causes:
 
-- **No double quotes** — the contents are emitted inside `onload="…"`.
-- **No `//` comments** — files are concatenated, so a line comment would silently disable
-  whatever followed it. A single-line `/* … */` is safe.
-- **Filename must match `^on_load_`**, the pattern `listModulePagesFiles` searches for.
+- **`autofocus`** — a `MutationObserver` on `document.documentElement` catches the input
+  the moment it is inserted and strips the attribute. Observer callbacks are microtasks;
+  autofocus candidates are flushed during the rendering steps, which come later.
+- **`on_load_main.js`** — an own `focus` property is assigned to that one element,
+  shadowing the prototype method, so core's call is a no-op. Nothing else on the page is
+  affected, and the property is deleted on a zero timeout after `load`, giving the field
+  back for ordinary use.
 
-Scoped to `.multishipLoginNotice`, so ordinary logins are untouched. It degrades well: the
-problem is caused by JavaScript, so with scripting disabled there is no focus to undo and
-nothing to fix. `listModulePagesFiles()` is `@since v2.2.0`, so on v2.0.0 and v2.1.0 the
-file is simply never read — inert, not broken.
+The timeout is load-bearing. This script registers its `load` listener from the head, so
+without deferring it would run *before* the body's own `onload` attribute and hand
+`focus()` back just in time to be called.
+
+**Scoped server-side**, on `$_SESSION['multiship']->isChosen()` and the customer not being
+signed in — so the store's other shoppers keep core's behaviour untouched. That scoping
+moved out of the DOM: the old file keyed off `.multishipLoginNotice` being present, which
+is why that span used to be load-bearing and is now only a styling hook.
+
+It degrades well. The problem is caused by scripting, so with JavaScript off there is no
+focus to prevent. `listModulePagesFiles()` is `@since v2.2.0`, so on v2.0.0 and v2.1.0 the
+file is never read — inert, not broken, and those stores keep the behaviour they have
+today.
 
 This is a stopgap. The real fix is upstream, and is a one-line change with precedent:
 four core pages — `create_account`, `checkout_shipping_address`,

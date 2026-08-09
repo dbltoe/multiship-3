@@ -49,21 +49,16 @@ $define = [
     //
     // The wrapping span is a styling hook, kept deliberately.
     //
-    // Zen Cart focuses the login email field from core JavaScript --
-    // includes/modules/pages/login/on_load_main.js contains
-    // document.loginForm.email_address.focus(); -- so the login page arrives scrolled
-    // past the create-account section. That hurts multiship customers particularly,
-    // since they have just been told they need an account.
+    // Zen Cart focuses the login email field two ways -- the autofocus attribute on the
+    // input, and includes/modules/pages/login/on_load_main.js, whose entire contents are
+    // document.loginForm.email_address.focus() -- so in split-login mode, where the
+    // sign-in field sits below the create-account section, the page arrives scrolled past
+    // this notice and past the create-account option it is pointing at.
     //
-    // This plugin cannot fix it. A plugin stylesheet resolves at step 4 of the template
-    // lookup, behind the active template's own css directory at step 3, and One Page
-    // Checkout installs a login.css into the template -- so on any store running OPC a
-    // plugin login.css never loads at all.
-    //
-    // The span is what scopes the workaround in
-    // catalog/includes/modules/pages/login/on_load_multiship.js, which blurs the field and
-    // scrolls back to the top -- but only when this notice is present, so ordinary logins
-    // are untouched. Renaming or removing the span silently disables that file.
+    // Handled by catalog/includes/modules/pages/login/jscript_multiship_login_focus.php,
+    // which loads in the head and disables both causes before either fires. That file
+    // scopes itself server-side on the multiship session, so the span is no longer what
+    // gates it -- it is purely a styling hook now, and renaming it breaks nothing.
     'MULTISHIP_LOGIN_REQUIRED' => '<span class="multishipLoginNotice">Sending this order to more than one address needs an account, so each delivery can be tracked separately. Please sign in, or create an account, and we will bring you straight back.</span>',
 
     // -----
