@@ -87,6 +87,30 @@ class multiship_early_observer extends base
                     break;
                 }
 
+                // -----
+                // Multiship is chosen: this page is not part of that flow any more, so send
+                // the customer to the page that is.
+                //
+                // checkout_shipping used to be where a multiship customer picked their
+                // method and later confirmed it. Both questions moved to the address grid so
+                // the flow would be three steps rather than five -- but nothing then stopped
+                // a customer reaching this page anyway, by going back to the cart and
+                // choosing Checkout again. It rendered normally, and its Continue goes
+                // straight to payment: an order with multiship chosen, no addresses
+                // assigned, and no way for the customer to tell anything was wrong.
+                //
+                // Redirecting rather than explaining. There is nothing to decide here now.
+                //
+                // The grid clears the multiship intent on every route it takes back to this
+                // page -- a cart that no longer qualifies, no shipping available, an explicit
+                // decline -- so isChosen() is false by the time the customer arrives and this
+                // cannot bounce them back again.
+                //
+                if ($_SESSION['multiship']->isChosen()) {
+                    $_SESSION['multiship']->debugNote('checkout intercept: multiship chosen, sending to the address grid.');
+                    zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
+                }
+
                 if ($_SESSION['multiship']->hasBeenAsked()) {
                     $_SESSION['multiship']->debugNote('checkout intercept: already asked, not offering again.');
                     break;
@@ -136,7 +160,28 @@ class multiship_early_observer extends base
                 //
                 if ($_SESSION['multiship']->isChosen()) {
                     if (defined('SHIP_TO_MULTIPLE_CART_ACTIVE') && !empty($GLOBALS['messageStack']) && is_object($GLOBALS['messageStack'])) {
-                        $active = SHIP_TO_MULTIPLE_CART_ACTIVE;
+                        // -----
+                        // The notice carries the way out as well as the way on.
+                        //
+                        // Choosing multiship is sticky by design -- a customer part-way
+                        // through assigning addresses who nips back to the cart should not be
+                        // re-asked. But that left no way to change their mind from here:
+                        // Checkout went straight to the grid, and dbltoe found himself
+                        // "locked in to MS versus the original questions".
+                        //
+                        // The grid has always carried a decline link, but a customer who has
+                        // come back to the cart to start over is not looking at the grid. The
+                        // same escape belongs where they are.
+                        //
+                        // Declining also clears the asked-flag, so Checkout puts the original
+                        // question back -- which is what "start over" was reaching for.
+                        //
+                        $active = sprintf(
+                            SHIP_TO_MULTIPLE_CART_ACTIVE,
+                            '<a class="multishipActionLink" href="'
+                                . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '">'
+                                . SHIP_TO_MULTIPLE_CART_ACTIVE_DECLINE . '</a>'
+                        );
                         if (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS === 'True') {
                             $active .= ' ' . SHIP_TO_MULTIPLE_CART_NOTICE_EC;
                         }

@@ -29,6 +29,16 @@ $cart_contents = $_SESSION['cart']->count_contents();
 if ($cart_contents <= 0) {
     zen_redirect(zen_href_link(FILENAME_SHOPPING_CART));
 } elseif ($cart_contents == 1 || !isset($_SESSION['multiship'])) {
+    // -----
+    // A cart down to one item cannot go to several addresses, so the intent goes with it.
+    //
+    // Also a loop guard: checkout_shipping now redirects anyone with multiship chosen back
+    // to this page, so leaving the flag set on the way out would bounce the customer between
+    // the two pages until the browser gave up.
+    //
+    if (isset($_SESSION['multiship'])) {
+        $_SESSION['multiship']->declineMultiship();
+    }
     zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING));
 }
 
@@ -177,8 +187,14 @@ if (empty($_SESSION['shipping']['id']) && zen_count_shipping_modules() >= 1) {
 // No shipping at all: hand back to core rather than showing a page that cannot work. Same
 // destination as before this page took the choice over, so nothing is worse than it was.
 //
+// The intent is cleared on the way out. checkout_shipping now redirects a customer with
+// multiship chosen straight back here, so leaving the flag set would put the two pages in a
+// loop -- and there is nothing to come back for: without a shipping method this page cannot
+// function at all. Declining lands them in the store's ordinary checkout, which can.
+//
 if (empty($_SESSION['shipping'])) {
     $zco_notifier->notify('CHECKOUT_MULTISHIP_SHIPPING_NOT_SELECTED');
+    $_SESSION['multiship']->declineMultiship();
     zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
 }
 
@@ -189,18 +205,23 @@ if (empty($_SESSION['shipping'])) {
 $_SESSION['cartID'] = $_SESSION['cart']->cartID;
 
 // -----
-// Addressing a corner-case scenario.  If a customer has entered some multiple ship-to addresses
-// and subsequently changed the shipping-method so that one or more of those previously-entered
-// addresses are no longer valid, we need a way to let the 'checkout_shipping' processing "know"
-// that it should ignore those invalid addresses, from a 'multiship' standpoint, so that the 
-// customer can make their change/correction.
+// A chosen address the current shipping method cannot serve.
+//
+// This used to send the customer to checkout_shipping to pick a different method. The
+// method is chosen on this page now, so there is nowhere to send them -- everything needed
+// to resolve it is already here: the method list above, the addresses below, and a marker
+// against each address the method cannot reach.
+//
+// The flag is still set, since the observer on checkout_shipping reads it, but the redirect
+// is gone. Sending them away would now bounce straight back and would take the address
+// grid, the very thing they need to look at, off the screen.
 //
 if (isset($_GET['address_correction'])) {
     $ms_cart = $_SESSION['multiship']->getCart();
     foreach ($ms_cart as $address_id => $info) {
         if (isset($info['address-error'])) {
             $_SESSION['multiship_new_shipping'] = true;
-            zen_redirect(zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
+            break;
         }
     }
 }

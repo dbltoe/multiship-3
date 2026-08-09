@@ -35,7 +35,11 @@ $define = [
     // cart mid-flow has no way to tell whether multiship is still active, and reasonably
     // wonders where it went.
     //
-    'SHIP_TO_MULTIPLE_CART_ACTIVE' => 'This order is going to more than one address. Choose <strong>Checkout</strong> to set a delivery address for each item.',
+    // %s is a link that turns multiship off and puts the original question back at Checkout.
+    // It is here because a customer who returns to the cart to start over is not looking at
+    // the address grid, which is the only other place that offer exists.
+    'SHIP_TO_MULTIPLE_CART_ACTIVE' => 'This order is going to more than one address. Choose <strong>Checkout</strong> to set a delivery address for each item, or %s.',
+    'SHIP_TO_MULTIPLE_CART_ACTIVE_DECLINE' => 'send everything to one address instead',
 
     // -----
     // Added to the 'login' messageStack when a not-yet-signed-in customer chooses to ship
