@@ -115,12 +115,16 @@ $define = [
     // shipping cost or the order -- at the moment they are already unsure why they are on
     // a page they thought they had finished.
     //
-    // %1$u addresses, %2$s the link back to the grid, %3$s the label on the page's own
-    // submit button. That last one is passed in as BUTTON_CONTINUE_ALT rather than written
-    // here as "Continue", so the message always names the button the customer can actually
-    // see -- including when the store has renamed it or is running another language.
+    // %1$u addresses, %2$s the link back to the grid.
     //
-    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. If you need to make changes to them, %2$s. Otherwise, verify your shipping method below, then click <strong>%3$s</strong>.',
+    // The button is described by position, not by name. An earlier version passed in
+    // BUTTON_CONTINUE_ALT so the message would name the button the customer could see;
+    // that constant is 'Continue', but core and ZCA both hand it to zen_image_submit() as
+    // alt text and ZCA labels the button from elsewhere -- on a real store it reads
+    // "Continue to Step 2". So the message named a control that was not there. Chasing
+    // whatever label a template chose is not winnable across templates; "below" is.
+    //
+    'MULTISHIP_ADDRESSES_SET' => 'Your %1$u delivery addresses are saved. If you need to make changes to them, %2$s. Otherwise, verify your shipping method, then click <strong>Continue</strong> below.',
     'MULTISHIP_ADDRESSES_SET_LINK' => 'go back to your addresses',
 
     // -----
@@ -135,7 +139,15 @@ $define = [
     // extra_definitions would change it for single-address orders too, so it is swapped
     // client-side alongside the block removal.
     //
-    'MULTISHIP_SHIPPING_HEADING' => 'Step 2 of 3 - Choose Your Shipping Method',
+    // -----
+    // "Confirm", not "Choose". The shipping method is already settled by the time a
+    // multiship customer reaches this page -- checkout_multiship shows it to them
+    // ("Current shipping method: ...") with its own link to change it, and the per-address
+    // quoting has already run against it. Arriving at a page headed "Choose Your Shipping
+    // Method" asks for a decision they have made, which reads as though the previous step
+    // did not take.
+    //
+    'MULTISHIP_SHIPPING_HEADING' => 'Step 2 of 3 - Confirm Your Shipping',
 
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 

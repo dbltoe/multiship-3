@@ -79,23 +79,25 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
             <td class="msipPrice"><?php echo $currentProduct['price']; ?></td>
 <?php
     // -----
-    // Choosing an address submits the form, so the page reloads and the browser lands back
-    // at the top -- once per item, which on a five-row order means scrolling down four
-    // times to do four things. Pointing the form at the *next* row's anchor puts the
-    // customer where they were about to work instead.
+    // Choosing an address submits the form, so the page reloads -- once per item, which on
+    // a five-row order is five reloads while working down a single list.
     //
-    // Done by rewriting the action rather than with a scroll script, so it needs nothing
-    // beyond the submit that was already happening here. Customers without JavaScript never
-    // reach this path at all; they set every row and press Update.
+    // This used to rewrite the form's action to point at the next row's anchor, so the
+    // reload would land there. It did not hold: the fragment of a POST target is not
+    // reliably applied, and where it is, an anchor scroll is still a visible jump.
     //
-    // The last row has no next row, so it points at the controls below the grid -- which is
-    // where that customer is going anyway. Without this it targeted an anchor that does not
-    // exist and the browser chose for itself.
-    $multishipNextRow = (int)$multishipRowIndex + 1;
-    $multishipNextAnchor = ($multishipNextRow < count($productsArray)) ? 'multishipRow' . $multishipNextRow : 'multishipControls';
+    // jscript_multiship_grid.php now records the scroll position here and restores it on
+    // the way back in, so the page returns exactly where it was and the reload costs no
+    // movement. It also returns keyboard focus to the next unanswered menu, which a reload
+    // would otherwise throw back to the top of the document on every choice.
+    //
+    // Guarded rather than called outright: if that file is ever absent the submit still
+    // happens and the customer gets the old behaviour, not a dead menu. Customers without
+    // JavaScript never reach this path at all -- they set every row and press Save.
+    //
     $multishipOnChange =
         'ok2leave();'
-        . ' this.form.action = this.form.action.split(\'#\')[0] + \'#' . $multishipNextAnchor . '\';'
+        . ' if (window.multishipRemember) { window.multishipRemember(); }'
         . ' this.form.submit();';
 ?>
             <td class="sendto"><?php

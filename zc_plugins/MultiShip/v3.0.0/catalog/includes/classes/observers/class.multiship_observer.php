@@ -178,10 +178,20 @@ class multiship_observer extends base
                         sprintf(
                             MULTISHIP_ADDRESSES_SET,
                             $_SESSION['multiship']->addressCount(),
-                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>',
-                            // The page's own submit label, so the message names the button
-                            // the customer can see rather than assuming it says Continue.
-                            defined('BUTTON_CONTINUE_ALT') ? BUTTON_CONTINUE_ALT : 'Continue'
+                            '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL') . '">' . MULTISHIP_ADDRESSES_SET_LINK . '</a>'
+                            // -----
+                            // The button used to be named here, passed in as
+                            // BUTTON_CONTINUE_ALT, so the message would always match what
+                            // the customer could see. It did not: BUTTON_CONTINUE_ALT is
+                            // 'Continue', and both core and ZCA pass it to
+                            // zen_image_submit() as the *alt* text -- ZCA labels the button
+                            // itself something else, and dbltoe's store renders it
+                            // "Continue to Step 2". The message named a control that was
+                            // not on the page.
+                            //
+                            // Tracking whatever a template chose to label its button is not
+                            // winnable. Position is: the message now says "click Continue
+                            // below" and points down the page instead.
                         ),
                         'caution'
                     );
