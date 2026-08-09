@@ -96,7 +96,20 @@ $define = [
     // Quantities and extra items are the cart's business, not this page's. %1$s and %2$s
     // are links to the cart and to the storefront.
     //
-    'TEXT_MULTISHIP_CHANGE_QUANTITIES' => 'Sending more than one of something, or changed your mind about an item? %1$s to adjust quantities, or %2$s to keep shopping.',
+    // -----
+    // Says nothing about changing your mind, and that is deliberate.
+    //
+    // This used to open "Sending more than one of something, or changed your mind about an
+    // item?" -- and the decline link a few lines below opens "Changed your mind?". Two links
+    // on the same page, the same words, opposite consequences: this one goes to the cart and
+    // keeps multiship, that one ends multiship altogether. dbltoe took this one expecting
+    // the other and reported being stuck in multiship, which is exactly what the wording
+    // promised him.
+    //
+    // Now says what it is for -- quantities and items -- and leaves "changed your mind" to
+    // the link that actually acts on it.
+    //
+    'TEXT_MULTISHIP_CHANGE_QUANTITIES' => 'Need a different quantity, or want to add or remove something? %1$s to make changes, or %2$s to keep shopping. Your delivery addresses are kept.',
     'TEXT_MULTISHIP_CHANGE_QUANTITIES_CART' => 'Return to Your Cart',
     'TEXT_MULTISHIP_CHANGE_QUANTITIES_SHOP' => 'browse the store',
 

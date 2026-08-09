@@ -179,6 +179,17 @@ $define = [
     //
     'MULTISHIP_SHIPPING_HEADING' => 'Step 2 of 3 - Confirm Your Shipping',
 
+    // -----
+    // Shown on checkout_confirmation, above the per-address breakdown. %1$u is the number of
+    // delivery addresses.
+    //
+    // Also the whole of what a customer without JavaScript is told there: the breakdown is
+    // placed by a script, and without it core's page shows one address -- their default one
+    // -- for an order going to several. This at least contradicts that, on the last page
+    // before they commit.
+    //
+    'MULTISHIP_CONFIRMATION_NOTICE' => 'This order is going to %1$u different addresses. Check below that each item is going where you intended, then place your order.',
+
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
     'TEXT_GRAND_TOTAL' => 'Grand Total:',

@@ -173,8 +173,11 @@ class multiship_early_observer extends base
                         // come back to the cart to start over is not looking at the grid. The
                         // same escape belongs where they are.
                         //
-                        // Declining also clears the asked-flag, so Checkout puts the original
-                        // question back -- which is what "start over" was reaching for.
+                        // Following that link ends multiship and returns the customer to the
+                        // store's ordinary checkout. Coming back to the cart afterwards also
+                        // reopens the question -- declineMultiship() sets the asked-flag, and
+                        // the branch below clears it on arrival here -- so "start over" gets
+                        // the original choice back, which is what it was reaching for.
                         //
                         $active = sprintf(
                             SHIP_TO_MULTIPLE_CART_ACTIVE,
