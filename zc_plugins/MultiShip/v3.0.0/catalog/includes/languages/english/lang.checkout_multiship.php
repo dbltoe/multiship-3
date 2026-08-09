@@ -105,18 +105,15 @@ $define = [
     'BUTTON_MULTISHIP_SAVE_ADDRESSES' => 'Save Addresses',
 
     // -----
-    // Says what the button is for, because for most customers the answer is "nothing".
+    // Shown inside <noscript>, beneath the Save Addresses button, so only a customer without
+    // JavaScript ever reads it. Everyone else has their choices saved as they make them and
+    // never sees the button at all.
     //
-    // Every address menu saves the moment it is changed, so a customer with JavaScript never
-    // needs this button at all. It exists for the customer who does not: without it they
-    // could fill in the whole grid and have no way to record any of it.
+    // An instruction, not an explanation. This customer has no other way to record anything,
+    // so what they need is what to do -- not to be told that other people's browsers behave
+    // differently, which they can neither see nor act on.
     //
-    // Unlabelled, it reads as the thing you must press to keep your work -- which invites
-    // people to hunt for it, and makes anyone who has not pressed it wonder whether their
-    // choices took. Saying plainly that the work is already saved is the point; the button
-    // is the safety net, not the mechanism.
-    //
-    'TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE' => 'You do not normally need this. Each address is saved as soon as you choose it &mdash; this button is here in case your browser has JavaScript turned off.',
+    'TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE' => 'Choose an address for every item above, then press Save Addresses to record your choices.',
 
     'TEXT_QUANTITIES_CHANGED' => 'One or more product quantities have been changed, but not yet updated.  If you leave this page, those changes will not be saved.  To save those quantity changes, stay on the page and click the update button.',
 

@@ -96,9 +96,13 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
         // Nothing left unanswered: the work is done and the only thing left is to leave, so
         // go to the button that does it. It can easily be below the fold on a long grid.
         //
+        // Only the Continue link is looked for. Save Addresses used to be the fallback here,
+        // but it now lives inside <noscript> -- so by definition it never exists on any load
+        // that runs this code, and naming it would be searching for something that cannot be
+        // there.
+        //
         if (target === null) {
-            target = document.querySelector('#multishipContinue a') ||
-                     document.querySelector('#multishipControls input[name="save"]');
+            target = document.querySelector('#multishipContinue a');
         }
         if (target === null) {
             return;

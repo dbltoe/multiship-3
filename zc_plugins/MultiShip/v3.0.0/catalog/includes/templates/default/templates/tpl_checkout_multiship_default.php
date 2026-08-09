@@ -230,10 +230,32 @@ $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(F
 // such classes, so it never renders as bare text.
 //
 ?>
-    <div id="multishipSaveAddresses">
-        <?php echo zen_draw_hidden_field('save_addresses', '1') . zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save" onclick="ok2leave();"'); ?>
-        <div id="multishipSaveNote"><?php echo TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE; ?></div>
-    </div>
+<?php
+// -----
+// Save Addresses only exists for a customer without JavaScript.
+//
+// Every address menu submits the moment it is changed, so for everyone else the button does
+// nothing they have not already done -- and a button labelled Save, on a page full of
+// choices, reads as the thing you must press to keep your work. It invited hunting for it,
+// and made anyone who had not pressed it doubt their choices had taken. Explaining that in a
+// caption underneath only drew more attention to it.
+//
+// <noscript> answers it properly: with scripting on the browser does not parse this as
+// markup at all, so the control never exists rather than being drawn and then hidden. With
+// scripting off it is the only way to record anything, and the wording says so plainly
+// instead of describing itself as an exception.
+//
+// The save_addresses hidden field went with the rewrite -- nothing has ever read it. This
+// page detects a post by the securityToken that zen_draw_form() emits, which is present
+// however the form was submitted.
+//
+?>
+    <noscript>
+        <div id="multishipSaveAddresses">
+            <?php echo zen_image_submit(BUTTON_IMAGE_UPDATE, BUTTON_MULTISHIP_SAVE_ADDRESSES, 'name="save"'); ?>
+            <div id="multishipSaveNote"><?php echo TEXT_MULTISHIP_SAVE_ADDRESSES_NOTE; ?></div>
+        </div>
+    </noscript>
     <div id="multishipQuantityNote" class="alert alert-info"><?php echo sprintf(TEXT_MULTISHIP_CHANGE_QUANTITIES, $multiship_cart_link, $multiship_shop_link); ?></div>
     <div class="clearBoth"></div>
     <div class="multiship-decline"><?php echo sprintf(TEXT_DECLINE_MULTISHIP, '<a class="multishipActionLink" href="' . zen_href_link(FILENAME_CHECKOUT_MULTISHIP, 'action=decline', 'SSL') . '" onclick="ok2leave();">' . TEXT_DECLINE_MULTISHIP_LINK . '</a>'); ?></div>
