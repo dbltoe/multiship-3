@@ -131,6 +131,22 @@ timeEffect : 750
         <li><em>Edit Orders</em>, if you have it installed, refuses to open a multiship order and says why. See <a href="#usage">Usage Notes</a>.</li>
       </ol>
     </div>
+
+    <h2 id="emailbanner" class="inner">The image at the top of your emails</h2>
+    <div class="sub-content">
+      <p>Worth knowing before you take multiship orders, because this plugin will make you send more email than you do now. Each sub-order has its own status, so a customer who split an order across three addresses gets three &quot;your order has shipped&quot; emails rather than one. Whatever sits at the top of those appears once per parcel &mdash; and on most stores, what sits there is a file the owner has never seen.</p>
+      <p>Zen Cart ships <code>/email/header.jpg</code>, a 550&times;110 banner, and puts it at the top of every HTML email your store sends. The constants controlling it live in <code>/includes/languages/english/lang.email_extras.php</code>:</p>
+      <ol>
+        <li><code>EMAIL_LOGO_FILENAME</code> &mdash; <code>header.jpg</code></li>
+        <li><code>EMAIL_LOGO_WIDTH</code> / <code>EMAIL_LOGO_HEIGHT</code> &mdash; <code>550</code> / <code>110</code></li>
+        <li><code>EMAIL_LOGO_ALT_TEXT</code> &mdash; <code>Brand Logo</code></li>
+        <li><code>EMAIL_LOGO_ALT_TITLE_TEXT</code> &mdash; <code>Zen Cart! The Art of E-commerce</code></li>
+      </ol>
+      <p>Read that last one again. Until it is changed, every HTML email your store sends carries Zen Cart's branding in the image tooltip, over your logo, under your domain.</p>
+      <p><b>Why you may never have noticed.</b> Two switches both have to be on before anyone sees it. The store's &mdash; <em>Configuration &rarr; E-Mail Options &rarr; Send E-Mails in HTML format</em> &mdash; and the customer's, because each account carries its own email-format preference and one set to Plain Text gets plain text regardless. A store can run for years with the stock banner going to the subset of customers who have HTML enabled, while the owner, testing with a plain-text account, sees nothing.</p>
+      <p><b>What to do.</b> Replace <code>/email/header.jpg</code> with your own artwork at the same dimensions &mdash; same filename, same size, nothing else to change. If your logo is a different shape, adjust the width and height constants and fix the alt and title text while you are there. If you would rather send no banner, a transparent image at those dimensions is safer than deleting the file, which leaves a broken-image icon.</p>
+      <p><b>What this plugin does about it: nothing, deliberately.</b> Multiship sends no email of its own &mdash; it lets Zen Cart's order-status machinery do the sending, so a sub-order email looks exactly like every other email your store sends. If you have set that banner up, these emails use it. If you have not, these emails are no worse than the rest of your mail, and the fix above fixes all of them at once rather than just ours.</p>
+    </div>
   </div>
 </div>
 
