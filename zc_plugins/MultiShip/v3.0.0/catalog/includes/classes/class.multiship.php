@@ -21,6 +21,7 @@ class multiship extends base
               $shipping_method,
               $initialization_active,
               $saved_order_info,
+              $full_cart_prices,
               $orders_multiship_ids,
               $text_email,
               $shipping_total,
@@ -1245,7 +1246,70 @@ class multiship extends base
         if (isset($_SESSION['shipping_tax_amount'])) {
             $this->saved_order_info['shipping_tax_amount'] = $_SESSION['shipping_tax_amount'];
         }
+
+        // -----
+        // What each unit costs when the cart is whole. Captured here because this is the last
+        // moment it is knowable: checkoutInitialize() is about to replace the cart contents
+        // with one address's share at a time.
+        //
+        // A quantity discount belongs to the cart, not to a parcel. Zen Cart prices a line with
+        // zen_get_products_discount_price_qty($prid, $qty), which looks for a tier row with
+        // discount_qty <= $qty -- so once the cart has been split, four units of a product with
+        // a tier at three become two lots of two, no tier is reached, and the discount the
+        // customer was shown silently disappears. There is no split that avoids it: even 3 + 1
+        // discounts only the three.
+        //
+        // Confirmed on a live order before this was written, using the demo product with a 10%
+        // tier at quantity three: the customer was charged the undiscounted amount.
+        //
+        // get_products() fires NOTIFIER_CART_GET_PRODUCTS_END, which this plugin also listens
+        // to -- harmless here, because initialization_active is not set until after this method
+        // returns, so the handler stands down and this call sees the store's own pricing.
+        //
+        $this->full_cart_prices = [];
+        foreach ((array)$_SESSION['cart']->get_products() as $product) {
+            if (isset($product['id'], $product['price'])) {
+                $this->full_cart_prices[$product['id']] = $product['price'];
+            }
+        }
     }
+
+    // -----
+    // Price a sub-order the way the whole cart was priced.
+    //
+    // Called from the observer on NOTIFIER_CART_GET_PRODUCTS_END, which passes the assembled
+    // line array by reference, while checkoutInitialize() is building each address's order.
+    //
+    // 'price' is the field to correct rather than 'final_price': order::cart() computes
+    //     $products_final_price_without_tax = $products[$i]['price'] + attributes_price(...)
+    // and everything else -- final_price, the subtotal, and the tax, which is calculated from
+    // final_price -- follows from it. Correcting the base price therefore fixes the money and
+    // the tax together, and leaves attribute pricing to core.
+    //
+    // Available from Zen Cart v2.0.0, verified at every released tag through 2.2.2 and master,
+    // so it holds across this plugin's whole declared range.
+    //
+    public function applyFullCartPricing(&$products_array)
+    {
+        if (empty($this->initialization_active) || empty($this->full_cart_prices) || !is_array($products_array)) {
+            return;
+        }
+
+        foreach ($products_array as $i => $product) {
+            if (!isset($product['id']) || !isset($this->full_cart_prices[$product['id']])) {
+                continue;
+            }
+            $cart_price = $this->full_cart_prices[$product['id']];
+            if ((float)$product['price'] !== (float)$cart_price) {
+                $this->debugLog(
+                    'applyFullCartPricing: ' . $product['id'] . ' priced at ' . $product['price']
+                    . ' for this address, restored to the cart price of ' . $cart_price . '.'
+                );
+                $products_array[$i]['price'] = $cart_price;
+            }
+        }
+    }
+
     protected function restoreOrdersBaseValues()
     {
         global $total_weight, $total_count;
@@ -1261,6 +1325,14 @@ class multiship extends base
             $_SESSION['shipping_tax_amount'] = $this->saved_order_info['shipping_tax_amount'];
         }
         unset($this->saved_order_info);
+
+        // -----
+        // Cleared with everything else it was captured alongside. The cart is whole again, so
+        // the store's own pricing is correct from here and nothing should be overriding it --
+        // and leaving stale prices in the session to be applied to a later, differently-sized
+        // cart is exactly the bug this method exists to prevent for the other saved values.
+        //
+        $this->full_cart_prices = [];
     }
     
     // -----

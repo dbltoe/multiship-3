@@ -61,6 +61,23 @@ class multiship_observer extends base
                     //
                     /* /includes/templates/*[/common]/main_template_vars.php */
                     'NOTIFY_MAIN_TEMPLATE_VARS_END',
+
+                    // -----
+                    // How a quantity discount survives the order being split.
+                    //
+                    // checkoutInitialize() prices each address by replacing the cart with that
+                    // address's share and building an order from it. Zen Cart prices a line with
+                    // zen_get_products_discount_price_qty($prid, $qty), so a tier at quantity
+                    // three is simply not reached once four units become two lots of two -- and
+                    // the discount the customer was shown on the cart page disappears from the
+                    // order they are charged for.
+                    //
+                    // This notifier hands the assembled line array over by reference, after
+                    // pricing and before order::cart() reads it, which is the one point where
+                    // the sub-order's prices can be put back to the cart's.
+                    //
+                    /* /includes/classes/shopping_cart.php, get_products() */
+                    'NOTIFIER_CART_GET_PRODUCTS_END',
                 )
             );
         }
@@ -75,6 +92,17 @@ class multiship_observer extends base
             //
             case 'NOTIFY_MAIN_TEMPLATE_VARS_END':
                 $this->setMultishipHistoryTemplate($p2);
+                break;
+
+            // -----
+            // $p2 is the assembled cart-line array, by reference. The class decides whether to
+            // act: it only does so while checkoutInitialize() is splitting the cart, and does
+            // nothing at all on the ordinary get_products() calls every page makes.
+            //
+            case 'NOTIFIER_CART_GET_PRODUCTS_END':
+                if (isset($_SESSION['multiship'])) {
+                    $_SESSION['multiship']->applyFullCartPricing($p2);
+                }
                 break;
 
             // -----
