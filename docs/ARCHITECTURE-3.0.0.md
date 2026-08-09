@@ -278,11 +278,6 @@ Done:
 
 Outstanding:
 
-- **A quantity discount across a split is untested.** A product with a
-  `products_discount_quantity` tier, enough units to reach it, split so no single
-  address reaches it alone: does the discount survive, and does it survive *once*
-  rather than per sub-order? This is the last unverified money path and needs store
-  data to stage.
 - Two dead template files, `tpl_checkout_shipping_multiship.php` and
   `tpl_checkout_confirmation_multiship_address.php`, plus any language constants they
   orphan. Nothing includes either; both are lat9 override leftovers.
@@ -326,7 +321,7 @@ Outstanding:
 
 Retitled: this section was headed "Not yet verified" when almost nothing had been run.
 Most of what follows is now a record of what *was* verified and how. What genuinely
-remains unverified is listed in §6 — one item, the quantity discount.
+remains unverified is listed in §6.
 
 All 53 PHP files pass `php -l` under **PHP 8.5.9**, matching the version on the test
 site. The `lang.*.php` files were additionally *executed* under `E_ALL` and each returns
@@ -556,7 +551,45 @@ This mattered more than a normal regression check. The recalculation moved pages
 the flow went from five steps to three, so the split producing *wrong money* was the
 failure that outranked everything cosmetic. It does not.
 
-Still unverified: the quantity-discount case in §6.
+### Quantity discounts across a split — found, fixed, confirmed
+
+The last money path, and it was broken. Four of a product carrying a 10% tier at
+quantity three, split across two addresses: the cart showed 129.56 and the order
+charged 143.96.
+
+`checkoutInitialize()` prices each address by replacing the cart with that address's
+share, and Zen Cart prices a line with
+`zen_get_products_discount_price_qty($prid, $qty)`, which needs a tier row with
+`discount_qty <= $qty`. Two lots of two reach nothing. No split avoids it — 3 + 1
+discounts only the three — because the discount belongs to the cart and a sub-order
+does not know the cart exists.
+
+The first answer proposed here was to refuse multiship for such carts, alongside the
+coupon and group-pricing guards of §5. That was wrong, and dbltoe was right to push
+back on it. The unit prices are captured in `saveOrdersBaseValues()` while the cart is
+whole and restored during the per-address builds through
+`NOTIFIER_CART_GET_PRODUCTS_END`, which passes the assembled line array by reference
+after pricing and before `order::cart()` reads it.
+
+`price` is the field corrected rather than `final_price`, because `order::cart()` does
+
+```php
+$products_final_price_without_tax = $products[$i]['price'] + attributes_price(...);
+```
+
+so the subtotal *and* the per-address tax both follow from it. Tax genuinely is
+per-address and stays that way — it is simply computed on the right price. That is
+what turned an assumed rewrite into about seventy lines.
+
+Verified live after the fix. Confirmed present on branches 2.0, 2.1, 2.2, 2.3 and
+master: both the notifier and `order.php` reading `$products[$i]['price']`. Note that
+`v2.3.0` is a *branch*, not a tag — tags stop at 2.2.2 — so a tag-only check misses
+the very version this plugin was developed against.
+
+Gated twice, and inert everywhere else: it acts only while `initialization_active` is
+set and only for products captured from the whole cart, both cleared before
+`checkoutInitialize()` returns or redirects. The ordinary `get_products()` calls that
+every page makes see nothing.
 
 The v2.0.0 installer API question *has* been resolved: v2.0.0 ships only
 `executeInstallerSql()` and `$this->dbConn` — the `ScriptedInstallHelpers` trait
