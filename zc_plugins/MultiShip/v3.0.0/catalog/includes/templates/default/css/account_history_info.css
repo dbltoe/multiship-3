@@ -20,12 +20,15 @@
 #orderHistoryInfoHeader { width: 100%; text-align: center; }
 
 /* -----
-   The same recipient layout the confirmation page uses.
+   The same recipient layout the confirmation and success pages use.
 
-   tpl_modules_multiship.php is rendered on both pages, so these rules have to exist in both
-   stylesheets -- page CSS is loaded by page name and neither file sees the other. Kept
-   deliberately identical: a customer who checked their order at confirmation and comes back
-   to it in their account should recognise what they are looking at. */
+   These rules are identical in three files: this one, checkout_confirmation.css and
+   checkout_success.css. tpl_modules_multiship.php renders on all three pages, page CSS is
+   loaded by page name, and none of the three sees the others -- Zen Cart offers no way to
+   load one stylesheet on a chosen set of pages, and a stylesheet_*.css would load on every
+   page of the store to serve three. Kept deliberately identical: a customer who checked their
+   order at confirmation, saw it again on success and comes back to it in their account should
+   recognise what they are looking at each time. Change one, change all three. */
 .multishipOrderName {
     font-weight: bold;
 }
@@ -36,12 +39,24 @@
     opacity: 0.8;
 }
 
+.multishipOrderHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25em 1.5em;
+}
+
+.multishipOrderWho {
+    min-width: 0;
+}
+
 .multishipOrderTotals {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.4em 1.5em;
-    padding-top: 0.4em;
+    gap: 0.25em 1.25em;
+    margin-left: auto;
 }
 
 .multishipTotalItem {
@@ -52,3 +67,8 @@
     font-weight: bold;
     padding-left: 0.35em;
 }
+
+/* Nothing for the items table, deliberately -- it carries core's #cartContentsDisplay and is
+   spaced by the store's own stylesheet, the same as its product tables everywhere else.
+   .multishipItems is an unstyled hook so a store owner can space these without targeting an
+   id that repeats down the page. */

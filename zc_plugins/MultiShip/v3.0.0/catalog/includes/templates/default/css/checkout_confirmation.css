@@ -135,20 +135,38 @@
 }
 
 /* -----
-   Each recipient's totals on one line.
+   Who it is going to on the left, what it comes to on the right, one line.
 
-   Stacked, they were three full-width rows per recipient -- which is how core lays out the
-   totals for a whole order, and fine when it happens once. Here it happens for every
-   recipient, and a single item to a single address came to about nine rows.
+   This block through to the end of the file is identical in three stylesheets: this one,
+   account_history_info.css and checkout_success.css, because tpl_modules_multiship.php
+   renders on all three pages and page CSS is loaded by page name. Change one, change all
+   three.
 
-   Ranged right, matching where totals sit on every other page of a Zen Cart checkout, and
-   wrapping to as many lines as they need on a narrow screen rather than being squeezed. */
+   The totals were three stacked rows under the table, then one row under the table, and are
+   now no rows at all -- the header line already ran the width of the box with nothing to its
+   right. Ranged right, matching where totals sit on every other page of a Zen Cart checkout.
+
+   space-between with margin-left:auto on the totals so that when the recipient's name is
+   long enough to wrap the whole line, the totals still sit right rather than drifting under
+   the name. */
+.multishipOrderHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25em 1.5em;
+}
+
+.multishipOrderWho {
+    min-width: 0;
+}
+
 .multishipOrderTotals {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.4em 1.5em;
-    padding-top: 0.4em;
+    gap: 0.25em 1.25em;
+    margin-left: auto;
 }
 
 .multishipTotalItem {
@@ -159,3 +177,16 @@
     font-weight: bold;
     padding-left: 0.35em;
 }
+
+/* -----
+   Nothing here for the items table, deliberately.
+
+   Quantity, Products and Total do run together, and this plugin is not going to fix that.
+   The table carries core's #cartContentsDisplay, so it is spaced by whatever the store's own
+   stylesheet does with its product tables -- and dbltoe confirmed the same crowding on the
+   account order-history page and elsewhere on the site. It is the store's look. Padding it
+   here would make the one page this plugin touches the odd one out, which is the opposite of
+   the intent: structure and behaviour are ours, appearance is the store's.
+
+   .multishipItems is on the table as a hook, unstyled, so a store owner can space these
+   tables without having to target an id that repeats down the page. */

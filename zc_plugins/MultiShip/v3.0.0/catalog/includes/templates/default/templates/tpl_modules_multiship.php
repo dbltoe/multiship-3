@@ -23,9 +23,59 @@ if (isset($multiship_info) && is_array($multiship_info)) {
 $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
 ?>
 <div class="multishipOrder">
-    <span class="multishipOrderName"><?php echo TEXT_SHIPPING_TO . $multishipRecipientName; ?></span>
-    <span class="multishipOrderAddress"><?php echo $currentInfo['address']; ?></span>
-    <table id="cartContentsDisplay">
+    <div class="multishipOrderHeader">
+        <span class="multishipOrderWho">
+            <span class="multishipOrderName"><?php echo TEXT_SHIPPING_TO . $multishipRecipientName; ?></span>
+            <span class="multishipOrderAddress"><?php echo $currentInfo['address']; ?></span>
+        </span>
+<?php
+// -----
+// This recipient's totals, on the same line as the name they belong to.
+//
+// They were three stacked rows under the table, then one row under the table, and are now
+// no rows at all: the header line already runs the width of the box with nothing to its
+// right, so the totals cost nothing to put there. dbltoe asked for this ("it would be nice
+// to have the Sub, Ship, and Total up in the other") and it is the right place on its own
+// merits -- who the parcel is for and what it comes to are one fact about one delivery, and
+// reading them together beats reading one at the top and the other at the bottom.
+//
+// The classes core puts on each total are kept, so a store that has styled ot_shipping or
+// ot_total keeps that styling.
+//
+        if (MODULE_ORDER_TOTAL_INSTALLED) {
+?>
+        <span class="multishipOrderTotals">
+<?php
+            foreach ($currentInfo['totals'] as $currentTotal) {
+?>
+            <span class="multishipTotalItem <?php echo $currentTotal['class']; ?>">
+                <span class="multishipTotalTitle"><?php echo $currentTotal['title']; ?></span>
+                <span class="multishipTotalValue"><?php echo $currentTotal['text']; ?></span>
+            </span>
+<?php
+            }
+?>
+        </span>
+<?php
+        }
+?>
+    </div>
+<?php
+// -----
+// The id is left alone, and the class is left unstyled.
+//
+// id="cartContentsDisplay" repeats once per recipient, which is invalid -- but it is what
+// lat9 wrote, and it is also what makes this table look like every other product table in
+// the store, because the store's own stylesheet is what spaces it. dbltoe confirmed the same
+// crowding on the account order-history page and elsewhere on the site: it is the store's
+// look, not a defect in this plugin, and padding it here would make the pages this plugin
+// touches the odd ones out.
+//
+// .multishipItems is a hook, carried by every copy of the table and styled by none of them,
+// so a store owner can space these without having to target an id that repeats down the page.
+//
+?>
+    <table id="cartContentsDisplay" class="multishipItems">
         <tr class="cartTableHeading">
             <th scope="col" id="ccQuantityHeading"><?php echo TABLE_HEADING_QUANTITY; ?></th>
             <th scope="col" id="ccProductsHeading"><?php echo TABLE_HEADING_PRODUCTS; ?></th>
@@ -84,42 +134,6 @@ $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
         }  // end for loopthru all products 
 ?>
     </table>
-<?php
-// -----
-// This recipient's totals on one line, not three.
-//
-// Each total used to be its own full-width row with a clearing break after it, which is how
-// core lays out the totals for a whole order -- reasonable when it happens once at the
-// bottom of a page. Here it happens for every recipient, and with the heading, the table
-// header and the item rows it came to about nine rows for a single item going to a single
-// address. dbltoe reported the scrolling on a three-address order; on ten it would be
-// unusable.
-//
-// Sub-Total, Shipping and Total side by side reads as a summary of the block above rather
-// than as three separate statements, and it costs two rows per recipient. The horizontal
-// rule went with them: the box around each recipient already separates one from the next,
-// and a rule inside it was dividing something that did not need dividing.
-//
-// The classes core puts on each total are kept, so a store that has styled ot_shipping or
-// ot_total keeps that styling.
-//
-        if (MODULE_ORDER_TOTAL_INSTALLED) {
-?>
-    <div class="multishipOrderTotals">
-<?php
-            foreach ($currentInfo['totals'] as $currentTotal) {
-?>
-        <span class="multishipTotalItem <?php echo $currentTotal['class']; ?>">
-            <span class="multishipTotalTitle"><?php echo $currentTotal['title']; ?></span>
-            <span class="multishipTotalValue"><?php echo $currentTotal['text']; ?></span>
-        </span>
-<?php
-            }
-?>
-    </div>
-<?php
-        }
-?>
 </div>
 <?php
     }  // END foreach loop
