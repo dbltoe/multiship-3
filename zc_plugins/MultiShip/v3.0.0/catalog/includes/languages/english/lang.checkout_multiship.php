@@ -8,7 +8,7 @@ $define = [
     'NAVBAR_TITLE_1' => 'Checkout',
     'NAVBAR_TITLE_2' => 'Choose Multiple Shipping Addresses',
 
-    'HEADING_TITLE' => 'Choose Shipping Address for Each Item',
+    'HEADING_TITLE' => 'Choose a Shipping Address for Each Item',
     // -----
     // Stated, not asked. This only renders once every item has an address, so "All
     // finished?" was a question whose answer was always yes -- and "Return to Checkout"

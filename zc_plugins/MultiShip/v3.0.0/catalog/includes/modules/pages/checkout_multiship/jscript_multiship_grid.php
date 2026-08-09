@@ -77,11 +77,33 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
                 break;
             }
         }
+
+        // -----
+        // Nothing left unanswered: the work is done and the only thing remaining is to
+        // leave the page, so go to that button rather than staying put.
+        //
+        // This is the one case where moving is right. Everywhere else the customer is
+        // mid-task and being moved is an interruption; here they have finished, and the
+        // control that finishes it can easily be below the fold on a long grid. Keeping
+        // the position would just highlight a button they cannot see -- which is what
+        // dbltoe found: "highlights the Continue with Checkout button which may be hidden
+        // from view and the highlight never seen by the customer".
+        //
         if (target === null) {
-            target = document.querySelector('#multishipContinue a') ||
-                     document.querySelector('#multishipControls input[name="save"]');
+            var finish = document.querySelector('#multishipContinue a') ||
+                         document.querySelector('#multishipControls input[name="save"]');
+            if (finish !== null) {
+                if (typeof finish.scrollIntoView === 'function') {
+                    finish.scrollIntoView({ block: 'center' });
+                }
+                if (typeof finish.focus === 'function') {
+                    finish.focus({ preventScroll: true });
+                }
+            }
+            return;
         }
-        if (target !== null && typeof target.focus === 'function') {
+
+        if (typeof target.focus === 'function') {
             target.focus({ preventScroll: true });
         }
 
