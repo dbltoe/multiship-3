@@ -39,11 +39,19 @@ if (defined('DIR_WS_CATALOG')) {
 }
 
 // -----
-// A GitHub button is deliberately not added yet. github_repo below is populated, but the
-// Plugin Manager renders that field nowhere (see docs/multiship_core_requirements.md 2.4),
-// and the repository's master branch still holds the pre-v3.0.0 plugin. Linking there now
-// would send a store owner to code older than what they have installed. Add it here, the
-// same way as the readme button, once the work is merged.
+// A GitHub button must not be added, and the reason has changed.
+//
+// It used to be "not yet", because the repository's master branch still held the pre-v3.0.0
+// plugin and linking there would have sent a store owner to code older than the one they had
+// installed. That was a wait-and-see.
+//
+// The repository is now private, so a link would give every store owner a 404. github_repo
+// below is kept as the maintainer's own pointer -- the Plugin Manager renders that field
+// nowhere (see docs/multiship_core_requirements.md 2.4), so it costs nothing and misleads
+// no one where it sits. Surfacing it as a button would.
+//
+// If this plugin is ever distributed with a public source repository again, that decision
+// comes first and the button follows it, not the other way round.
 //
 
 return [
@@ -80,6 +88,8 @@ return [
     //
     'zcVersions' => ['v2.0.0', 'v2.0.1', 'v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0'],
     'changelog' => '', // online URL (eg github release tag page, or changelog file there) or local filename only, ie: changelog.txt (in same dir as this manifest file)
-    'github_repo' => 'https://github.com/dbltoe/multiship',
+    // Private. Reachable by the maintainer and invited collaborators only -- see the note
+    // above on why this must not become a button.
+    'github_repo' => 'https://github.com/dbltoe/multiship-3',
     'pluginGroups' => [],
 ];
