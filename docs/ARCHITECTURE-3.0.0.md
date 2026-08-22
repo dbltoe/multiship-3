@@ -278,6 +278,11 @@ Done:
 
 Outstanding:
 
+- **Free shipping across a split is untested and may be a live defect.** See §8: each
+  sub-order is judged against its own total, so a cart that qualifies may produce sub-orders
+  that do not, and the customer is returned to the grid with every address flagged
+  unshippable and no explanation. One order settles it, using the same setup as the no-ship
+  test.
 - ~~Two dead template files~~ — **done.** `tpl_checkout_shipping_multiship.php` and
   `tpl_checkout_confirmation_multiship_address.php` removed, along with the unreachable
   `NOTIFY_HEADER_START_CHECKOUT_SHIPPING` case in `multiship_observer` and the four
@@ -473,9 +478,13 @@ distinguishable in the Send To dropdown, because it labels options with
 
 ### One method for the whole order — a real limitation
 
-Multiship applies a **single** shipping method to every sub-order.
-`$_SESSION['shipping']['id']` is one value, `getShippingId()` returns one value, and
-`orders_multiship` has no shipping-method column.
+Multiship applies a **single** shipping method to every sub-order, because
+`$_SESSION['shipping']['id']` is one value chosen once, on the address grid, before any
+address has been quoted.
+
+(`orders_multiship` has no shipping-method column either, which used to be cited here as
+part of the difficulty. It is not — see below. The method is already recorded per sub-order
+as the title of that sub-order's `ot_shipping` row.)
 
 That is wrong for a catalogue where different items need different carriers. A telescoping
 flag pole may only go UPS while a flag could go USPS. Today the customer picks USPS,
@@ -489,18 +498,99 @@ travel in the same parcel, so one carrier for them is correct, not wasteful. The
 appears **across** addresses: a flag going to one address could have used USPS while the
 pole going to another needed UPS.
 
-The proper fix is therefore a shipping method **per sub-order**, since the constraint is
-"this method must carry everything going to this address". That needs a shipping-method
-column on `orders_multiship`, per-address method selection in the grid with each address
-quoting its own carriers, and rework of `getShippingId()`, `checkoutInitialize()` and order
-creation — all of which currently assume one method. A version's work, not a patch.
+The proper fix is a shipping method **per sub-order**, since the constraint is "this method
+must carry everything going to this address".
 
-**Proposed interim step** (dbltoe): a configuration setting naming which shipping methods
-are available for multiple-address orders, mirroring `MODULE_MULTISHIP_PAYMENT_METHODS`
-which already does this for payment. A store owner knows their own catalogue, so one that
-sells oversized goods can simply exclude USPS from multiship orders and no customer ever
-chooses a method destined to fail. Cheap, consistent with the existing design, and it does
-not pretend to be the per-sub-order fix.
+### The per-address fix is much smaller than this document used to claim
+
+The paragraph that stood here said the fix needed a shipping-method column on
+`orders_multiship`, rework of `getShippingId()`, `checkoutInitialize()` and order creation,
+and was "a version's work, not a patch". That was written without checking what the data
+model already carries. It is wrong, and wrong in the direction that stops someone attempting
+it.
+
+What is already in place:
+
+- `checkoutInitialize()` **already** builds a fresh `shipping` object per address and
+  **already** composes a per-address method title at line 1171:
+  `$shipping_quote[0]['module'] . ' (' . $shipping_quote[0]['methods'][0]['title'] . ')'`
+- `orders_multiship_total` stores `title`, `text`, `value`, `class` **per sub-order**, so the
+  method name and its cost are already recorded per address. No new column is needed.
+- the confirmation, order-history and checkout_success pages already render those per-address
+  totals, so per-address methods would display correctly with no template work
+- core's `shipping::quote($method = '', $module = '')` already supports *all methods of one
+  module* and *all methods of all modules*
+- `getShippingId()` has exactly one caller, inside an `isSelected()` block in
+  `header_php_checkout_shipping_multiship.php` — on a page multiship customers are now
+  redirected away from before it runs. It needs no rework because nothing reaches it.
+
+The remaining work is the selection policy and what to put in the main order's single
+`orders.shipping_method` column. Twenty-five lines and two decisions, not a version.
+
+### The design to build (dbltoe)
+
+**Do not ask the customer for a method at all. Quote every module against each address and
+take the cheapest that answers.**
+
+The elegance is that constraint satisfaction falls out for free. A carrier that cannot take
+the consignment returns nothing, and core drops it silently:
+
+```php
+$quotes = $GLOBALS[$quoting_module]->quote($method);
+…
+if (!empty($quotes) && is_array($quotes)) { $quotes_array[] = $quotes; }
+```
+
+So the flag pole eliminates USPS by arithmetic rather than by a special case, and the flag
+travelling to the same address goes UPS with it. One quote, one carrier, one `ot_shipping`
+row per address — nothing downstream changes.
+
+This also settles a question that had been posed the wrong way round. An earlier sketch here
+proposed *partitioning* an address's items into separate consignments — the pole by UPS, the
+flag by USPS, using core's `product_ships_in_own_box` as the partition rule. That optimises
+the wrong quantity: two consignments means paying two base rates, and one dearer parcel
+usually beats two cheaper ones. dbltoe's "only one method winning out per address" is both
+the simpler implementation and, in most carts, the cheaper answer for the customer.
+
+Two things have to come with it:
+
+1. **The exclusion setting becomes a prerequisite, not an interim step.** Cheapest-across-
+   everything picks Store Pickup or Free Shipping for every address otherwise. Store Pickup
+   should arguably be excluded from multiship unconditionally — a customer cannot collect
+   three parcels addressed to three other people.
+2. **`orders.shipping_method`** is one column and there is no longer one answer. Probably
+   "Multiple methods", with the truth in the per-address rows that already hold it.
+
+And one dependency outside this plugin's control: **it works exactly as well as the installed
+modules' willingness to decline.** `shipping.php` never reads dimensions — `products_length`,
+`products_width`, `products_height` and `product_ships_in_own_box` are stored per product and
+exposed per cart line by `shopping_cart::get_products()` at lines 1440-43, but the shipping
+*class* is weight-only and whether a module honours dimensions is its own business. A module
+that prices a ten-foot pole on weight alone eliminates nothing, and the customer buys a label
+the carrier will reject.
+
+### Free shipping across a split — probably a live defect
+
+Not a future concern. `freeoptions.php:96` qualifies on
+
+```php
+$cart_total = $_SESSION['cart']->show_total();
+```
+
+and `checkoutInitialize()` swaps `$_SESSION['cart']->contents` for one address's share before
+quoting, so each sub-order is judged against **its own** total rather than the cart's.
+
+The reachable scenario: a store offers free shipping over $50, the customer's cart is $60 and
+the cart page says so, they split it two ways at $30 each, neither sub-order reaches the
+threshold, `freeoptions` returns nothing for either, and **every address flags as
+unshippable**. They are returned to the grid with warning icons and no explanation.
+
+Whether a split order *should* keep free shipping is a policy question — the store is now
+paying for two parcels, so charging is defensible. The current outcome is not a policy. It is
+a dead end with no message, and it is the same shape as the quantity-discount loss recorded
+in section 7: a figure shown on the cart page that does not survive the split.
+
+Untested. One order settles it, and it costs the same setup as the no-ship test.
 
 ### Heavy sub-orders are handled, by core
 
@@ -511,13 +601,28 @@ splits a consignment into multiple boxes once it exceeds `SHIPPING_MAX_WEIGHT`:
 if ($shipping_weight > SHIPPING_MAX_WEIGHT) { // Split into many boxes
     $zc_boxes = zen_round(($shipping_weight / SHIPPING_MAX_WEIGHT), 2);
     $shipping_num_boxes = ceil($zc_boxes);
+    $shipping_weight = $shipping_weight / $shipping_num_boxes;
+}
 ```
+
+That last line is the one to notice: the total is divided evenly by the box count.
 
 `checkoutInitialize()` creates a fresh `shipping` object per address (line 1148) against
 that sub-order's own weight, so three items totalling 72 lb going to one address are boxed
 independently of everything else in the order. Per-address quoting makes this work rather
 than breaking it — and it is more accurate than a single-address order, where the whole
 cart weight is boxed together.
+
+**With one caveat this section originally missed.** That calculation is pure arithmetic on
+the *total* weight and knows nothing about item boundaries. A single indivisible 80 lb item
+against a 70 lb maximum becomes "two boxes of 40 lb" — a quote for a shipment that cannot
+physically exist. Nothing splits an item in half.
+
+That is true of an ordinary single-address order too, so it is a core limitation rather than
+one this plugin introduces. Multiship only makes it easier to notice, by quoting each address
+separately. The cheapest-per-address design above would improve it without fixing it: a
+carrier that refuses the weight drops out and another wins, which is the right outcome by
+accident rather than by understanding.
 
 ### Outside the plugin's reach
 
@@ -528,6 +633,20 @@ data, and it should not try: a guessed weight is worse than a visibly wrong one.
 Multiship does make bad data **more visible**, since a wrong weight is quoted separately
 against each address rather than being absorbed into one total. That is a diagnostic, not a
 defect.
+
+**Surfacing it is fair game, though, and cheap** (dbltoe). Not compensating for the data —
+reporting on it:
+
+1. A count on the plugin's own configuration page. "You have 47 products with no weight" is
+   worth more than the three paragraphs currently in `STORE-OWNER-NOTES.md`, and it is one
+   `COUNT(*)`.
+2. A read-only admin report listing products with `products_weight = 0` or null dimensions,
+   each linking to its product editor. One page, one query.
+
+Both stay on the right side of the line above, because neither guesses at a value. The line
+is worth naming, since it is where this would stop: a **bulk editor** for product data does
+not belong here. Editing weights is a general Zen Cart admin need with nothing to do with
+shipping to several addresses, and adopting it is how a focused plugin acquires a second job.
 
 ### The multiship path itself, now verified live
 
