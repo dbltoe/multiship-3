@@ -284,7 +284,14 @@ if (isset($_POST['securityToken'])) {
     if ($multiship_chosen_addresses === []) {
         $_SESSION['multiship']->sessionCleanup();
     } elseif (!$_SESSION['multiship']->addressValidation($multiship_chosen_addresses)) {
-        $messageStack->add('multiship', ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING, 'error');
+        // -----
+        // Flagged here, added to the stack further down, once the address-book caution has
+        // been added. messageStack renders in the order things are put into it, and this
+        // point in the file comes before that caution -- which put the error above it, and
+        // so furthest from the grid, the opposite of why these messages moved down at all.
+        // dbltoe asked for the warning to sit below the caution; this is what does it.
+        //
+        $multiship_address_rejected = true;
     } else {
         // -----
         // Record the customer's multiship selection in the session variable.
@@ -382,6 +389,14 @@ if (defined('MAX_ADDRESS_BOOK_ENTRIES') && count($multishipAddresses) > (int)MAX
         sprintf(TEXT_MULTISHIP_OVER_ADDRESS_LIMIT, count($multishipAddresses), (int)MAX_ADDRESS_BOOK_ENTRIES),
         'caution'
     );
+}
+
+// -----
+// The rejected-address error, added last so it renders closest to the grid it concerns.
+// Raised back in the POST handling above; see the note there.
+//
+if (!empty($multiship_address_rejected)) {
+    $messageStack->add('multiship', ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING, 'error');
 }
 
 // -----
