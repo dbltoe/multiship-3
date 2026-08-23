@@ -98,7 +98,7 @@ $define = [
     // claimed yet. Both block the way onward, for different reasons, and saying which is
     // which is the difference between a customer fixing it and a customer stuck.
     //
-    'TEXT_MULTISHIP_ADDRESS_UNREACHABLE' => 'One or more items are going to an address this shipping method cannot deliver to &mdash; look for %s beside the address above. Choose a different address for those items, or pick another shipping method.',
+    'TEXT_MULTISHIP_ADDRESS_UNREACHABLE' => 'One or more items are going to an address your chosen shipping method is not available for &mdash; look for %s beside the address above. Either choose a different address for those items, or pick another shipping method.',
 
     'TEXT_NEED_ANOTHER_ADDRESS' => 'Need another address? ',
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',
@@ -109,7 +109,7 @@ $define = [
     // each unit now has its own row, and quantities are changed in the cart where customers
     // already expect to change them. What remains is what the page cannot tell you itself.
     //
-    'TEXT_MULTISHIP_INSTRUCTIONS' => 'Every item is listed separately, so you can send each one wherever you like.<br /><br /><strong>Two things worth knowing:</strong><ul><li>If a warning icon appears beside an address, your chosen shipping method cannot deliver there. Pick another address, or change the shipping method.</li><li>Anything that does not need shipping, such as a gift certificate or a download, is not listed here.</li></ul>',
+    'TEXT_MULTISHIP_INSTRUCTIONS' => 'Every item is listed separately, so you can send each one wherever you like.<br /><br /><strong>Two things worth knowing:</strong><ul><li>If a warning icon appears beside an address, the shipping method you chose is not available for it. Pick another address, or change the shipping method.</li><li>Anything that does not need shipping, such as a gift certificate or a download, is not listed here.</li></ul>',
 
     // -----
     // Quantities and extra items are the cart's business, not this page's. %1$s and %2$s
@@ -149,6 +149,21 @@ $define = [
 
     'TEXT_QUANTITIES_CHANGED' => 'One or more product quantities have been changed, but not yet updated.  If you leave this page, those changes will not be saved.  To save those quantity changes, stay on the page and click the update button.',
 
-    'ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD' => 'One or more of the shipping addresses you previously chose cannot be used for the currently-selected shipping method; see the selections below marked with %1$s.<br /><br />Either modify the marked shipping addresses or click the link below to change the shipping method for your order.',
+    // -----
+    // Says the method is unavailable, not that the address is undeliverable.
+    //
+    // The plugin cannot tell those apart. A missing quote means the chosen module returned
+    // nothing for that sub-order, and a zone restriction is only one reason. Free shipping is
+    // another and a common one: freeoptions and freeshipper qualify on the cart's total,
+    // weight or item count, and checkoutInitialize() quotes each address against its own
+    // share -- so a $60 cart that qualified whole can fail a $50 threshold twice once it is
+    // split, with nothing wrong with either address. Telling that customer their address
+    // cannot be delivered to sends them to change something that was never the problem.
+    //
+    // "above" replaces "click the link below to change the shipping method". That link went
+    // when the method moved onto this page in v3.0.0; the choices are now in the fieldset
+    // above this message, and the instruction had been pointing at nothing since.
+    //
+    'ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD' => 'The shipping method you chose is not available for one or more of these addresses &mdash; look for %1$s beside them below. Either choose a different address for those items, or pick another shipping method above.',
 ];
 return $define;
