@@ -10,9 +10,16 @@
     <h1 id="checkoutMultishipDefaultHeading"><?php echo HEADING_TITLE; ?></h1>
 
 <?php 
-if ($messageStack->size('multiship') > 0) {
-    echo $messageStack->output('multiship');
-}
+// -----
+// The page's own messages are not output here any more; they render immediately above the
+// grid, further down. dbltoe asked for that once the scroll-to-top was fixed: a warning at
+// the top of the page is a warning about a page, and these are about particular rows in one
+// table. The shipping-method message stayed behind, in the fieldset it belongs to.
+//
+// shopping_cart is core's and stays put. It is about the cart as a whole, it is what the
+// customer sees in this position on every other page, and moving it would be this plugin
+// deciding where the store's own messaging goes.
+//
 if ($messageStack->size('shopping_cart') > 0) {
     echo $messageStack->output('shopping_cart'); 
 }
@@ -61,6 +68,15 @@ $multishipShippingOnChange =
 ?>
     <fieldset id="checkoutMultishipShipping">
         <legend id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></legend>
+<?php
+// -----
+// The shipping-method message, with the choices it is about. See header_php.php, where it
+// is added to a stack of its own for exactly this.
+//
+if ($messageStack->size('multiship_shipping') > 0) {
+    echo $messageStack->output('multiship_shipping');
+}
+?>
 <?php
 // -----
 // No price against the method, deliberately.
@@ -135,6 +151,23 @@ foreach ($quotes as $multishipQuote) {
 // after the template's, so the grid would have kept its own striping on a store whose other
 // tables stripe differently. Letting the template do it is the point.
 //
+
+// -----
+// The grid's messages, immediately above the grid.
+//
+// Every message left in this stack is about the table below it -- an address that the chosen
+// method cannot reach, an address selection that is not valid, more addresses saved than the
+// store's book normally holds. At the top of the page they were a screen away from the rows
+// they described, and the cannot-ship one literally says "see the selections below marked
+// with" a marker the customer then had to go and find.
+//
+// This was worth doing only once the page stopped jumping to the top on every selection
+// (see jscript_multiship_grid.php): while it did, the top was the one place a message was
+// certain to be read.
+//
+if ($messageStack->size('multiship') > 0) {
+    echo $messageStack->output('multiship');
+}
 ?>
     <table id="multishipTable" class="table table-striped">
         <tr>

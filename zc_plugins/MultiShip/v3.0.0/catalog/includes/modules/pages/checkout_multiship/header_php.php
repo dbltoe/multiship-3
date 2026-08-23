@@ -170,7 +170,15 @@ if (isset($_SESSION['shipping']['id'])) {
         }
     }
     if (!in_array($_SESSION['shipping']['id'], $multiship_valid_methods, true)) {
-        $messageStack->add('multiship', ERROR_PLEASE_RESELECT_SHIPPING_METHOD, 'error');
+        // -----
+        // Its own stack, so it can render beside the shipping choices.
+        //
+        // This shared the 'multiship' stack until the grid's warnings moved down to sit
+        // above the table they refer to. This one could not travel with them: the message
+        // ends "Please choose another below", and from below the grid the choices it means
+        // are above. A separate stack keeps it next to the radios and keeps that word true.
+        //
+        $messageStack->add('multiship_shipping', ERROR_PLEASE_RESELECT_SHIPPING_METHOD, 'error');
         unset($_SESSION['shipping']);
     }
 }
