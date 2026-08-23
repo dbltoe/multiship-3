@@ -178,17 +178,13 @@ $define = [
     'MULTISHIP_PRODUCT_DECREASE_SHIP_PRIMARY' => 'Changing the quantity of <b>(%s)</b> has cleared its delivery addresses. You will choose them again when you check out.',
 
     // -----
-    // Says that the choice was discarded, because that is the part the customer cannot see.
+    // Not shown to the customer on its own any more. This is the value stored in
+    // address-error when an address is marked unshippable, and the page speaks through
+    // ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD instead -- one message, pointing at the
+    // marker now sitting beside the offending row. Kept as a sentence rather than a bare
+    // flag so it reads sensibly in a debug log.
     //
-    // A rejected selection is never saved -- addressValidation() failing means setMultiship()
-    // is not called -- so the menu snaps back to "Please choose an address" and the row looks
-    // exactly as it did before the customer touched it. The old wording explained that the
-    // address was unsupported but not that their choice had been thrown away, which reads as
-    // the page having ignored the click. dbltoe hit precisely this and went looking for a
-    // warning icon to explain it; there is no icon on this path, because nothing was kept to
-    // mark.
-    //
-    'ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING' => 'The shipping method you chose cannot deliver to that address, so the selection was not saved and the item still needs one. Pick a different address for it, or change the shipping method above and try again.',
+    'ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING' => 'That address selection is not supported by the currently-selected shipping method.',
     'MULTISHIP_CHOOSE_DIFFERENT_SHIPPING' => 'One or more of your additional shipping addresses cannot be used with the currently-selected shipping method. Either change your shipping method or click the link below to make changes to your additional shipping addresses.',
     // -----
     // Deliberately not a Font Awesome icon any more.

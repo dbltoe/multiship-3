@@ -89,6 +89,17 @@ $define = [
     //
     'TEXT_MULTISHIP_ITEMS_UNASSIGNED' => 'Choose a delivery address for every item &mdash; your own, or the person you are sending it to. %u still to go.',
 
+    // -----
+    // Occupies the Continue position while an item is assigned to an address the chosen
+    // shipping method cannot reach. Names the marker rather than the address, because the
+    // marker is what the customer has to go and find; %s is that marker.
+    //
+    // Distinct from TEXT_MULTISHIP_ITEMS_UNASSIGNED above, which covers rows nobody has
+    // claimed yet. Both block the way onward, for different reasons, and saying which is
+    // which is the difference between a customer fixing it and a customer stuck.
+    //
+    'TEXT_MULTISHIP_ADDRESS_UNREACHABLE' => 'One or more items are going to an address this shipping method cannot deliver to &mdash; look for %s beside the address above. Choose a different address for those items, or pick another shipping method.',
+
     'TEXT_NEED_ANOTHER_ADDRESS' => 'Need another address? ',
     'TEXT_ENTER_NEW_ADDRESS' => 'Enter a new shipping address.',
     'TEXT_DELETE_ITEM' => 'If you changed any quantities, click ',

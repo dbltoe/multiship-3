@@ -309,22 +309,33 @@ $multiship_shop_link = '<a class="multishipActionLink" href="' . zen_href_link(F
     <div class="clearBoth"></div>
 <?php
 // -----
-// One position, two states, and it sits last: both ways off this page are offered before
+// One position, three states, and it sits last: both ways off this page are offered before
 // the way on through it, so the button a finishing customer wants is the final thing on the
 // page rather than something to scroll back up for.
 //
-// While items are unanswered the reminder occupies this spot instead. It lives here rather
-// than in the messageStack at the top of the page because the customer is working at the
-// bottom of a long grid, and a message they scrolled past before starting is not a
-// reminder.
+// While anything is outstanding the reminder occupies this spot instead. It lives here
+// rather than in the messageStack because the customer is working at the bottom of a long
+// grid, and a message they scrolled past before starting is not a reminder.
 //
-if ($multiship_unassigned === 0) {
+// The unreachable-address state is the newer of the two. Until an unshippable selection was
+// kept and marked, this could not arise: a rejected address was discarded, so the row simply
+// stayed unanswered and the count above covered it. Now the row does hold an address and the
+// count is satisfied, so without this the button would appear and do nothing visible --
+// $multiship_continue_link points back at this page while an address is unreachable, so the
+// customer would click Continue and arrive right back where they started with no idea why.
+// Better to say what is wrong and name the marker that shows where.
+//
+if ($multiship_unassigned !== 0) {
 ?>
-    <div id="multishipContinue"><?php echo $resume_checkout_anchor; ?></div>
+    <div id="multishipContinue" class="multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned); ?></div>
+<?php
+} elseif (!empty($invalid_address_present)) {
+?>
+    <div id="multishipContinue" class="multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ADDRESS_UNREACHABLE, MULTISHIP_ICON_NO_SHIP); ?></div>
 <?php
 } else {
 ?>
-    <div id="multishipContinue" class="multishipIncomplete"><?php echo sprintf(TEXT_MULTISHIP_ITEMS_UNASSIGNED, $multiship_unassigned); ?></div>
+    <div id="multishipContinue"><?php echo $resume_checkout_anchor; ?></div>
 <?php
 }
 ?>

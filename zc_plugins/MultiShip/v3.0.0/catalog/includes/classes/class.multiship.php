@@ -25,7 +25,8 @@ class multiship extends base
               $orders_multiship_ids,
               $text_email,
               $shipping_total,
-              $noship_address_id;
+              $noship_address_id,
+              $invalid_addresses;
 
     // -----
     // Class constructor.  This class is created via auto_load as $_SESSION['multicart'].
@@ -268,6 +269,15 @@ class multiship extends base
         global $order;
         $addresses = array_unique($addresses);
         $validated = true;
+
+        // -----
+        // Which addresses failed, not just whether any did.
+        //
+        // The caller marks the offending rows so the customer can see which one is wrong, so
+        // a bare true/false is not enough to act on. Reset per call: this is the result of
+        // this validation, not an accumulation across the session.
+        //
+        $this->invalid_addresses = [];
         if (count($addresses) > 1 || (count($addresses) == 1 && $addresses[0] != $_SESSION['sendto'])) {
             // -----
             // The shipping id is required, in 'module_method' form, to perform the validation.  If it's
@@ -312,6 +322,7 @@ class multiship extends base
                 $this->debugLog("addressValidation: Quote received for $address_id: " . var_export($shipping_quote, true));
                 if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
                     $validated = false;
+                    $this->invalid_addresses[] = $address_id;
                     $this->debugLog("No shipping quote for $address_id.");
                 }
             }
@@ -320,6 +331,29 @@ class multiship extends base
         return $validated;
     }
   
+    // -----
+    // Marks the addresses the last validation rejected, so the grid can show which they are.
+    //
+    // Must be called after setMultiship(), which rebuilds the cart and would otherwise wipe
+    // these flags off it. address-error is the same key the confirmation-page quoting sets
+    // when a quote fails there, so both routes to an unshippable address end up looking
+    // identical to getNoShipIcon() and to the page: one marker, one message, one way back.
+    //
+    // Addresses no longer in the cart are skipped rather than created -- a flag on an address
+    // holding no items would mark nothing and count towards a problem that is not there.
+    //
+    public function flagInvalidAddresses()
+    {
+        if (empty($this->invalid_addresses) || !is_array($this->cart)) {
+            return;
+        }
+        foreach ($this->invalid_addresses as $address_id) {
+            if (isset($this->cart[$address_id])) {
+                $this->cart[$address_id]['address-error'] = ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING;
+            }
+        }
+    }
+
     // -----
     // Returns a binary flag that indicates whether or not the customer has selected multiple
     // shipping addresses for the current order.

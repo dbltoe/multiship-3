@@ -283,20 +283,31 @@ if (isset($_POST['securityToken'])) {
 
     if ($multiship_chosen_addresses === []) {
         $_SESSION['multiship']->sessionCleanup();
-    } elseif (!$_SESSION['multiship']->addressValidation($multiship_chosen_addresses)) {
-        // -----
-        // Flagged here, added to the stack further down, once the address-book caution has
-        // been added. messageStack renders in the order things are put into it, and this
-        // point in the file comes before that caution -- which put the error above it, and
-        // so furthest from the grid, the opposite of why these messages moved down at all.
-        // dbltoe asked for the warning to sit below the caution; this is what does it.
-        //
-        $multiship_address_rejected = true;
     } else {
         // -----
-        // Record the customer's multiship selection in the session variable.
+        // The choice is recorded whether or not it can be shipped, then marked if it cannot.
         //
+        // A rejected address used to be dropped on the floor: setMultiship() was skipped
+        // entirely, so the menu snapped back to "Please choose an address" and the row looked
+        // exactly as it had before the customer touched it. That is why dbltoe had never seen
+        // the warning icon the instructions promise -- nothing was kept for it to sit beside.
+        //
+        // Keeping the address and marking it is what those instructions describe. The row
+        // holds the address, the address carries address-error, getNoShipIcon() puts the
+        // marker on it, and $invalid_address_present further down does the rest: it raises
+        // the message that points at the marker, and it sends "Continue with Checkout" back
+        // to this page instead of on to payment. On an order with several rows that names the
+        // offending one, rather than refusing the page and leaving the customer to work out
+        // for themselves which address was the problem.
+        //
+        // Order matters. setMultiship() rebuilds the cart from the posted selections, so the
+        // flagging has to follow it or the flags are rebuilt away.
+        //
+        $multiship_addresses_valid = $_SESSION['multiship']->addressValidation($multiship_chosen_addresses);
         $_SESSION['multiship']->setMultiship($multiship_chosen_addresses, $multiship_chosen_prids);
+        if ($multiship_addresses_valid === false) {
+            $_SESSION['multiship']->flagInvalidAddresses();
+        }
     }
 }
 
@@ -389,14 +400,6 @@ if (defined('MAX_ADDRESS_BOOK_ENTRIES') && count($multishipAddresses) > (int)MAX
         sprintf(TEXT_MULTISHIP_OVER_ADDRESS_LIMIT, count($multishipAddresses), (int)MAX_ADDRESS_BOOK_ENTRIES),
         'caution'
     );
-}
-
-// -----
-// The rejected-address error, added last so it renders closest to the grid it concerns.
-// Raised back in the POST handling above; see the note there.
-//
-if (!empty($multiship_address_rejected)) {
-    $messageStack->add('multiship', ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING, 'error');
 }
 
 // -----
