@@ -18,13 +18,14 @@ $currencies = new currencies();
 $oID = (int)zen_db_prepare_input($_GET['oID']);
 
 // -----
-// Bring in storefront version of the class for zc155 (already baked-in for zc156 and later).
+// The order class.
 //
-if (strpos(PROJECT_VERSION_MINOR, '5.5') === 0) {
-    require DIR_FS_CATALOG . DIR_WS_CLASSES . 'order.php';
-} else {
-    require DIR_WS_CLASSES . 'order.php';
-}
+// This used to branch on strpos(PROJECT_VERSION_MINOR, '5.5') === 0, pulling the storefront
+// class in explicitly for Zen Cart 1.5.5, where the admin had its own and the two differed.
+// PROJECT_VERSION_MINOR is '0.1' at this plugin's 2.0 floor and '2.2' on the 2.3 branch, so
+// that test cannot match on any version still supported and the else was always taken.
+//
+require DIR_WS_CLASSES . 'order.php';
 $order = new order($oID);
 
 $orders_status_array = array();

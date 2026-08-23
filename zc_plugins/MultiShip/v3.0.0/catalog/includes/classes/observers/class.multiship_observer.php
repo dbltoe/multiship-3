@@ -48,7 +48,7 @@ class multiship_observer extends base
                     /* /includes/modules[/YOUR_TEMPLATE]/checkout_process.php */
                     'NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_TOTALS_PROCESS',
                     
-                    /* /includes/modules/order_total/ot_shipping.php (zc156b+) */
+                    /* /includes/modules/order_total/ot_shipping.php */
                     'NOTIFY_OT_SHIPPING_TAX_CALCS',
 
                     // -----

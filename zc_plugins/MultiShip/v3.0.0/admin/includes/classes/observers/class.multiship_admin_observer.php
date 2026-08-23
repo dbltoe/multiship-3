@@ -14,19 +14,24 @@ if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
 class multiship_observer extends base
 {
     protected $eventID = '';
-    protected $processed_order;
 
     public function __construct ()
     {
         $this->attach(
             $this, 
             array(
-                //-Issued by /includes/classes/order.php
+                // -----
+                // Issued by /includes/classes/order.php.
+                //
+                // ORDER_QUERY_ADMIN_COMPLETE used to be attached alongside this, because the
+                // pre-1.5.6 admin order class emitted only that one. Every version this plugin
+                // now supports emits both, in a fixed order -- NOTIFY_ORDER_AFTER_QUERY first,
+                // then ORDER_QUERY_ADMIN_COMPLETE marked @deprecated since v1.5.6 -- verified
+                // on the 2.0 branch (order.php:381/387) and on 2.3 (365/372). The deprecated
+                // one could therefore never be the notification that did the work.
+                //
                 'NOTIFY_ORDER_AFTER_QUERY',
-                
-                //-Issued by /admin/includes/classes/order.php (pre-zc156) and on admin for zc156 (albeit deprecated)
-                'ORDER_QUERY_ADMIN_COMPLETE',
-                
+
                 //-Issued by /admin/orders.php
                 'NOTIFY_ADMIN_ORDERS_MENU_LEGEND',
                 'NOTIFY_ADMIN_ORDERS_SHOW_ORDER_DIFFERENCE',
@@ -58,36 +63,23 @@ class multiship_observer extends base
     {
         global $db;
         $this->eventID = $eventID;
-        $order_query_admin = false;
 
         switch ($eventID) {
             // -----
-            // Enabling zc155/zc156 interoperability, the zc155 admin order-class issues **only** this
-            // event while the zc156 version brings in the storefront version of the class which issues
-            // this event (deprecated) _after_ issuing the event that follows.
+            // $p2 is the orders_id: notify('NOTIFY_ORDER_AFTER_QUERY', IS_ADMIN_FLAG, $this->orderId).
             //
-            // If the NOTIFY_ORDER_AFTER_QUERY event has been processed, there's nothing to do here.  If
-            // it hasn't (i.e. zc155), then this clause sets a flag to let the zc156 event "know" that
-            // the orders_id has been gathered.
+            // This used to be the second half of a fall-through from ORDER_QUERY_ADMIN_COMPLETE,
+            // with a processed_order flag stopping the two notifications doing the work twice.
+            // Both are gone. See the attach list above for why the deprecated notification could
+            // never win that race on any supported version; the flag only ever guarded it, and
+            // this case was never guarded at all, so behaviour here is unchanged.
             //
-            case 'ORDER_QUERY_ADMIN_COMPLETE':
-                if (isset($this->processed_order)) {
-                    break;
+            case 'NOTIFY_ORDER_AFTER_QUERY':
+                if (empty($p2)) {
+                    $this->logError('Invalid notification parameters: ' . json_encode($p2));
                 }
-                $order_query_admin = true;
-                if (empty($p1['orders_id'])) {
-                    $this->logError('Invalid notification parameters: ' . json_encode($p1));
-                }
-                $orders_id = (int)$p1['orders_id'];
-            case 'NOTIFY_ORDER_AFTER_QUERY':            //-Fall through from above processing
-                if (!$order_query_admin) {
-                    if (empty($p2)) {
-                        $this->logError('Invalid notification parameters: ' . json_encode($p2));
-                    }
-                    $orders_id = (int)$p2;
-                }
-                $this->processed_order = true;
-        
+                $orders_id = (int)$p2;
+
                 $multiship_orders = $db->Execute(
                     "SELECT orders_multiship_id, delivery_name as name, delivery_company as company, delivery_street_address as street_address, delivery_suburb as suburb, 
                             delivery_city as city, delivery_postcode as postcode, delivery_state as state, delivery_country as country, delivery_address_format_id as address_format_id, 

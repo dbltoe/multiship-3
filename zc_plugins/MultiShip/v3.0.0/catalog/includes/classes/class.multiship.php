@@ -814,8 +814,12 @@ class multiship extends base
     // Called by the multiship_observer class upon receipt of NOTIFY_ORDER_DURING_CREATE_ADDED_PRODUCT_LINE_ITEM
     // (issued by the order class).  This is called once for each product in the current session's cart.
     //
-    // Note: A change was introduced in zc155, adding the order-class products' array index; that needs
-    //       to be removed prior to database update!
+    // Note: the notified array is not a row. Core merges two of its own keys onto the front of it --
+    //       notify('NOTIFY_ORDER_DURING_CREATE_ADDED_PRODUCT_LINE_ITEM', array_merge(['orders_products_id'
+    //       => ..., 'i' => $i], $sql_data_array), ...) -- and both must come off before this goes to the
+    //       database, which is what the unset below is for. 'i' arrived in zc155 and the note here used to
+    //       say so; it is simply how the notification has been shaped on every version this plugin now
+    //       supports (verified on the 2.3 branch, order.php:1149), so it is no longer a version caveat.
     //
     public function createOrderAddProducts($orders_products_array, $orders_products_id) {
         global $db, $currencies;
