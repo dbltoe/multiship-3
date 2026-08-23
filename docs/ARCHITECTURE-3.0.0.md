@@ -718,3 +718,32 @@ passes the previous version. The installer therefore uses raw SQL throughout and
 declares `executeUpgrade($oldVersion = null)`, which is signature-compatible with
 both. `zen_register_admin_page`, `zen_deregister_admin_pages` and
 `queryFactory::prepare_input` were each confirmed present at v2.0.0 and at 2.3.
+
+### Known limitation: a lone address that matches `sendto` is never validated
+
+`addressValidation()` opens by deciding whether there is anything to check:
+
+```php
+if (count($addresses) > 1 || (count($addresses) == 1 && $addresses[0] != $_SESSION['sendto'])) {
+```
+
+So a single chosen address that already equals `$_SESSION['sendto']` returns `true`
+without a quote being requested for it. Nothing is validated, nothing is flagged, and
+the grid shows no marker — even where the current shipping method cannot serve that
+address at all.
+
+This surfaced while testing the zone-restriction path. Putting the bad address in the
+first of two dropdowns appeared to behave correctly, and it was only the *second*
+dropdown — two distinct addresses, the first case the guard actually lets through —
+that reached validation and exposed the redirect loop fixed in `efbcce3`.
+
+Left as it is, deliberately. dbltoe's call: "something we can live with". The case is
+narrow — one address, already the session's send-to, so the customer has effectively
+not split the order at all — and the order does not escape unchecked, because
+`checkoutInitialize()` quotes every address again when the customer moves on and marks
+whatever fails there. The cost is that the warning arrives a step later than it could,
+not that a bad address ships.
+
+Worth revisiting only if the guard is being touched for another reason. The obvious
+change — validate whenever any address is present — means an extra carrier quote on
+every single-address pass through the page, which is what the guard exists to avoid.
