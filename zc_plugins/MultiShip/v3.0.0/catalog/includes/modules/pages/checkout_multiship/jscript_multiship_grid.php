@@ -83,6 +83,28 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
             return;
         }
 
+        // -----
+        // Where the customer was, kept as a fallback rather than discarded.
+        //
+        // multishipRemember() records the scroll offset and, until now, nothing ever read it
+        // back -- restore() only tested the value for existence and then moved to a computed
+        // target instead. That is right whenever a target is found. But three paths below
+        // reach the end without one: no menus match the selector, everything is answered and
+        // no Continue link is present, or the browser has no scrollIntoView. Each returned
+        // having scrolled nowhere, which leaves the customer at the top of a page they were
+        // working their way down -- the one place they certainly did not ask to be.
+        //
+        // Falling back to the remembered offset makes the worst case "stay where you were".
+        // That is never worse than the top of the page, and it is what the value was being
+        // recorded for in the first place.
+        //
+        var remembered = parseInt(marked, 10);
+        function keepPlace() {
+            if (!isNaN(remembered) && remembered > 0) {
+                window.scrollTo(0, remembered);
+            }
+        }
+
         var menus = document.querySelectorAll('#multishipTable select[name="address[]"]');
         var target = null;
         for (var i = 0; i < menus.length; i++) {
@@ -105,6 +127,7 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
             target = document.querySelector('#multishipContinue a');
         }
         if (target === null) {
+            keepPlace();
             return;
         }
 
@@ -112,6 +135,8 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
         // the element wherever the browser chooses rather than where this puts it.
         if (typeof target.scrollIntoView === 'function') {
             target.scrollIntoView({ block: 'center' });
+        } else {
+            keepPlace();
         }
         if (typeof target.focus === 'function') {
             target.focus({ preventScroll: true });
