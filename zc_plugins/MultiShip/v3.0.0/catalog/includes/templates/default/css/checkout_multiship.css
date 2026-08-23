@@ -56,8 +56,8 @@
            --multiship-alert explicitly for their own background.
 
            Colour is not the only signal in either place it is used: the cannot-ship
-           marker is a fa-exclamation-circle icon with title text, and the surcharge line
-           is labelled. */
+           marker is a warning sign carrying both an accessible name and hover text, and
+           the surcharge line is labelled. */
         --multiship-alert: color-mix(in srgb, #e5484d 55%, currentColor);
     }
 }
@@ -118,7 +118,23 @@
    rest of the site, which is the opposite of the intent. */
 .onetime_charge, #onetime_charges { color: var(--multiship-alert); }
 .virtual { display: none; }
-td.sendto .fa { color: var(--multiship-alert); }
+/* -----
+   The cannot-ship marker.
+
+   Keyed on the plugin's own class rather than Font Awesome's .fa, which is what this
+   selector used to target. The marker no longer depends on a webfont the plugin never
+   loaded -- see MULTISHIP_ICON_NO_SHIP in lang.multiship_common.php -- so it is styled
+   here and renders on every template rather than only on the ones carrying Font Awesome.
+
+   Sized up because a warning sign at body size reads as punctuation next to an address;
+   fa-lg was doing the same job before. Not scaled any further: it sits inline in a table
+   cell and must not push the row height around. */
+.multishipNoShip {
+    color: var(--multiship-alert);
+    font-size: 1.25em;
+    line-height: 1;
+    vertical-align: -0.05em;
+}
 
 /* -----
    Column widths. The item name is the longest thing on the row and was being squeezed by a

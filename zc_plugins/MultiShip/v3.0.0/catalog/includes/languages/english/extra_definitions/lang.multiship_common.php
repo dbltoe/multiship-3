@@ -5,6 +5,13 @@
 // Substantially rewritten in v3.0.0, Copyright (C) 2026 My Zen Cart Host (dbltoe)
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
 //
+// -----
+// The cannot-ship marker's accessible name, held in a variable because the markup below
+// needs it twice -- once for screen readers, once on hover -- and a translator who changed
+// only one of two literals would leave the two disagreeing.
+//
+$multiship_no_ship_alt = 'Cannot be shipped to this address';
+
 $define = [
     'SHIPPING_TO_MULTIPLE_ADDRESSES' => 'Shipping to multiple addresses, see below.',
 
@@ -172,6 +179,30 @@ $define = [
 
     'ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING' => 'That address selection is not supported by the currently-selected shipping method.',
     'MULTISHIP_CHOOSE_DIFFERENT_SHIPPING' => 'One or more of your additional shipping addresses cannot be used with the currently-selected shipping method. Either change your shipping method or click the link below to make changes to your additional shipping addresses.',
-    'MULTISHIP_ICON_NO_SHIP' => '<i class="fa fa-exclamation-circle fa-lg"></i>',
+    // -----
+    // Deliberately not a Font Awesome icon any more.
+    //
+    // This was <i class="fa fa-exclamation-circle fa-lg"></i>, and the plugin loads Font
+    // Awesome nowhere -- it relied on whatever the active template had loaded. ZCA Bootstrap
+    // ships it, which is why this looked right all through development; stock
+    // responsive_classic does not, and there the element renders empty.
+    //
+    // That is not a cosmetic loss. This marker is the whole subject of
+    // ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD, which sends the customer to look for "the
+    // selections below marked with %1$s" -- so on a template without Font Awesome that
+    // sentence trails off into nothing and no row carries a marker at all.
+    //
+    // U+26A0 needs no webfont and no co-operation from the template. U+FE0E after it forces
+    // text presentation: without it some platforms substitute a colour emoji, which would
+    // ignore --multiship-alert and take the contrast work in checkout_multiship.css with it.
+    //
+    // role="img" with aria-label finally gives it an accessible name -- the CSS already
+    // claimed it had "title text" when it had neither -- and title= shows the same words on
+    // hover, so the marker explains itself to a sighted customer too.
+    //
+    'MULTISHIP_ICON_NO_SHIP' =>
+        '<span class="multishipNoShip" role="img"'
+        . ' aria-label="' . $multiship_no_ship_alt . '"'
+        . ' title="' . $multiship_no_ship_alt . '">&#9888;&#xFE0E;</span>',
 ];
 return $define;
