@@ -143,10 +143,57 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', restore);
-    } else {
+    // -----
+    // Wait until the document can actually be scrolled before trying to scroll it.
+    //
+    // This ran at DOMContentLoaded and did nothing at all on responsive_classic. That
+    // template's html_header.php sets <html class="no-fouc"> while the head is still
+    // parsing, its stylesheet declares .no-fouc { display: none }, and the class is not
+    // removed until a jQuery handler in jscript_responsive_framework.php runs. So at
+    // DOMContentLoaded the whole document is display:none: it has no layout boxes, so
+    // scrollIntoView() has nothing to scroll to, and no scroll height, so scrollTo() clamps
+    // to zero. The class then comes off, the page paints, and the customer is at the top --
+    // on every single selection. ZCA has no such guard, which is why this was invisible
+    // there and why the two templates disagreed.
+    //
+    // The test is for a scrollable document rather than for the no-fouc class, because that
+    // name belongs to one template and the problem belongs to any template that hides the
+    // body while loading. Polling by animation frame costs a frame or two in the normal case
+    // and keeps the scroll immediate; window.load is the backstop for a page that never
+    // becomes taller than the viewport, and the attempt cap stops a short page waiting
+    // forever. restore() clears the stored marker, so the guard below is what keeps the two
+    // entry points from both acting on it.
+    //
+    var ran = false;
+    function runOnce() {
+        if (ran) {
+            return;
+        }
+        ran = true;
         restore();
+    }
+
+    function whenScrollable(attemptsLeft) {
+        if (ran) {
+            return;
+        }
+        if (attemptsLeft <= 0 || document.documentElement.scrollHeight > window.innerHeight) {
+            runOnce();
+            return;
+        }
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(function () { whenScrollable(attemptsLeft - 1); });
+        } else {
+            window.setTimeout(function () { whenScrollable(attemptsLeft - 1); }, 16);
+        }
+    }
+
+    window.addEventListener('load', runOnce);
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { whenScrollable(90); });
+    } else {
+        whenScrollable(90);
     }
 })();
 </script>
