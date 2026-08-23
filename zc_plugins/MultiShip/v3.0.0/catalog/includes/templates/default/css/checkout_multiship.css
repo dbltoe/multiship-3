@@ -110,12 +110,31 @@
 .multishipShipError { color: var(--multiship-alert); padding: 0.35em 0; }
 #checkoutMultishipInstructions { padding: 1em 0; }
 #multishipTable { width: 100%; padding: 0.3em; }
-#multishipTableHeading { font-weight: bold; }
-#multishipTableHeading > div, .multishipTableItem > div { display: table-cell; padding: 0.3em; border-bottom: 1px solid var(--multiship-rule); }
-/* No striping here. The table carries Bootstrap's "table-striped", so a Bootstrap store
-   stripes it the way it stripes every other table. A rule here would fight that and win --
-   page CSS loads after the template's -- leaving this one grid striped differently from the
-   rest of the site, which is the opposite of the intent. */
+/* -----
+   Cell spacing and row rules, written so any template can beat them.
+
+   These were "#multishipTableHeading > div, .multishipTableItem > div", from lat9's original
+   div-based grid. The grid is a real <table id="multishipTable"> now, so those selectors
+   matched nothing and this plugin has been contributing no table styling whatsoever. It went
+   unnoticed because the markup carries Bootstrap's "table table-striped": on ZCA those class
+   names do the work and the dead rules were never missed. On a template without Bootstrap --
+   responsive_classic, Zen Cart's own default -- the class names mean nothing, no rule
+   anywhere gives this grid padding, rules or striping, and every row runs into the next.
+
+   Inside :where() deliberately. Page CSS loads after the template's, so a plain
+   #multishipTable selector would beat Bootstrap on specificity and on order both, and this
+   fallback would end up overriding the templates that least need it. :where() contributes
+   zero specificity, so anything a template says -- Bootstrap's .table td, or a store's own
+   rule -- outranks this regardless of load order. It applies only where nothing else does.
+
+   A browser too old for :where() drops the rule as invalid, which is today's behaviour
+   rather than anything worse.
+
+   Striping is still not attempted, for the reason it never was: a store that stripes its
+   tables should stripe this one the same way, and that is the template's business. */
+:where(#multishipTable) th,
+:where(#multishipTable) td { padding: 0.3em; border-bottom: 1px solid var(--multiship-rule); }
+:where(#multishipTable) th { font-weight: bold; text-align: left; }
 .onetime_charge, #onetime_charges { color: var(--multiship-alert); }
 .virtual { display: none; }
 /* -----
