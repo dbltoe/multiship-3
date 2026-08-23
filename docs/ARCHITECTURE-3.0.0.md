@@ -569,28 +569,77 @@ exposed per cart line by `shopping_cart::get_products()` at lines 1440-43, but t
 that prices a ten-foot pole on weight alone eliminates nothing, and the customer buys a label
 the carrier will reject.
 
-### Free shipping across a split — probably a live defect
+### Free shipping across a split — two defects, not one
 
-Not a future concern. `freeoptions.php:96` qualifies on
+Analysed properly on 2026-08-23. The earlier version of this section named one mechanism and
+called the outcome "a dead end with no message". Both halves were wrong: there are two
+mechanisms, they fail in opposite ways, and the louder of the two was until `efbcce3` an
+infinite redirect loop rather than a dead end.
+
+**Quote-time: `freeoptions`, `freeshipper`.** All three of `freeoptions`' criteria read the
+session cart —
 
 ```php
-$cart_total = $_SESSION['cart']->show_total();
+$cart_total  = $_SESSION['cart']->show_total();
+$order_weight = round($_SESSION['cart']->show_weight(), 9);
+$num_items   = $_SESSION['cart']->count_contents();
 ```
 
-and `checkoutInitialize()` swaps `$_SESSION['cart']->contents` for one address's share before
-quoting, so each sub-order is judged against **its own** total rather than the cart's.
+— and `checkoutInitialize()` replaces `$_SESSION['cart']->contents` with one address's share
+before instantiating `new shipping` inside its per-address loop. The module decides
+`$this->enabled` in its constructor, so it is re-judged per consignment against a sub-cart.
+Free shipping over $50, a $60 cart split two ways at $30, and neither half qualifies: the
+chosen method returns no quote, and *every* address is flagged unshippable.
 
-The reachable scenario: a store offers free shipping over $50, the customer's cart is $60 and
-the cart page says so, they split it two ways at $30 each, neither sub-order reaches the
-threshold, `freeoptions` returns nothing for either, and **every address flags as
-unshippable**. They are returned to the grid with warning icons and no explanation.
+Until `efbcce3` that meant a redirect loop, not a warning. `checkoutInitialize()` redirected
+to `checkout_multiship` on an invalid address while running on that very page. Same fault
+dbltoe hit with a zone-restricted address; free shipping reaches it by a different door.
 
-Whether a split order *should* keep free shipping is a policy question — the store is now
-paying for two parcels, so charging is defensible. The current outcome is not a policy. It is
-a dead end with no message, and it is the same shape as the quantity-discount loss recorded
-in section 7: a figure shown on the cart page that does not survive the split.
+It is now loud but misleading. The customer gets the marker and
+`ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD`, which says the method cannot deliver to that
+address. It can. The order simply stopped qualifying for free shipping the moment it was
+split, and no change of address will fix it — though "or pick another shipping method",
+which the same message offers, happens to be exactly right.
 
-Untested. One order settles it, and it costs the same setup as the no-ship test.
+**Total-time: `ot_shipping`'s own free-shipping option.** A different mechanism with a worse
+failure. `ot_shipping.php:89`:
+
+```php
+if ($pass && ($order->info['total'] - $order->info['shipping_cost']) >= MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING_OVER) {
+```
+
+`$order` is built per address inside `checkoutInitialize()`, so this too is judged on a
+sub-order. Here the quote succeeds — a real carrier method was chosen — and `ot_shipping`
+merely declines to zero it. The order completes and the customer is charged shipping on
+every consignment after the cart page told them shipping was free. Silent, and the same
+shape as the quantity-discount loss in section 7: a figure shown on the cart page that does
+not survive the split.
+
+**Neither is exercised on the test store.** `freeoptions` and `freeshipper` are not
+installed, and `MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING` is `false` (threshold 50).
+Reproducing either needs a configuration change first, which is why none of this has ever
+shown up in testing.
+
+**A fix cannot come from a notifier.** `ot_shipping`'s only notifier is
+`NOTIFY_OT_SHIPPING_TAX_CALCS` at line 103, after the decision at line 89, and it exposes
+only tax handling. Nothing hooks the free-shipping test itself. The encapsulation trap
+again: the plugin would have to correct the outcome afterwards in its own totals handling,
+re-implementing `ot_shipping`'s threshold and its national/international/both destination
+rule to know whether the whole order should have qualified. That is duplicated policy, and
+it goes stale the day core changes the rule.
+
+**The policy question is the easy half.** Whether a split order keeps free shipping is a
+genuine choice — the store is paying for several parcels now, so charging is defensible.
+What is not defensible is either current outcome: one blocks checkout while blaming the
+address, the other bills the customer for something they were promised. The precedent set
+by the quantity-discount fix is that the customer keeps what the cart page showed them, and
+consistency argues for whole-order qualification, with an admin flag for owners who would
+rather charge — the same flag contemplated in the design above.
+
+Not fixed for v3.0.0. The cheap honest step is the wording of
+`ERROR_ADDRESS_INVALID_FOR_SHIPPING_METHOD`, which asserts a cause it cannot know, plus a
+store-owner note that free shipping and multiship interact badly. Both are small; neither
+has been done.
 
 ### Heavy sub-orders are handled, by core
 
