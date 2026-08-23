@@ -1261,10 +1261,23 @@ class multiship extends base
         
         // -----
         // If any of the multiple ship-to addresses aren't valid for the currently-selected shipping method,
-        // redirect back to the 'checkout_multiship' page so that the customer can make other
-        // selections.
+        // send the customer to the 'checkout_multiship' page so that they can make other selections --
+        // unless that is the page they are already on.
         //
-        if (!empty($invalid_address_found)) {
+        // Without the second test this redirects to itself. checkoutInitialize() is called from
+        // checkout_multiship's own header_php (line 347) as well as from checkout_shipping, so on the
+        // multiship page the redirect lands back where it started, runs again, finds the same invalid
+        // address and goes round again. dbltoe hit exactly that -- two addresses, the second one
+        // unshippable -- and got "This page isn't working" with no error log, because a redirect loop
+        // raises no PHP error at all: 272 laps in the multiship debug log at about five a second.
+        //
+        // The loop was reachable before the selection began being retained, but only by the narrower
+        // route of a quote failing at confirmation time; keeping a rejected address put it on the path
+        // a customer takes by simply choosing one. There is nothing for the redirect to achieve here in
+        // any case: this page already marks the offending row, says so above the grid, and replaces
+        // Continue with an explanation. Arriving at it a second time adds nothing.
+        //
+        if (!empty($invalid_address_found) && ($GLOBALS['current_page_base'] ?? '') !== FILENAME_CHECKOUT_MULTISHIP) {
             zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
         }
     }
