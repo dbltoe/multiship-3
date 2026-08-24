@@ -152,6 +152,18 @@ $define = [
 
     'TEXT_SHIPPING_TO' => 'Shipping to: ',
 
+    // -----
+    // The accessible name on each recipient's item table; %s is the recipient.
+    //
+    // Never displayed. These tables all carry id="cartContentsDisplay", which repeats down
+    // the page -- kept deliberately, because it is what makes them inherit the store's own
+    // product-table styling. The cost of that is a page of tables that are identical to
+    // anything reading structure rather than layout, and a screen-reader user moving table
+    // by table had no way to tell whose parcel they were looking at. Naming them fixes the
+    // part that actually reaches a person, without touching the id or the styling.
+    //
+    'LABEL_MULTISHIP_ITEMS_FOR' => 'Items being sent to %s',
+
     'TEXT_GRAND_TOTAL' => 'Grand Total:',
 
     'MULTISHIP_MULTIPLE' => 'Multiple',

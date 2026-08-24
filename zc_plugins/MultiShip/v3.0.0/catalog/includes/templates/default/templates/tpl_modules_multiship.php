@@ -21,6 +21,17 @@ if (isset($multiship_info) && is_array($multiship_info)) {
 // exactly the case this page has to let a customer catch. Quieter, not absent.
 //
 $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
+
+// -----
+// Names this recipient's table for anything reading structure rather than layout.
+//
+// Omitted rather than left empty when there is no name to use: an aria-label of "Items being
+// sent to " is worse than none, because it replaces the element's own accessible name with
+// an unfinished sentence.
+//
+$multishipItemsLabel = ($multishipRecipientName === '')
+    ? ''
+    : ' aria-label="' . sprintf(LABEL_MULTISHIP_ITEMS_FOR, zen_output_string_protected($multishipRecipientName)) . '"';
 ?>
 <div class="multishipOrder">
     <div class="multishipOrderHeader">
@@ -74,8 +85,19 @@ $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
 // .multishipItems is a hook, carried by every copy of the table and styled by none of them,
 // so a store owner can space these without having to target an id that repeats down the page.
 //
+// Raised again in the v3.0.0 accessibility pass and settled the same way, deliberately. The
+// repetition is invalid, and there is no version of this that keeps both: browsers apply an
+// id selector to every element carrying that id, and it is exactly that tolerance the store's
+// own #cartContentsDisplay rule depends on. Unique ids would be valid and would inherit
+// nothing. dbltoe's call -- "we need to keep the ability to pick up the styling of each
+// individual store" -- and the right one, because the cost is validity rather than anything a
+// person meets: no screen reader announces an id.
+//
+// What a person did meet was a run of identical unnamed tables, and that is fixed above
+// without touching any of this: each now carries an aria-label naming its recipient.
+//
 ?>
-    <table id="cartContentsDisplay" class="multishipItems">
+    <table id="cartContentsDisplay" class="multishipItems"<?php echo $multishipItemsLabel; ?>>
         <tr class="cartTableHeading">
             <th scope="col" id="ccQuantityHeading"><?php echo TABLE_HEADING_QUANTITY; ?></th>
             <th scope="col" id="ccProductsHeading"><?php echo TABLE_HEADING_PRODUCTS; ?></th>
