@@ -42,13 +42,13 @@ th, td { padding: 1%; border: 1px solid #3333ff; }
 .bitalic { font-weight: bold; font-style: italic; color: blue; }
 #header { width: 100%; }
 #title { font-size: 20px; padding-top: 1%; padding-bottom: 1%; text-align: center; }
-h3, h4 { font-size: 12px; padding: 0.5% 0 0.5% 1%; border: 1px solid #5D90A7; background-color: #9ECED3; font-weight: bold; font-style: italic; margin-top: 0.5%; }
+h4 { font-size: 12px; padding: 0.5% 0 0.5% 1%; border: 1px solid #5D90A7; background-color: #9ECED3; font-weight: bold; font-style: italic; margin-top: 0.5%; }
 
 .the_head { width:97%; padding:1%; font-weight:bold; margin: 0.5% auto 0;  background-color: #5D90A7; border: 1px #0561ad solid; }
 .the_content { width:97%; padding:0 0 1% 0; border: 1px #666 solid; border-top:none; background:#fff; margin: 0 auto; }
 .openaee {  background: #4f7a8e; }
 
-h2 {width:98%; border: 1px #666 solid; border-right: none; border-left: none; padding:1%; font-weight:bold; margin-top:0.25%; background-color: #85BCD4;}
+h3 {width:98%; border: 1px #666 solid; border-right: none; border-left: none; padding:1%; font-weight:bold; margin-top:0.25%; background-color: #85BCD4;}
 .sub-content {width:98%; padding:1%; background:#fff; list-style:none; color:#033; margin-left: 0; }
 .sub-content.no-border { border: none; }
 

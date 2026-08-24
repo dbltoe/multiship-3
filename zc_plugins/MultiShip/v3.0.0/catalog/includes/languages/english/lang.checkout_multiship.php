@@ -59,6 +59,13 @@ $define = [
     'HEADING_PRICE' => 'Price',
     'HEADING_SENDTO' => 'Send To:',
 
+    // -----
+    // The accessible name on each row's Send To menu; %s is the product. Never displayed --
+    // the row is the visible label -- but it is what a screen reader reads out, and without
+    // it every menu on the page announces identically.
+    //
+    'LABEL_MULTISHIP_SENDTO_FOR_ITEM' => 'Delivery address for %s',
+
     'TEXT_OPTION_DIVIDER' => ': ',
     'ONETIME_CHARGE_INDICATOR' => '*',
     'TEXT_ONETIME_CHARGES_APPLY' => 'One-time charges apply.',

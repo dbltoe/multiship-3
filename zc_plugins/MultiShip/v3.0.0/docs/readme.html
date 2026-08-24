@@ -65,14 +65,14 @@ timeEffect : 750
   </ul>
 </div>
 
-<h1 class="the_head" id="introduction">Introduction</h1>
+<h2 class="the_head" id="introduction">Introduction</h2>
 <div class="the_content">
-  <h2 id="credits">Credits</h2>
+  <h3 id="credits">Credits</h3>
   <div class="sub-content">
     <p>The order-splitting, per-address shipping-cost and destination-based tax handling that this plugin still relies on were created by <a href="https://vinosdefrutastropicales.com" target="_blank" rel="noreferrer">Vinos de Frutas Tropicales</a> (lat9), Copyright &copy; 2014-2019. Original support thread at the Zen Cart forums: <a href="https://www.zen-cart.com/showthread.php?211914-Multiple-Ship-To-Addresses-Support-Thread" target="_blank">Multiple Ship-To Addresses Support Thread</a>.</p>
     <p>Version 3.0.0, which repackages the plugin as an encapsulated <code>zc_plugin</code> and rebuilds the checkout flow, Copyright &copy; 2026 My Zen Cart Host (dbltoe).</p>
   </div>
-  <h2 id="usage">Usage Notes</h2>
+  <h3 id="usage">Usage Notes</h3>
   <div class="sub-content">
     <p>This plugin changes how an order is built, so it has to coexist carefully with anything else that does. As of v3.0.0 most of those interactions are handled for you rather than left as a warning:</p>
     <ol>
@@ -90,7 +90,7 @@ timeEffect : 750
   </div>
 </div>
   
-<h1 class="the_head" id="overview">Overview</h1>
+<h2 class="the_head" id="overview">Overview</h2>
 <div class="the_content">
   <div class="sub-content no-border">
     <p>This plugin lets a customer send the individual products in one order to two or more different addresses. The order is split into per-address sub-orders, each quoted, taxed, tracked and status-updated independently, while the customer pays once.</p>
@@ -105,7 +105,7 @@ timeEffect : 750
   </div>
 </div>
 
-<h1 class="the_head" id="zcai">Zen Cart Admin Interfaces</h1>
+<h2 class="the_head" id="zcai">Zen Cart Admin Interfaces</h2>
 <div class="the_content">
   <div class="sub-content no-border">
     <p>Installing the plugin from the Plugin Manager creates two tables in your Zen Cart database:</p>
@@ -115,7 +115,7 @@ timeEffect : 750
     </ol>
     <p>It also adds one column to your existing <em>orders_products</em> table, recording which sub-order each product line belongs to, and registers the <code>invoice_multiship</code> and <code>packingslip_multiship</code> pages plus its own configuration menu entry.</p>
 
-    <h2 class="inner">Settings</h2>
+    <h3 class="inner">Settings</h3>
     <div class="sub-content">
       <p>Under <em>Configuration &rarr; Multiple Ship-to Addresses</em>:</p>
       <ol>
@@ -126,7 +126,7 @@ timeEffect : 750
       <p>There is no store-wide on/off switch. Installing the plugin <em>is</em> the decision to use it; uninstall it from the Plugin Manager to turn it off.</p>
     </div>
 
-    <h2 class="inner">Orders, invoices and packing slips</h2>
+    <h3 class="inner">Orders, invoices and packing slips</h3>
     <div class="sub-content">
       <ol>
         <li><em>Customers &rarr; Orders</em> shows a multiship order with each sub-order broken out, including what shipped where, and lets you change the status of one sub-order without touching the others. The customer is emailed about that sub-order only.</li>
@@ -135,7 +135,7 @@ timeEffect : 750
       </ol>
     </div>
 
-    <h2 id="emailbanner" class="inner">The image at the top of your emails</h2>
+    <h3 id="emailbanner" class="inner">The image at the top of your emails</h3>
     <div class="sub-content">
       <p>Worth knowing before you take multiship orders, because this plugin will make you send more email than you do now. Each sub-order has its own status, so a customer who split an order across three addresses gets three &quot;your order has shipped&quot; emails rather than one. Whatever sits at the top of those appears once per parcel &mdash; and on most stores, what sits there is a file the owner has never seen.</p>
       <p>Zen Cart ships <code>/email/header.jpg</code>, a 550&times;110 banner, and puts it at the top of every HTML email your store sends. The constants controlling it live in <code>/includes/languages/english/lang.email_extras.php</code>:</p>
@@ -153,13 +153,13 @@ timeEffect : 750
   </div>
 </div>
 
-<h1 class="the_head" id="zcci">Zen Cart Customer Interfaces</h1>
+<h2 class="the_head" id="zcci">Zen Cart Customer Interfaces</h2>
 <div class="the_content">
   <div class="sub-content no-border">
     <p>A customer who does not want multiple addresses sees your store's ordinary checkout, unchanged. Everything below happens only once they ask for it.</p>
   </div>
 
-  <h2 id="checkout" class="innerLink">Checkout, Step by Step</h2>
+  <h3 id="checkout" class="innerLink">Checkout, Step by Step</h3>
   <div class="sub-content">
     <p>Checkout is <strong>three steps</strong>, the same number as an ordinary Zen Cart order. In v2.0.0 a multiship customer went through five; the shipping-method choice has since moved onto the address page, and the page that used to exist only to confirm that choice is gone.</p>
     <p><b>Being asked.</b> When a cart could be split &mdash; two or more shippable items, a registered customer, shipping available &mdash; clicking <em>Checkout</em> presents a short page offering three choices: carry on with normal checkout, send the items to different addresses, or go back and keep shopping. It is asked once per order. Declining is remembered, and so is accepting &mdash; a customer who changes their mind can leave multiship from the address page at any point before paying.</p>
@@ -173,7 +173,7 @@ timeEffect : 750
     <p>A customer who is not signed in when they choose multiple addresses is sent to log in first, and told why, since multiship needs a saved address book.</p>
   </div>
 
-  <h2 id="account" class="innerLink">Account &mdash; Reviewing Order History</h2>
+  <h3 id="account" class="innerLink">Account &mdash; Reviewing Order History</h3>
   <div class="sub-content">
     <p>When a customer has placed an order with <em>Multiple Ship-To Addresses</em>, that order's display within the customer's account-related pages changes to reflect the multiple addresses:</p><ol>
       <li>On the main <em>My Account</em> page, the <b>Ship To</b> column of the <b>Previous Orders</b> table shows &quot;Multiple Addresses&quot;.</li>
@@ -184,9 +184,9 @@ timeEffect : 750
   
 </div>
 
-<h1 class="the_head" id="iaui">Install and Un-install Instructions</h1>
+<h2 class="the_head" id="iaui">Install and Un-install Instructions</h2>
 <div class="the_content">
-  <h2 id="install" class="inner">Installation</h2>
+  <h3 id="install" class="inner">Installation</h3>
   <div class="sub-content">
     <p>There are no core-file overwrites and no template overrides. You should still back up your database and files before installing anything, but there is nothing to merge.</p>
     <ol>
@@ -206,7 +206,7 @@ timeEffect : 750
     <p>Upgrading from v2.x: install this version from the Plugin Manager, then delete the individual files the older version had you copy into <code>/includes/</code> and your admin directory, and restore your own copies of any core or template files you merged its changes into. Your existing multiship orders are not affected &mdash; the database tables are the same, and the installer leaves existing data alone.</p>
   </div>
 
-  <h2 id="uninstall" class="inner">Uninstall</h2>
+  <h3 id="uninstall" class="inner">Uninstall</h3>
   <div class="sub-content">
     <ol>
       <li>Go to <em>Modules &rarr; Plugin Manager</em>, find <b>Multiple Ship-To Addresses</b> and click <b>Uninstall</b>. This drops the two multiship tables, removes the <code>orders_multiship_id</code> column from <code>orders_products</code>, removes the configuration group and its settings, and de-registers the invoice and packing-slip pages.</li>
@@ -218,7 +218,7 @@ timeEffect : 750
   </div>
 </div>
 
-<h1 class="the_head" id="vach">Version and Change History</h1>
+<h2 class="the_head" id="vach">Version and Change History</h2>
 <div class="the_content">
     <ul>
       <li>v3.0.0, 2026<ul>

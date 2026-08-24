@@ -171,9 +171,9 @@ if ($messageStack->size('multiship') > 0) {
 ?>
     <table id="multishipTable" class="table table-striped">
         <tr>
-            <th class="item"><?php echo HEADING_ITEM; ?></th>
-            <th class="price"><?php echo HEADING_PRICE; ?></th>
-            <th class="sendto"><?php echo HEADING_SENDTO; ?></th>
+            <th scope="col" class="item"><?php echo HEADING_ITEM; ?></th>
+            <th scope="col" class="price"><?php echo HEADING_PRICE; ?></th>
+            <th scope="col" class="sendto"><?php echo HEADING_SENDTO; ?></th>
         </tr>
 <?php
 foreach ($productsArray as $multishipRowIndex => $currentProduct) {
@@ -222,7 +222,29 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
         . ' this.form.submit();';
 ?>
             <td class="sendto"><?php
-                echo zen_draw_pull_down_menu('address[]', $multishipAddresses, $currentProduct['sendto'], 'onchange="' . $multishipOnChange . '"');
+                // -----
+                // Named for the item it belongs to.
+                //
+                // Every menu in this column is called "address[]" and sits under one Send To
+                // heading, so a screen reader announced fifteen identical unlabelled combo
+                // boxes with no way to tell which row was which -- and a column header does
+                // not name a control the way a <label> does. There is no visible label to
+                // point at, because the row itself is the label, so the product name is put
+                // on the control directly.
+                //
+                // Tags are stripped and quotes escaped: the name can carry markup, and this
+                // is going into an attribute.
+                //
+                $multishipMenuLabel = zen_output_string_protected(
+                    trim(strip_tags(str_replace('<br />', ' ', $currentProduct['name'])))
+                );
+                echo zen_draw_pull_down_menu(
+                    'address[]',
+                    $multishipAddresses,
+                    $currentProduct['sendto'],
+                    'onchange="' . $multishipOnChange . '"'
+                    . ' aria-label="' . sprintf(LABEL_MULTISHIP_SENDTO_FOR_ITEM, $multishipMenuLabel) . '"'
+                );
                 // Only ask about serviceability once there is an address to ask about.
                 if ($currentProduct['sendto'] !== '') {
                     echo ' ' . $_SESSION['multiship']->getNoShipIcon($currentProduct['sendto']);
