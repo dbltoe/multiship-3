@@ -38,6 +38,32 @@ $multiship_version = 'v3.0.0';
 //
 $multiship_github = 'https://github.com/dbltoe/multiship-3';
 
+// -----
+// The Zen Cart Plugin Library listing, and the number in it.
+//
+// The id in this URL is the same number as 'pluginId' below, and the two must not drift apart.
+// PluginManager stores pluginId as plugin_control.zc_contrib_id and
+// getPluginsAfterCheckingForNewVersionsOnline() posts those ids to zen-cart.com to ask whether
+// a newer release exists. A wrong id, or the 0 this manifest carried until now, means store
+// owners are never told an update is available -- silently, since nothing anywhere reports the
+// lookup failing.
+//
+// 1823 is confirmed rather than inferred: /plugins/multiple-ship-to-addresses-vb1823 and
+// /downloads.php?do=file&id=1823 both resolve to this plugin's library page.
+//
+$multiship_download = 'https://www.zen-cart.com/downloads.php?do=file&id=1823';
+
+// -----
+// The forum support thread, added before the first release rather than after it, deliberately.
+//
+// On v2.2 and later a later edit is picked up on the next Plugin Manager scan. On v2.0 and
+// v2.1 it is not: those releases write plugin_control.description only on the INSERT that
+// first creates the row, so whatever is here the first time a store scans this plugin is what
+// that store shows for good. Adding the link after release would reach nobody on the older
+// half of the supported range short of an uninstall and re-install.
+//
+$multiship_forum = 'https://www.zen-cart.com/threads/189154';
+
 $multiship_readme_button = '';
 if (defined('DIR_WS_CATALOG')) {
     $multiship_readme_button =
@@ -85,6 +111,16 @@ $multiship_github_button =
 // encapsulated and rebuilt around them, and that is a different contribution from having
 // worked out how to do it in the first place.
 //
+// -----
+// The support thread, as an ordinary link rather than a third button. Install, Uninstall,
+// Read Me and GitHub are all things an owner does with the plugin; asking for help is a
+// different kind of act, and giving it the same weight as Uninstall would misrepresent it.
+//
+$multiship_forum_link =
+    '<div style="margin:8px 0 0;">'
+    . '<a href="' . $multiship_forum . '" target="_blank" rel="noopener">Forum Support Thread</a>'
+    . '</div>';
+
 $multiship_credits =
     '<div style="margin:8px 0 0;"><em>'
     . 'Originally created by lat9 of Vinos de Frutas Tropicales, whose order splitting, '
@@ -119,9 +155,13 @@ return [
         . 'tracked and status-updated independently in the admin.'
         . $multiship_readme_button
         . $multiship_github_button
+        . $multiship_forum_link
         . $multiship_credits,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
-    'pluginId' => 0, // ID from Zen Cart forum
+    // Stored as plugin_control.zc_contrib_id and sent to zen-cart.com to check for newer
+    // releases. Must match the id in $multiship_download above; see the note there for what a
+    // wrong value costs.
+    'pluginId' => 1823,
     // -----
     // Dotted, because that is the only form the comparison can match.
     //
