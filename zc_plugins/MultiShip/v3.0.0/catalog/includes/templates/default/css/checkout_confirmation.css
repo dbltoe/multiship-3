@@ -105,6 +105,30 @@
 #multishipConfirmationBreakdown {
     column-span: all;
     -webkit-column-span: all;
+
+    /* -----
+       Clear, because this block takes the place of a floated one.
+
+       jscript_multiship_confirmation.php replaces #checkoutShipto with this breakdown -- a
+       single ship-to address means nothing on an order going to several. The element it
+       replaces is floated: core's confirmation template gives #checkoutBillto class="back"
+       and #checkoutShipto class="forward", which are float:left and float:right, and a
+       template then sets both to some share of the width -- 47% each in responsive_classic.
+
+       replaceChild hands over the position but not the class or the id, so what lands there
+       is an ordinary block sitting beside a left-floated 47% box, with about half the row to
+       work in. dbltoe reported it as "too narrow on page 3 of 3", and it is: the per-address
+       tables were being asked to fit in the gap left by the billing address.
+
+       Clearing drops it below the floats and gives it the full width, which is what a
+       breakdown of every recipient needs. Preferred over narrowing the store's own address
+       boxes -- the width lives in the template's stylesheet, so changing it would be lost on
+       the next template update and would shrink those boxes for every customer, including
+       everyone who never splits an order.
+
+       Inert where it is not needed: clear does nothing to a grid item, so the ZCA path
+       through .card-columns above is unaffected. */
+    clear: both;
 }
 
 .multishipOrder {
