@@ -1,0 +1,85 @@
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on account_history_info when the order went to several addresses.
+
+   The box around each recipient takes its rule from currentColor, so it follows whatever
+   the store's template has set the text to rather than stating a grey of its own. Written
+   twice: the plain colour first for browsers without color-mix(), then the derived value.
+   Override --multiship-rule in the template's own stylesheet to be explicit. */
+
+:root {
+    --multiship-rule: #757575;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    :root {
+        --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
+    }
+}
+
+.multishipOrder { border: 1px solid var(--multiship-rule); border-radius: 6px; margin-top: 10px; padding: 5px; }
+#orderHistoryInfoHeader { width: 100%; text-align: center; }
+
+/* -----
+   The same recipient layout the confirmation and success pages use.
+
+   These rules are identical in three files: this one, checkout_confirmation.css and
+   checkout_success.css. tpl_modules_multiship.php renders on all three pages, page CSS is
+   loaded by page name, and none of the three sees the others -- Zen Cart offers no way to
+   load one stylesheet on a chosen set of pages, and a stylesheet_*.css would load on every
+   page of the store to serve three. Kept deliberately identical: a customer who checked their
+   order at confirmation, saw it again on success and comes back to it in their account should
+   recognise what they are looking at each time. Change one, change all three. */
+.multishipOrderName {
+    font-weight: bold;
+}
+
+.multishipOrderAddress {
+    display: block;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.multishipOrderHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25em 1.5em;
+}
+
+.multishipOrderWho {
+    flex: 1 1 12em;
+    min-width: 0;
+}
+
+/* nowrap so the three stay on one line as a group -- with a title as long as
+   "USPS (Ground Advantage):" they wrap one-per-line at the first excuse, which is the
+   stacked layout this was meant to get away from. The header around them still wraps.
+   Below 600px there is no line to keep them on. */
+.multishipOrderTotals {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 0.25em 1.25em;
+    margin-left: auto;
+}
+
+@media (max-width: 600px) {
+    .multishipOrderTotals {
+        flex-wrap: wrap;
+    }
+}
+
+.multishipTotalItem {
+    white-space: nowrap;
+}
+
+.multishipTotalValue {
+    font-weight: bold;
+    padding-left: 0.35em;
+}
+
+/* Nothing for the items table, deliberately -- it carries core's #cartContentsDisplay and is
+   spaced by the store's own stylesheet, the same as its product tables everywhere else.
+   .multishipItems is an unstyled hook so a store owner can space these without targeting an
+   id that repeats down the page. */

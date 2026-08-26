@@ -1,0 +1,84 @@
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on multiship_choice; the page otherwise inherits the store template.
+
+   -----
+   Three answers abreast, each with its explanation beneath.
+
+   This page is a question and three answers, with no product grid or sidebar to give it
+   shape. Stacked vertically and left to fill the viewport it stretched across the whole of
+   a wide monitor -- dbltoe called it "IMax syndrome" -- and put one short button per
+   screenful of empty space.
+
+   Side by side is what the page is actually asking. These are three options to be weighed
+   against each other, not a list to be read in order, and a row of three presents them as
+   the comparison they are. It also uses the width instead of fighting it.
+
+   The heading and introduction above stay full width; only the answers are columned. The
+   introduction is prose and still wants a readable measure, so the wrapper keeps one.
+
+   em rather than px throughout, so everything follows the store's own font size. A template
+   with larger body text gets a proportionally wider layout and the same number of
+   characters per line, which is the thing being limited.
+
+   Only layout is set here. Colour, font and button styling all come from the store, as
+   everywhere else in this plugin. */
+
+#multishipChoice {
+    max-width: 64em;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Prose, so held to a readable measure rather than the full 64em the columns want. */
+#multishipChoiceIntro {
+    max-width: 46em;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#multishipChoiceOptions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5em;
+    align-items: start;
+    margin-top: 1.5em;
+}
+
+/* Column, so the button sits above its own explanation and the two read as one answer. */
+.multishipChoiceOption {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+}
+
+/* Full width of its column, so the three buttons form an even row whatever their labels
+   measure -- three different widths centred in three columns reads as three unrelated
+   controls. */
+.multishipChoiceOption .button {
+    width: 100%;
+}
+
+.multishipChoiceHelp {
+    margin: 0;
+}
+
+/* -----
+   One column on a narrow screen, where three would be unreadably tight. The rule above each
+   answer after the first does the job the grid gap does on a wide screen: it is only needed
+   once the options are stacked, which is why it lives here and not above. */
+@media (max-width: 767px) {
+    #multishipChoiceOptions {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .multishipChoiceOption {
+        padding: 1em 0;
+    }
+
+    .multishipChoiceOption + .multishipChoiceOption {
+        border-top: 1px solid #757575;
+        border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    }
+}

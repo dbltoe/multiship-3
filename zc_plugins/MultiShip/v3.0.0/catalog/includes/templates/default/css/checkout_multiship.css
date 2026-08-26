@@ -1,0 +1,214 @@
+﻿/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on checkout_multiship.
+
+   Layout is ours; colour is the store's. This page is reached mid-checkout, and a
+   customer who feels handed to a different site to finish their order has been given a
+   reason to stop. So nothing here states a colour of its own where it can derive one.
+
+   Rules and shading are mixed from currentColor, which is whatever the store's template
+   has set the text to -- so they follow a light theme, a dark theme or a branded one
+   without being told about it. Each is written twice: a plain colour first for browsers
+   without color-mix(), then the derived value, which those browsers ignore as invalid.
+   The fallbacks are the values this file used to hardcode, so nothing regresses.
+
+   ZCA Bootstrap, the template this was built against, exposes no custom properties at all --
+   there is no --bs-border-color to inherit, which is why colour is derived from text rather
+   than read from the theme. (Its stylesheet header says "BOOTSTRAP v3.4.0", but that is the
+   ZCA template's own version string: the markup it emits is Bootstrap 4 -- card, p-3,
+   float-right, custom-control.)
+
+   Three properties are exposed for a store owner who wants to be explicit. Set them
+   anywhere that wins the cascade, e.g. in the template's own stylesheet:
+
+       :root {
+           --multiship-rule:   #d0d0d0;   rules and borders
+           --multiship-alert:  #9b1c15;   surcharges and the cannot-ship marker
+       }
+*/
+
+:root {
+    --multiship-rule: #414141;
+    /* Fallback only, for browsers without color-mix(). Measures 8.17:1 on white and 2.13:1
+       on a dark surface -- which is exactly why the derived value below exists. */
+    --multiship-alert: #9b1c15;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    :root {
+        --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
+
+        /* -----
+           The alert colour is derived too, and for a sharper reason than the other two.
+           A fixed red cannot serve both a light and a dark store: #9b1c15 measures 8.17:1
+           on white and 2.13:1 on a dark surface, so a store owner switching to a dark
+           theme would silently lose the one marker on this page that means "this item
+           cannot ship there".
+
+           Mixing the red with currentColor pulls it toward the store's own text, so it
+           darkens on a light theme and lightens on a dark one. At 55% it measures about
+           6.9:1 either way (6.85 light, 6.97 dark, against typical #333-on-white and
+           #e0e0e0-on-#1a1a1a).
+
+           That is a hair under the 7:1 this plugin targets, and it is a deliberate
+           trade: no red holds 7:1 in both directions without desaturating into brown and
+           losing the meaning. Comfortably past AA in both, and far better than a fixed
+           colour that fails outright in one. A store owner wanting AAA can set
+           --multiship-alert explicitly for their own background.
+
+           Colour is not the only signal in either place it is used: the cannot-ship
+           marker is a warning sign carrying both an accessible name and hover text, and
+           the surcharge line is labelled. */
+        --multiship-alert: color-mix(in srgb, #e5484d 55%, currentColor);
+    }
+}
+
+#checkoutMultishipNewAddress, #onetime_charges, #checkoutMultishipShipping { padding-top: 0.5em; padding-bottom: 0.3em; }
+#checkoutMultishipShipping { border-bottom: 1px solid var(--multiship-rule); margin-bottom: 0.3em; padding: 1em 0; }
+
+/* -----
+   The shipping-method choice, which now lives on this page rather than on checkout_shipping.
+
+   A fieldset with a legend, not a div with a heading. Radio buttons are a group and need a
+   group label: without one a screen reader announces "Flat Rate", "USPS Ground Advantage"
+   with nothing saying what is being chosen. A legend is read out with each option.
+
+   It was an <h2> first, and on dbltoe's store it rendered as "an unmarked link not seen
+   until the mouse is hovered over it" -- some rule in that template, Bootstrap's own or a
+   customisation, taking it somewhere invisible. So every property a theme is likely to have
+   an opinion about is stated here rather than inherited. Bootstrap 3 in particular gives
+   legend a full-width block, a 21px font, its own colour and a bottom border, all of which
+   are undone below. */
+/* Restates the bottom rule set further up: a bare "border: 0" to strip the fieldset's own
+   frame would come later in the file and wipe it. min-width guards against a fieldset's
+   default min-content sizing squeezing the layout. */
+#checkoutMultishipShipping { border: 0; border-bottom: 1px solid var(--multiship-rule); min-width: 0; }
+#multishipShippingHeading {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    margin: 0 0 0.5em;
+    padding: 0;
+    border: 0;
+    font-size: 1.1em;
+    font-weight: bold;
+    line-height: inherit;
+    color: inherit;
+    text-decoration: none;
+}
+/* Spacing only. The rows carry Bootstrap's custom-control classes so a Bootstrap template
+   draws them exactly as it draws its own shipping methods, and laying them out here would
+   fight that -- an earlier version set display:flex on the row and flex:1 on the label,
+   which left the control undrawn and the choices findable only by hovering. On a template
+   without those classes the native radio and label render normally and need no help. */
+/* Top and bottom only, never padding-left. Bootstrap gives .custom-control a
+   padding-left of 1.5rem and then draws the control with the label's ::before at
+   left: -1.5rem -- so the padding is the space the radio sits in. The shorthand
+   "padding: 0.35em 0" zeroed it, and page CSS loads after the template's, so ours won and
+   the buttons rendered off the left edge of the page. */
+.multishipShipMethod { padding-top: 0.35em; padding-bottom: 0.35em; }
+.multishipShipMethod label { cursor: pointer; margin: 0; font-weight: normal; }
+.multishipShipError { color: var(--multiship-alert); padding: 0.35em 0; }
+#checkoutMultishipInstructions { padding: 1em 0; }
+#multishipTable { width: 100%; padding: 0.3em; }
+/* -----
+   Cell spacing and row rules, written so any template can beat them.
+
+   These were "#multishipTableHeading > div, .multishipTableItem > div", from lat9's original
+   div-based grid. The grid is a real <table id="multishipTable"> now, so those selectors
+   matched nothing and this plugin has been contributing no table styling whatsoever. It went
+   unnoticed because the markup carries Bootstrap's "table table-striped": on ZCA those class
+   names do the work and the dead rules were never missed. On a template without Bootstrap --
+   responsive_classic, Zen Cart's own default -- the class names mean nothing, no rule
+   anywhere gives this grid padding, rules or striping, and every row runs into the next.
+
+   Inside :where() deliberately. Page CSS loads after the template's, so a plain
+   #multishipTable selector would beat Bootstrap on specificity and on order both, and this
+   fallback would end up overriding the templates that least need it. :where() contributes
+   zero specificity, so anything a template says -- Bootstrap's .table td, or a store's own
+   rule -- outranks this regardless of load order. It applies only where nothing else does.
+
+   A browser too old for :where() drops the rule as invalid, which is today's behaviour
+   rather than anything worse.
+
+   Striping is still not attempted, for the reason it never was: a store that stripes its
+   tables should stripe this one the same way, and that is the template's business. */
+:where(#multishipTable) th,
+:where(#multishipTable) td { padding: 0.3em; border-bottom: 1px solid var(--multiship-rule); }
+:where(#multishipTable) th { font-weight: bold; text-align: left; }
+.onetime_charge, #onetime_charges { color: var(--multiship-alert); }
+.virtual { display: none; }
+/* -----
+   The cannot-ship marker.
+
+   Keyed on the plugin's own class rather than Font Awesome's .fa, which is what this
+   selector used to target. The marker no longer depends on a webfont the plugin never
+   loaded -- see MULTISHIP_ICON_NO_SHIP in lang.multiship_common.php -- so it is styled
+   here and renders on every template rather than only on the ones carrying Font Awesome.
+
+   Sized up because a warning sign at body size reads as punctuation next to an address;
+   fa-lg was doing the same job before. Not scaled any further: it sits inline in a table
+   cell and must not push the row height around. */
+.multishipNoShip {
+    color: var(--multiship-alert);
+    font-size: 1.25em;
+    line-height: 1;
+    vertical-align: -0.05em;
+}
+
+/* -----
+   Column widths. The item name is the longest thing on the row and was being squeezed by a
+   Send To column sized for the whole address. Price is given only what it needs and
+   separated from the name so the two stop running together. */
+#multishipTable th.item, #multishipTable td:first-child { width: 40%; padding-right: 1.5em; }
+#multishipTable th.price, #multishipTable td.msipPrice { width: 10%; white-space: nowrap; padding-right: 1.5em; }
+#multishipTable th.sendto, #multishipTable td.sendto { width: 50%; }
+
+/* -----
+   The closed menu still has to distinguish one address from another -- a customer who can
+   read the name but not whether it is the home or the office address cannot check their
+   own work. With the side columns hidden on this page there is room to show enough of it,
+   so the cap is generous; opening the menu shows every option in full regardless. */
+#multishipTable td.sendto select { width: 100%; max-width: 34em; }
+
+/* -----
+   The closing controls stack down the middle rather than sitting side by side.
+
+   Save Addresses and this note used to share a line, button left and note floated right.
+   On a narrower desktop that put the button off at one edge where it got lost, and the note
+   beside it read as a caption to the button rather than as its own thing. Stacked and
+   centred, each is read in turn: save, then how to change quantities, then how to leave
+   multiship, then the way on.
+
+   The alert alert-info classes give the note the store's informational styling on Bootstrap
+   templates; these rules are the fallback for templates that have no such classes, and are
+   overridden harmlessly where they do. */
+#multishipControls { padding-top: 0.5em; }
+#multishipSaveAddresses { text-align: center; padding-bottom: 0.75em; }
+#multishipSaveNote { padding-top: 0.4em; font-size: 0.9em; }
+#multishipQuantityNote { max-width: 44em; margin: 0 auto 0.5em; padding: 0.5em 0.75em; text-align: center; }
+#multishipQuantityNote:not(.alert) { border: 1px solid var(--multiship-rule); border-radius: 6px; }
+.clearBoth { clear: both; }
+
+/* -----
+   The way out of multiship is offered first, then the way on through it, so the button a
+   finishing customer wants is the last thing on the page. Centred to sit with the button
+   below it, the two reading as one block of closing choices rather than two strays. */
+.multiship-decline { clear: both; text-align: center; padding: 0.75em 0 0.25em; }
+
+/* -----
+   The label wraps across lines at this width, so centre it -- ragged-left text inside a
+   button reads as a rendering fault rather than a deliberate shape. Centring the block too
+   keeps the button under the statement above it rather than adrift at one edge. */
+#multishipContinue { clear: both; text-align: center; padding: 0.5em 0 1em; }
+#multishipContinue a { text-align: center; }
+#multishipContinue.multishipIncomplete { font-weight: bold; }
+
+@media (max-width: 767px) {
+    #multishipTable th.item, #multishipTable td:first-child,
+    #multishipTable th.price, #multishipTable td.msipPrice,
+    #multishipTable th.sendto, #multishipTable td.sendto { width: auto; padding-right: 0.5em; }
+    #multishipTable td.sendto select { max-width: 100%; }
+    /* Full width on a phone, still centred. The old rule here zeroed margin-left to undo a
+       float that no longer exists; leaving it would have knocked the note off centre. */
+    #multishipQuantityNote { max-width: 100%; }
+}

@@ -1,0 +1,1625 @@
+<?php
+// -----
+// Part of the Multiple Shipping Addresses plugin for Zen Cart
+// Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
+// @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+//
+
+class multiship extends base 
+{
+    public $address2multiship,
+              $payment_methods,
+              $selected,
+              $enabled,
+              $can_offer,
+              $debug,
+              $logfile,
+              $cart,
+              $details,
+              $totals,
+              $shipping_method_id,
+              $shipping_method,
+              $initialization_active,
+              $saved_order_info,
+              $full_cart_prices,
+              $orders_multiship_ids,
+              $text_email,
+              $shipping_total,
+              $noship_address_id,
+              $invalid_addresses;
+
+    // -----
+    // Class constructor.  This class is created via auto_load as $_SESSION['multicart'].
+    //
+    public function __construct() 
+    {
+        $this->selected = false;
+        $this->can_offer = false;
+        $this->enabled = $this->isEnabled();
+    }
+    
+    // -----
+    // Called by the plugin's observer-class on each page-load to check to see that the plugin's
+    // processing is still to be enabled and to initialize various elements (since this class
+    // is session-based).  Also called by the class constructor.
+    //
+    // -----
+    // Whether the session is in a guest or PayPal Express Checkout flow, neither of which
+    // can support multiple ship-to addresses: a guest flow leaves no account to attach the
+    // per-address sub-orders to, and Express Checkout fixes a single delivery address from
+    // the PayPal account.
+    //
+    // Static, and reachable before this class is instantiated, because
+    // multiship_early_observer must answer NOTIFY_OPC_SET_DISABLED at autoLoadConfig[97],
+    // before $_SESSION['multiship'] exists at [130]. The class *file* is loaded at [0], so
+    // a static call is available throughout.
+    //
+    // The PayPal test requires all three session values, matching the test One Page
+    // Checkout applies in OnePageCheckout::checkEnabled(). paypal_ec_token alone is set the
+    // moment a customer clicks the Express Checkout button and *survives them abandoning
+    // it*, so testing the token by itself disabled multiship for the rest of the session
+    // for anyone who merely looked at PayPal and came back. payer_id and payer_info only
+    // exist once the customer has actually returned from PayPal authorised, which is what
+    // distinguishes an express checkout in progress from an abandoned click.
+    //
+    public static function inExpressOrGuestCheckout()
+    {
+        if (!empty($_SESSION['COWOA']) || !empty($_SESSION['customer_guest_id'])) {
+            return true;
+        }
+
+        return (!empty($_SESSION['paypal_ec_token'])
+                && !empty($_SESSION['paypal_ec_payer_id'])
+                && !empty($_SESSION['paypal_ec_payer_info']));
+    }
+
+    public function isEnabled()
+    {
+        // -----
+        // Installing the plugin *is* the decision to use it, so there is no longer a
+        // store-wide enable toggle (MODULE_MULTISHIP_ENABLE was retired in v3.0.0).
+        // The plugin starts out enabled and is disabled below only for the cases where
+        // multiple ship-to addresses would produce incorrect order totals.
+        //
+        $this->enabled = true;
+
+        // -----
+        // Check the conditions under which multiple ship-to addresses cannot be
+        // offered for the current order.
+        //
+        if ($this->enabled) {
+            $payment_methods = defined('MODULE_MULTISHIP_PAYMENT_METHODS') ? str_replace(' ', '', MODULE_MULTISHIP_PAYMENT_METHODS) : '';
+            $this->payment_methods = ($payment_methods != '') ? explode(',', $payment_methods) : false;
+            $this->debug = (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true');
+            $this->logfile = DIR_FS_LOGS . '/multiship_' . date('Ymd') . '.log';
+
+            // -----
+            // Multiple ship-to addresses require a registered account, and are therefore
+            // never available to guest or express-checkout flows:
+            //
+            // - COWOA and One Page Checkout's guest checkout produce no account to which
+            //   the per-address sub-orders could be attached.
+            // - PayPal Express Checkout establishes a single delivery address from the
+            //   PayPal account, outside this plugin's control, which cannot be reconciled
+            //   with per-item addresses.
+            //
+            // offerAvailable() applies the same test before offering, but this guard is
+            // what makes it an invariant: a customer who accepts the offer and *then*
+            // enters one of these flows is disabled here, and the sessionCleanup() below
+            // clears the intent flag, which in turn re-enables One Page Checkout.
+            //
+            if (self::inExpressOrGuestCheckout()) {
+                $this->debugLog('isEnabled, setting disabled for a guest or express-checkout session.');
+                $this->enabled = false;
+            }
+
+            // -----
+            // If a customer's currently logged-in, and they're part of a 'group-pricing'
+            // group, multiple ship-to addresses are disabled.  The ot_group_pricing
+            // processing performs its calculations assuming that the order's current
+            // ship-to *address* is the basis of any tax-calculations and if there are
+            // multiple *different* tax rates for the ship-to addresses, those calculations
+            // will not be correct.
+            //
+            if (!empty($_SESSION['customer_id'])) {
+                $group = $GLOBALS['db']->Execute(
+                    "SELECT customers_group_pricing 
+                       FROM " . TABLE_CUSTOMERS . " 
+                      WHERE customers_id = " . (int)$_SESSION['customer_id'] . "
+                      LIMIT 1");
+                // -----
+                // EOF checked, because a customer_id in session does not guarantee a row.
+                //
+                // A session can outlive the customer record it names -- a deleted test
+                // account is the everyday way to produce one -- and the query then returns
+                // nothing, leaving $group->fields an empty array. PHP 8 warns on the missing
+                // key, which is the "Undefined array key customers_group_pricing" dbltoe saw
+                // logged from the login page.
+                //
+                // Behaviour is deliberately unchanged. The missing key evaluated to null,
+                // null != 0 is false, and multiship stayed enabled; not entering the block
+                // when there is no row keeps exactly that, minus the warning. Enabled is also
+                // the right answer on the merits: this test exists to disable multiship for
+                // group-pricing customers, and a customer with no record is not in a group.
+                //
+                if (!$group->EOF && $group->fields['customers_group_pricing'] != 0) {
+                    $this->debugLog("isEnabled, setting disabled since the currently logged-in customer is part of a group-pricing group.");
+                    $this->enabled = false;
+                }
+            }
+            
+            // -----
+            // If a coupon was applied to the order (during the checkout_payment page's
+            // processing) and the customer "comes back" to the checkout_shipping step,
+            // multiple ship-to addresses can no longer be offered for reasons similar to the
+            // disablement for group pricing.
+            //
+            if (!empty($_SESSION['cc_id'])) {
+                $this->debugLog("isEnabled, setting disabled since there is a coupon currently applied to the order.");
+                $this->enabled = false;
+            }
+        }
+        
+        // -----
+        // If the plugin is not currently enabled (which could occur if the configuration and/or
+        // customer's group-pricing setup were changed since login), clean up the multiship
+        // session information.
+        //
+        if (!$this->enabled) {
+            $this->sessionCleanup();
+        }
+        return $this->enabled;
+    }
+  
+    // -----
+    // Called by the header_php.php processing for the "checkout_multiship" page.  The two arrays are
+    // (presumed to be) of equal size and a one-to-one correlation between an address_id for the
+    // current customer and the Zen Cart "prid" (which defines both the product_id and its associated
+    // attributes.
+    //
+    // Build up an array, indexed by the address_id, that contains the "prid" items to be shipped to that 
+    // address_id. If more than one address_id is found in the array of addresses, then the customer has chosen
+    // to send their order to more than one shipping address ... and multiship is selected.  The address/prid
+    // array is saved within the class data for processing on the checkout_confirmation page.
+    //
+    // Note that the processing above is slightly modified when there is a mixture of physical and virtual
+    // products in the customer's cart.  This function/process won't be called if the entire cart is virtual
+    // since there's no shipping required!  If the cart is "mixed", then need to make sure that the 
+    // current shipping arrangement doesn't have all virtual products going to an address separate from
+    // the physical products.  If so, move the virtual products to be associated with one of the physical
+    // ship-to addresses.
+    //
+    // The function returns a binary flag that indicates whether or not multiple shipping addresses have
+    // been selected.
+    // 
+    public function setMultiship($address_array, $prid_array) 
+    {
+        $this->selected = false;
+        $multiship_values = array();
+        $address = false;
+        $this->debugLog('setMultiship: ' . json_encode($address_array) . ', ' . json_encode($prid_array));
+        foreach ($address_array as $i => $currentAddress) {
+            if ($address === false) {
+                $address = $currentAddress;
+            }
+            if ($address != $currentAddress) {
+                $this->selected = true;
+                $address = $currentAddress;
+            }
+          
+            $prid = $prid_array[$i];
+          
+            if (isset($multiship_values[$address])) {
+                $multiship_values[$address]['has_physical'] |= $this->cartItemIsPhysical($prid);
+            } else {
+                $multiship_values[$address] = array();
+                $multiship_values[$address]['has_physical'] = $this->cartItemIsPhysical($prid);
+            }
+          
+            if (isset($multiship_values[$address][$prid])) {
+                $multiship_values[$address][$prid]++;
+            } else {
+                $multiship_values[$address][$prid] = 1;
+            }
+          
+        }  // END foreach inspecting each address/prid pair
+
+        if (!$this->selected) {
+            $this->sessionCleanup();
+
+            // -----
+            // Keep whatever the customer has assigned so far, even though it is not yet
+            // "multiship" by the test above -- which requires two *different* addresses.
+            //
+            // Rows are no longer pre-filled with the primary address, so a customer working
+            // down the grid posts one address, then two, and so on. Without this the first
+            // selection was discarded as not-multiship, the row re-rendered unassigned, and
+            // no amount of clicking ever accumulated a second address. sessionCleanup()
+            // above clears the derived details and totals, which are genuinely stale; the
+            // assignments themselves are the customer's work and are put back here.
+            //
+            if ($multiship_values !== []) {
+                $this->cart = $multiship_values;
+            }
+        } else {
+            if ($_SESSION['cart']->get_content_type() != 'mixed') {
+                $this->cart = $multiship_values;
+            } else {
+                $num_physical_addresses = 0;
+                foreach ($multiship_values as $address_id => $productInfo) {
+                    if ($productInfo['has_physical']) {
+                        $num_physical_addresses++;
+                        if (!isset($physical_product_address_id)) {
+                            $physical_product_address_id = $address_id;
+                        }
+                    } else {
+                        $virtual_product_address_id = $address_id;
+                    }
+                }
+                if (isset($virtual_product_address_id) && $num_physical_addresses == 1) {
+                    $virtual_products = $multiship_values[$virtual_product_address_id];
+                    unset($virtual_products['has_physical'], $multiship_values[$virtual_product_address_id]);
+                    if (isset($multiship_values[$_SESSION['customer_default_address_id']])) {
+                        $physical_product_address_id = $_SESSION['customer_default_address_id'];
+                    }
+                    if (count($multiship_values) == 1) {
+                        $_SESSION['sendto'] = $physical_product_address_id;
+                        $this->selected = false;
+                        $this->sessionCleanup();
+                    } else {
+                        $multiship_values[$physical_product_address_id] = array_merge($multiship_values[$physical_product_address_id], $virtual_products);
+                        $this->cart = $multiship_values;
+                    }
+                } else {
+                    $this->cart = $multiship_values;
+                }
+            }
+        }
+        $this->shipping_method_id = ($this->selected) ? $_SESSION['shipping']['id'] : '';
+        return $this->selected;
+    }
+    
+    public function addressValidation($addresses)
+    {
+        global $order;
+        $addresses = array_unique($addresses);
+        $validated = true;
+
+        // -----
+        // Which addresses failed, not just whether any did.
+        //
+        // The caller marks the offending rows so the customer can see which one is wrong, so
+        // a bare true/false is not enough to act on. Reset per call: this is the result of
+        // this validation, not an accumulation across the session.
+        //
+        $this->invalid_addresses = [];
+        if (count($addresses) > 1 || (count($addresses) == 1 && $addresses[0] != $_SESSION['sendto'])) {
+            // -----
+            // The shipping id is required, in 'module_method' form, to perform the validation.  If it's
+            // not present (or malformed), the validation can't be performed.
+            //
+            if (empty($_SESSION['shipping']['id']) || strpos($_SESSION['shipping']['id'], '_') === false) {
+                $this->debugLog('addressValidation: shipping id not set/malformed, cannot validate.');
+                return false;
+            }
+
+            // -----
+            // Pull in the httpClient class for those shipping methods (like UPS) that require it!
+            //
+            require_once DIR_WS_CLASSES . 'http_client.php';
+            
+            // -----
+            // Pull in the order and shipping classes.
+            //
+            // require_once, not require. checkout_multiship now builds the order and
+            // shipping classes in its own header so it can offer the shipping choice, and
+            // neither class file guards against being included twice -- a plain require
+            // here would be a redeclaration fatal on the very page this runs on.
+            require_once DIR_WS_CLASSES . 'order.php';
+            require_once DIR_WS_CLASSES . 'shipping.php';
+            
+            list($module, $method) = explode('_', $_SESSION['shipping']['id']);
+            $saved_sendto = $_SESSION['sendto'];
+            foreach ($addresses as $address_id) {
+                // -----
+                // Let the order class do the "heavy lifting" in the pulling in of the product list and delivery address 
+                // information for the current shipping address.
+                //
+                $_SESSION['sendto'] = $address_id;
+                $order = new order;
+ 
+                // -----
+                // Load the current shipping modules.
+                //
+                $shipping_modules = new shipping;
+                
+                $shipping_quote = $shipping_modules->quote($method, $module);
+                $this->debugLog("addressValidation: Quote received for $address_id: " . var_export($shipping_quote, true));
+                if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
+                    $validated = false;
+                    $this->invalid_addresses[] = $address_id;
+                    $this->debugLog("No shipping quote for $address_id.");
+                }
+            }
+            $_SESSION['sendto'] = $saved_sendto;
+        }
+        return $validated;
+    }
+  
+    // -----
+    // Marks the addresses the last validation rejected, so the grid can show which they are.
+    //
+    // Must be called after setMultiship(), which rebuilds the cart and would otherwise wipe
+    // these flags off it. address-error is the same key the confirmation-page quoting sets
+    // when a quote fails there, so both routes to an unshippable address end up looking
+    // identical to getNoShipIcon() and to the page: one marker, one message, one way back.
+    //
+    // Addresses no longer in the cart are skipped rather than created -- a flag on an address
+    // holding no items would mark nothing and count towards a problem that is not there.
+    //
+    public function flagInvalidAddresses()
+    {
+        if (empty($this->invalid_addresses) || !is_array($this->cart)) {
+            return;
+        }
+        foreach ($this->invalid_addresses as $address_id) {
+            if (isset($this->cart[$address_id])) {
+                $this->cart[$address_id]['address-error'] = ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING;
+            }
+        }
+    }
+
+    // -----
+    // Returns a binary flag that indicates whether or not the customer has selected multiple
+    // shipping addresses for the current order.
+    //
+    public function isSelected()
+    {
+        return $this->selected;
+    }
+
+    // -----
+    // The customer's *intent* to ship to multiple addresses, recorded the moment they
+    // accept the offer on the shopping-cart page.
+    //
+    // This is deliberately distinct from $this->selected, which only becomes true once
+    // addresses have actually been assigned to products. Between accepting the offer and
+    // completing those assignments there is a window in which selected is still false;
+    // keying the One Page Checkout bypass on intent rather than on selected closes it.
+    //
+    // For the same reason sessionCleanup() must not touch this flag: it runs whenever
+    // selected is false, which is exactly the window above. See that method.
+    //
+    // The flag lives directly in the session rather than on this object because
+    // multiship_early_observer must read it at autoLoadConfig[90], before this class is
+    // instantiated at [130]. See class.multiship_early_observer.php.
+    //
+    public function chooseMultiship()
+    {
+        $_SESSION['multiship_chosen'] = true;
+        $_SESSION['multiship_asked'] = true;
+        $this->debugLog('chooseMultiship, customer opted in to multiple ship-to addresses.');
+    }
+
+    public function isChosen()
+    {
+        return !empty($_SESSION['multiship_chosen']);
+    }
+
+    // -----
+    // Whether every shippable unit in the cart now has an address against it.
+    //
+    // isSelected() is not the same question: it only asks whether two *different* addresses
+    // are in play, so it is true for a half-finished order. This compares what has been
+    // assigned with what is in the cart, and is what tells checkout_shipping whether the
+    // customer is coming back finished or still has work to do.
+    //
+    public function allItemsAssigned()
+    {
+        if (empty($this->cart) || !is_array($this->cart)) {
+            return false;
+        }
+
+        $assigned = 0;
+        foreach ($this->cart as $address_id => $products) {
+            foreach ($products as $prid => $count) {
+                if ($prid === 'has_physical') {
+                    continue;
+                }
+                $assigned += (int)$count;
+            }
+        }
+
+        return ($assigned >= $this->cartPhysicalItemsCount());
+    }
+
+    // -----
+    // How many distinct addresses this order is going to, for telling the customer so.
+    //
+    public function addressCount()
+    {
+        return (empty($this->cart) || !is_array($this->cart)) ? 0 : count($this->cart);
+    }
+
+    // -----
+    // Whether the customer has already answered the ship-to-multiple-addresses question,
+    // whichever way they answered it.
+    //
+    // This is deliberately *not* cleared by sessionCleanup(). The intent flag is cleared
+    // there, and if the answer were cleared with it, a cleanup occurring between the
+    // interstitial and checkout would put the customer straight back on the interstitial
+    // -- an infinite loop for anyone who answered "no". Declining is durable for the
+    // session; the customer is asked at most once.
+    //
+    public function hasBeenAsked()
+    {
+        return !empty($_SESSION['multiship_asked']);
+    }
+
+    // -----
+    // Public wrapper around debugLog, so the early observer can record why it did or did
+    // not intercept checkout. That observer cannot call debugLog directly, since it is a
+    // separate class and debugLog is protected.
+    //
+    public function debugNote($message)
+    {
+        $this->debugLog($message);
+    }
+
+    // -----
+    // The customer has declined multiple ship-to addresses after previously accepting
+    // the offer. Without this, accepting the offer would be irreversible for the rest
+    // of the session: the intent flag would keep One Page Checkout suppressed and the
+    // customer would be held in the 3-step checkout they no longer want.
+    //
+    // sessionCleanup() clears the intent flag along with any partially-entered address
+    // assignments, so the next request sees One Page Checkout re-enabled.
+    //
+    public function declineMultiship()
+    {
+        $this->debugLog('declineMultiship, customer opted back out of multiple ship-to addresses.');
+
+        // -----
+        // The only place intent is cleared. sessionCleanup() deliberately leaves it alone,
+        // since it runs as routine housekeeping in states a committed multiship customer is
+        // normally in. Clearing it here re-enables One Page Checkout from the next request.
+        //
+        unset($_SESSION['multiship_chosen']);
+        $this->sessionCleanup();
+        $_SESSION['multiship_asked'] = true;
+    }
+
+
+    // -----
+    // Returns a binary flag that indicates whether the customer can be offered multiple shipping
+    // addresses for this order, as set by the checkoutInitialization method's processing during the
+    // checkout-shipping page.
+    //
+    public function canOffer()
+    {
+        return ($this->enabled && $this->can_offer);
+    }
+
+    // -----
+    // Evaluates the offer conditions on demand.
+    //
+    // canOffer() reports $this->can_offer, which is only computed by checkoutInitialize()
+    // during the checkout process; on the shopping-cart page that value is absent or
+    // stale. This method applies the same conditions directly:
+    //
+    // 1) More than one *physical* unit in the cart -- cartPhysicalItemsCount() sums
+    //    quantities, so a single product with a quantity of 2 qualifies, while virtual
+    //    and downloadable products are excluded because they do not ship.
+    // 2) The customer is not checking out via COWOA.
+    // 3) The customer is not checking out via a PayPal Express Checkout guest account.
+    // 4) At least one shipping module is installed.
+    //
+    public function offerAvailable()
+    {
+        if (!$this->enabled) {
+            $this->debugLog('offerAvailable: false, the plugin is not enabled.');
+            return false;
+        }
+
+        if (empty($_SESSION['cart']) || !is_object($_SESSION['cart']) || empty($_SESSION['cart']->contents)) {
+            $this->debugLog('offerAvailable: false, the cart is empty or unavailable.');
+            return false;
+        }
+
+        // -----
+        // Each condition is evaluated separately and reported, rather than collapsed into
+        // a single boolean return. Three of the four fail silently and look identical
+        // from the storefront, which makes a bare true/false useless for diagnosis.
+        //
+        $physical_units = $this->cartPhysicalItemsCount();
+        $express_or_guest = self::inExpressOrGuestCheckout();
+
+        // -----
+        // Deliberately NOT zen_count_shipping_modules(), which checkoutInitialize() can
+        // safely use but this method cannot.
+        //
+        // That function counts shipping modules already instantiated as globals, not
+        // modules that are installed. The shipping class is not created until line ~100
+        // of the checkout_shipping page header, whereas this method is reached from
+        // NOTIFY_HEADER_START_CHECKOUT_SHIPPING, issued on line 11 -- and from the
+        // shopping-cart page, where the shipping modules are never instantiated at all.
+        // In both contexts it would return 0 regardless of the store's configuration,
+        // making the offer permanently unavailable.
+        //
+        // MODULE_SHIPPING_INSTALLED is a semicolon-separated list of the installed
+        // modules, available from configuration on every page, which is what this test
+        // actually wants to know.
+        //
+        $has_shipping_modules = (defined('MODULE_SHIPPING_INSTALLED') && MODULE_SHIPPING_INSTALLED !== '');
+
+        $available = ($physical_units > 1 && !$express_or_guest && $has_shipping_modules);
+
+        $this->debugLog(
+            'offerAvailable: ' . ($available ? 'true' : 'false')
+            . ' [physical units: ' . $physical_units
+            . ', cart lines: ' . count($_SESSION['cart']->contents)
+            . ', shipping modules installed: ' . ($has_shipping_modules ? 'yes' : 'no')
+            . ', express/guest checkout: ' . ($express_or_guest ? 'yes' : 'no') . ']'
+        );
+
+        return $available;
+    }
+
+
+    // -----
+    // Returns an array that contains the details of the multiple shipping addresses.  The
+    // primary index for the array is the address_id to which the array of products is to
+    // be sent.
+    //
+    public function getDetails() 
+    {
+        return (isset($this->details)) ? $this->details : array();
+    }
+    
+    // -----
+    // Returns the count of the number of addresses currently in effect.
+    //
+    public function numShippingAddresses()
+    {
+        return (isset($this->cart)) ? count($this->cart) : 0;
+    }
+
+    // -----
+    // Returns an array of order_total values that have been summed for all the sub-orders.
+    //
+    function getTotals() 
+    {
+        return (isset($this->totals)) ? $this->totals : array();
+    }
+  
+    // -----
+    // Returns the name of the shipping class that is active for the current order, e.g. "United States Postal Service".
+    //
+    public function get_shipping_method() 
+    {
+        return (isset($this->shipping_method)) ? $this->shipping_method : '';
+    }
+    
+    // -----
+    // Returns the 'id' (e.g. 'usps_xxxx' or 'flat_flat') of the shipping-method that provided the shipping
+    // cost for the current multiship selections.
+    //
+    public function getShippingId()
+    {
+        if (empty($this->shipping_method_id)) {
+            throw new \RuntimeException('Sequencing error, shipping_method_id is empty.');
+        }
+        $this->debugLog("getShippingId, returning {$this->shipping_method_id}.");
+        return $this->shipping_method_id;
+    }
+    
+    // -----
+    // Returns the summation of the shipping costs for the current multiship selections.
+    //
+    public function getMultiShipShippingCost()
+    {
+        if (empty($this->details)) {
+            throw new \RuntimeException('Sequencing error, details is empty.');
+        }
+        $shipping_cost = 0;
+        foreach ($this->details as $addr_id => $ms_info) {
+            $shipping_cost += $ms_info['info']['shipping_cost'];
+        }
+        $this->debugLog("getMultiShipShippingCost, returning $shipping_cost.");
+        return $shipping_cost;
+    }
+    
+    // -----
+    // Returns the current multiship "cart" contents.
+    //
+    public function getCart() 
+    {
+        return (isset($this->cart)) ? $this->cart : array();
+    }
+  
+    // -----
+    // Returns the image to be associated with an unshippable address.
+    //
+    public function getNoShipIcon($address_id = '') 
+    {
+        return ($address_id === '' || isset($this->cart[$address_id]['address-error'])) ? MULTISHIP_ICON_NO_SHIP : '';
+    }
+    
+    // -----
+    // Returns a boolean flag to indicate whether or not an item presently in the cart is a physical item.
+    //
+    public function cartItemIsPhysical($prid) 
+    {
+        // -----
+        // Initially (for items not in the cart), the product identified is not physical.
+        //
+        $is_physical = false;
+        if (isset($_SESSION['cart']->contents[$prid])) {
+            // -----
+            // Check to see if the product is marked as a virtual one.
+            //
+            $pID = (int)zen_get_prid($prid);
+            $virtual_check = $GLOBALS['db']->Execute(
+                "SELECT products_virtual 
+                   FROM " . TABLE_PRODUCTS . " 
+                  WHERE products_id = $pID 
+                  LIMIT 1"
+            );
+            // -----
+            // EOF first, for the same reason as the group-pricing lookup above: a product can
+            // leave the catalogue while it is still sitting in somebody's cart, and the query
+            // then returns no row at all. Reading the key off an empty array warns on PHP 8.
+            //
+            // Treating a missing product as physical is what happened before -- null == 0 is
+            // true -- and it is kept. It is also the safer of the two answers: a physical item
+            // needs an address, and asking for one the order does not need is recoverable in a
+            // way that silently shipping nothing is not.
+            //
+            $is_physical = ($virtual_check->EOF || $virtual_check->fields['products_virtual'] == 0);
+            
+            // -----
+            // If the product is not marked as virtual and has attributes, check to see if one of the product's
+            // attributes identifies a download-type product.  If so, then the product is not physical.
+            //
+            if ($is_physical && isset($_SESSION['cart']->contents[$prid]['attributes']) && is_array($_SESSION['cart']->contents[$prid]['attributes'])) {
+                foreach ($_SESSION['cart']->contents[$prid]['attributes'] as $option_id => $value_id) {
+                    $is_download = $GLOBALS['db']->Execute(
+                        "SELECT pa.products_attributes_id
+                           FROM " . TABLE_PRODUCTS_ATTRIBUTES . " pa
+                                INNER JOIN " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad
+                                    ON pad.products_attributes_id = pa.products_attributes_id
+                          WHERE pa.products_id = $pID
+                            AND pa.options_id = $option_id
+                            AND pa.options_values_id = $value_id
+                          LIMIT 1"
+                    );
+                    if (!$is_download->EOF) {
+                        $is_physical = false;
+                        break;
+                    }
+                }  // END per-attribute foreach
+            }
+        }
+        return $is_physical;
+    }
+    
+    // -----
+    // Called by the multiship-observer class, upon receipt of NOTIFY_ORDER_CART_FINISHED from the order-class.
+    //
+    // If the current order has multiple ship-to addresses, we'll sum up the totals and taxes associated
+    // with those sub-orders into the order's header/info section for follow-on use by any order-total
+    // modules' processing.
+    //
+    public function updateOrdersTotalsAndTaxes(&$order)
+    {
+        // -----
+        // Quick return if the order doesn't have multiple ship-to addresses, or if the multi-ship
+        // totals and details have not yet been set.
+        //
+        if (!$this->selected || !isset($this->totals) || !isset($this->details) || !empty($this->initialization_active)) {
+            return;
+        }
+        
+        $this->debugLog("updateOrdersTotalAndTaxes, on entry: " . json_encode($order->info), true);
+        
+        // -----
+        // Set the order's current total, tax (and tax groups, used by ot_tax for its display) and shipping_cost
+        // based on the totals for each multi-ship sub-order.
+        //
+        // -----
+        // $this->totals only carries a key for an order-total module that actually produced
+        // a value (see the accumulation loop in updateTotals), so a missing key means that
+        // module contributed nothing -- zero -- not that something went wrong. A store with
+        // no tax configured has no 'ot_tax' at all, which raised an undefined-key warning
+        // here under PHP 8 every time an address was validated.
+        //
+        // ?? 0 rather than a guard, matching what this class already does everywhere else
+        // it reads these same keys.
+        //
+        $order->info['total'] = $this->totals['ot_total'] ?? 0;
+        $order->info['tax'] = $this->totals['ot_tax'] ?? 0;
+        $order->info['shipping_cost'] = $this->totals['ot_shipping'] ?? 0;
+
+        // -----
+        // Loop through each of the sub-orders to update the order's multi-ship tax groups.
+        //
+        $order->info['tax_groups'] = array();
+        foreach ($this->details as $addr_id => $info) {
+            // A sub-order shipping somewhere untaxed has no tax groups to merge.
+            if (empty($info['info']['tax_groups']) || !is_array($info['info']['tax_groups'])) {
+                continue;
+            }
+            foreach ($info['info']['tax_groups'] as $tax_group_name => $tax_group_value) {
+                if (!isset($order->info['tax_groups'][$tax_group_name])) {
+                    $order->info['tax_groups'][$tax_group_name] = 0;
+                }
+                $order->info['tax_groups'][$tax_group_name] += $tax_group_value;
+            }
+        }
+        $this->debugLog("updateOrdersTotalAndTaxes, on exit: " . json_encode($order->info));
+    }
+
+    // -----
+    // Called by the multiship-observer class, upon receipt of NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_TOTALS_PROCESS
+    // from the checkout_process.php module.
+    //
+    // This gives us the chance to modify the order's base total/tax values to include any additions based on multi-ship
+    // shipping charges and associated tax, allowing an external payment method to properly capture the order's total cost.
+    //
+    public function adjustOrdersBaseTotals()
+    {
+        // -----
+        // If the current order has multiple shipping addresses, update the order's base cost/total and
+        // associated tax, allowing payment methods' 'process' method to pick up the possibly updated
+        // charges.
+        //
+        if ($this->selected) {
+            $GLOBALS['order']->info['total'] = (isset($this->totals['ot_total'])) ? $this->totals['ot_total'] : 0;
+            $GLOBALS['order']->info['tax'] = (isset($this->totals['ot_tax'])) ? $this->totals['ot_tax'] : 0;
+        }
+    }
+    
+    // -----
+    // Called by the multiship_observer class, upon receipt of NOTIFY_ORDER_DURING_CREATE_ADDED_ORDER_HEADER
+    // (issued by the order class).
+    //
+    public function createOrderHeader($order_info_array) 
+    {
+        global $db;
+        
+        // -----
+        // If the current order has multiple shipping addresses ...
+        //
+        if ($this->selected) {
+            // -----
+            // First, fix-up the order's total and tax calculations to be the sum of the multiple shipping addresses.
+            //
+            $orders_id = $order_info_array['orders_id'];
+            $order_total = (isset($this->totals['ot_total'])) ? $this->totals['ot_total'] : 0;
+            $order_tax = (isset($this->totals['ot_tax'])) ? $this->totals['ot_tax'] : 0;
+            $db->Execute(
+                "UPDATE " . TABLE_ORDERS . " 
+                    SET order_total = $order_total, order_tax = $order_tax, shipping_method = '" . $this->shipping_method . "' 
+                WHERE orders_id = $orders_id
+                LIMIT 1"
+            );
+          
+            // -----
+            // Create the orders_multiship table record for each of the shipping addresses associated with the order.  Save the
+            // correlation between the address_id and the table record written so that we can cross-reference the products to their
+            // respective shipping addresses.
+            //
+            $this->address2multiship = array();
+            foreach ($this->details as $address_id => $currentInfo) {
+                $sql = array( 
+                    'orders_id' => $orders_id,
+                    'delivery_name' => $currentInfo['delivery']['firstname'] . ' ' . $currentInfo['delivery']['lastname'],
+                    'delivery_company' => $currentInfo['delivery']['company'],
+                    'delivery_street_address' => $currentInfo['delivery']['street_address'],
+                    'delivery_suburb' => $currentInfo['delivery']['suburb'],
+                    'delivery_city' => $currentInfo['delivery']['city'],
+                    'delivery_postcode' => $currentInfo['delivery']['postcode'],
+                    'delivery_state' => $currentInfo['delivery']['state'],
+                    'delivery_country' => $currentInfo['delivery']['country']['title'],
+                    'delivery_address_format_id' => $currentInfo['delivery']['format_id'],
+                    'last_modified' => 'now()',
+                    'orders_status' => $order_info_array['orders_status'],
+                    'content_type' => $currentInfo['content_type'],
+                );
+                zen_db_perform(TABLE_ORDERS_MULTISHIP, $sql);
+                $multiship_id = $db->Insert_ID();
+                $this->address2multiship[$address_id] = $multiship_id;
+
+                // -----
+                // Create the order-totals' records for the current shipping address.
+                //
+                foreach ($currentInfo['totals'] as $currentTotal) {
+                    $sql = array(
+                        'orders_multiship_id' => $multiship_id,
+                        'orders_id' => $orders_id,
+                        'title' => $currentTotal['title'],
+                        'text' => $currentTotal['text'],
+                        'value' => $currentTotal['value'],
+                        'class' => $currentTotal['code'],
+                        'sort_order' => $currentTotal['sort_order'],
+                    );
+                    zen_db_perform(TABLE_ORDERS_MULTISHIP_TOTAL, $sql);
+                }
+            }
+        }
+    }
+  
+    // -----
+    // Called by the multiship_observer class upon receipt of NOTIFY_ORDER_DURING_CREATE_ADDED_ORDERTOTAL_LINE_ITEM
+    // (issued by the order class).  This gives us an opportunity to modify the overall order's overall total for the current
+    // order-total class.
+    //
+    public function createOrderFixupTotal($orders_totals_array, $insert_id) 
+    {
+        global $db, $currencies;
+        if (is_array($this->totals) && isset($this->totals[$orders_totals_array['class']])) {
+            $this->debugLog('createOrderFixupTotal: input: ' . json_encode($orders_totals_array) . 'totals: ' . json_encode($this->totals));
+            $currentTotal = $this->totals[$orders_totals_array['class']];
+            $db->Execute(
+                "UPDATE " . TABLE_ORDERS_TOTAL . " 
+                    SET text = '" . $currencies->format($currentTotal) . "', 
+                        value = " . $currentTotal . " 
+                  WHERE orders_total_id = $insert_id
+                  LIMIT 1");
+        }
+    }
+  
+    // -----
+    // Called by the multiship_observer class upon receipt of NOTIFY_ORDER_DURING_CREATE_ADDED_PRODUCT_LINE_ITEM
+    // (issued by the order class).  This is called once for each product in the current session's cart.
+    //
+    // Note: the notified array is not a row. Core merges two of its own keys onto the front of it --
+    //       notify('NOTIFY_ORDER_DURING_CREATE_ADDED_PRODUCT_LINE_ITEM', array_merge(['orders_products_id'
+    //       => ..., 'i' => $i], $sql_data_array), ...) -- and both must come off before this goes to the
+    //       database, which is what the unset below is for. 'i' arrived in zc155 and the note here used to
+    //       say so; it is simply how the notification has been shaped on every version this plugin now
+    //       supports (verified on the 2.3 branch, order.php:1149), so it is no longer a version caveat.
+    //
+    public function createOrderAddProducts($orders_products_array, $orders_products_id) {
+        global $db, $currencies;
+
+        // -----
+        // If the current order has multiple shipping addresses ...
+        //
+        if ($this->selected) {
+            unset($orders_products_array['i'], $orders_products_array['orders_products_id']);
+            $prid = $orders_products_array['products_prid'];
+            $qty = $orders_products_array['products_quantity'];
+      
+            $initial_modification = false;
+            $this->orders_multiship_ids = array();
+            foreach ($this->details as $address_id => $currentInfo) {
+                if (!isset($this->details[$address_id]['products_ordered_text'])) {
+                    $this->details[$address_id]['products_ordered_text'] = '';
+                    $this->details[$address_id]['products_ordered_html'] = '';
+                }
+                $this->details[$address_id]['need_attributes'] = false;
+                foreach ($currentInfo['products'] as $currentProduct) {
+                    if ($currentProduct['id'] == $prid) {
+                        $this->details[$address_id]['need_attributes'] = true;
+                        $product_qty = $currentProduct['qty'];
+                        $qty -= $product_qty;
+                        if ($qty < 0) {
+//                            $this->_debugLog('_createOrderAddProducts: product quantity went negative.', array ( 'sql' => $orders_products_array, 'details' => $this->details ), true);
+                        }
+                        if (!$initial_modification) {
+                            $initial_modification = true;
+                            $db->Execute(
+                                "UPDATE " . TABLE_ORDERS_PRODUCTS . " 
+                                    SET products_quantity = " . $product_qty . ",
+                                        products_tax = " . $currentProduct['tax'] . ",
+                                        orders_multiship_id = " . $this->address2multiship[$address_id] . "
+                                  WHERE orders_products_id = $orders_products_id
+                                  LIMIT 1"
+                            );    
+                        } else {
+                            $orders_products_array['products_quantity'] = $product_qty;
+                            $orders_products_array['orders_multiship_id'] = $this->address2multiship[$address_id];
+                            zen_db_perform(TABLE_ORDERS_PRODUCTS, $orders_products_array);
+                            $this->orders_multiship_ids[] = $db->Insert_ID();
+                        }
+            
+                        $product_name = $currentProduct['name'];
+                        $product_model = $currentProduct['model'] != '' ? (' (' . $currentProduct['model'] . ') ') : '';
+                        $product_tax = $currentProduct['tax'];
+                        $product_price = $currencies->display_price($currentProduct['final_price'], $product_tax, $product_qty);
+                        $product_onetime = $currentProduct['onetime_charges'];
+                        $this->details[$address_id]['products_ordered_text'] .= "$product_qty x $product_name$product_model = $product_price";
+                        $this->details[$address_id]['products_ordered_html'] .= 
+                            "<tr>\n" .
+                            "<td class=\"product-details\" align=\"right\" valign=\"top\" width=\"30\">$product_qty&nbsp;x</td>\n" .
+                            '<td class="product-details" valign="top">' . nl2br($product_name) . nl2br($product_model) . "\n<small><em>%s</em></small></td>\n" .
+                            "<td class=\"product-details-num\" valign=\"top\" align=\"right\">$product_price</td></tr>\n";
+                        if ($product_onetime != 0) {
+                            $this->details[$address_id]['products_ordered_text'] .= "\n" . TEXT_ONETIME_CHARGES_EMAIL . $currencies->display_price($product_onetime, $product_tax, 1);
+                            $this->details[$address_id]['products_ordered_html'] .= '<tr><td class="product-details">' . nl2br(TEXT_ONETIME_CHARGES_EMAIL) . "</td>\n" . '<td>' . $currencies->display_price($product_onetime, $product_tax, 1) . "</td></tr>\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+  
+    // -----
+    // Called by the multiship_observer class upon receipt of NOTIFY_ORDER_DURING_CREATE_ADDED_ATTRIBUTE_LINE_ITEM
+    // (issued by the order class).
+    //
+    public function createOrderAddAttributes($products_attributes_array) 
+    {
+        if ($this->selected) {
+            unset($products_attributes_array['orders_products_attributes_id']);
+            foreach ($this->orders_multiship_ids as $orders_products_id) {
+                $products_attributes_array['orders_products_id'] = $orders_products_id;
+                zen_db_perform(TABLE_ORDERS_PRODUCTS_ATTRIBUTES, $products_attributes_array);
+            }
+        }
+    }
+  
+    public function insertAttributesText($order) 
+    {
+        if ($this->selected) {
+            foreach ($this->details as $address_id => &$currentInfo) {
+                if ($currentInfo['need_attributes']) {
+                    $currentInfo['products_ordered_text'] .= $order->products_ordered_attributes . "\n";
+                    $currentInfo['products_ordered_html'] = sprintf($currentInfo['products_ordered_html'], nl2br($order->products_ordered_attributes));
+                    $currentInfo['need_attributes'] = false;
+                }
+            }
+            unset($currentInfo);
+        }
+    }
+  
+    // -----
+    // Called by the multiship_observer upon receipt of NOTIFY_ORDER_EMAIL_BEFORE_PRODUCTS (issued by the order class, after the
+    // email lead-in information is built).  Save this information for use in the modification of the email for a multiple ship-to
+    // order's processing.
+    //
+    public function saveEmailHeader($text_email, $html_email) 
+    {
+        $this->text_email = $text_email;
+    }
+  
+    // -----
+    // Called by the multiship_observer upon receipt of the NOTIFY_ORDER_INVOICE_CONTENT_READY_TO_SEND2 (issued by the order class, 
+    // just before sending the order confirmation email).  If the current order has multiple shipping addresses, this provides the
+    // fix-ups required for the text and HTML email contents.
+    //
+    public function fixupOrderEmail($order, $parmArray, &$email_order, &$html_email) 
+    {
+        global $currencies;
+
+        if ($this->selected) {
+            // -----
+            // Lead in with the billing address and payment method information for the text emails.
+            //
+            $email_order = $this->text_email . "\n" . EMAIL_TEXT_BILLING_ADDRESS . "\n" . EMAIL_SEPARATOR . "\n" . zen_address_label($_SESSION['customer_id'], $_SESSION['billto'], 0, '', "\n") . "\n\n";
+            if (is_object($GLOBALS[$_SESSION['payment']])) {
+                $cc_num_display = (isset($order->info['cc_number']) && $order->info['cc_number'] != '') ? str_repeat('X', (strlen($order->info['cc_number']) - 8)) . substr($order->info['cc_number'], -4) . "\n\n" : '';
+                $email_order .= EMAIL_TEXT_PAYMENT_METHOD . "\n" . EMAIL_SEPARATOR . "\n";
+                $payment_class = $_SESSION['payment'];
+                $email_order .= $GLOBALS[$payment_class]->title . "\n\n";
+                $email_order .= (isset($order->info['cc_type']) && $order->info['cc_type'] != '') ? $order->info['cc_type'] . ' ' . $cc_num_display . "\n\n" : '';
+                $email_order .= ($GLOBALS[$payment_class]->email_footer) ? $GLOBALS[$payment_class]->email_footer . "\n\n" : '';
+            } else {
+                $email_order .= EMAIL_TEXT_PAYMENT_METHOD . "\n" . EMAIL_SEPARATOR . "\n" . PAYMENT_METHOD_GV . "\n\n";;
+            }
+      
+            // -----
+            // Format a separate section for each ship-to address and its associated products and prices.
+            //
+            $table_format = '<table border="0" width="100%%" cellspacing="0" cellpadding="2">%s</table>';
+            $order_totals_format = '<tr><td class="order-totals-text" align="right" width="100%%">%s</td><td class="order-totals-num" align="right">%s</td></tr>' . "\n";
+
+            $products_html = '';
+            foreach ($this->details as $address_id => $currentInfo) {
+                $shipping_to = TEXT_SHIPPING_TO . $currentInfo['address'];
+                $email_order .= EMAIL_SEPARATOR . "\n" . $shipping_to . "\n" . EMAIL_SEPARATOR . "\n";
+                $shipping_to = "<tr><td><div class=\"content-line\">$shipping_to</div></td></tr>";
+                $products_html .= '<hr /><table class="order-shipto" border="0" width="100%" cellspacing="0" cellpadding="2">' . "\n" . '<tr><td>' . sprintf ($table_format, $shipping_to) . "</td></tr>\n";
+
+                $email_order .= EMAIL_TEXT_PRODUCTS . "\n" . EMAIL_SEPARATOR . "\n" . $currentInfo['products_ordered_text'] . EMAIL_SEPARATOR . "\n";
+                $products_html .= '<tr><td><div class="content-line">' . EMAIL_TEXT_PRODUCTS . '</div>' . sprintf ($table_format, $currentInfo['products_ordered_html']) . "</td></tr>\n";
+
+                //order totals area
+                $html_ot = '<tr><td class="order-totals-text" align="right" width="100%">&nbsp;</td>' . "\n" . '<td class="order-totals-num" align="right" nowrap="nowrap">---------</td></tr>' . "\n";
+                foreach ($this->details[$address_id]['totals'] as $currentTotal) {
+                    $email_order .= strip_tags($currentTotal['title']) . ' ' . strip_tags($currentTotal['text']) . "\n";
+                    $html_ot .= '<tr><td class="order-totals-text" align="right" width="100%">' . $currentTotal['title'] . '</td>' . "\n" . '<td class="order-totals-num" align="right">' . $currentTotal['text'] . '</td></tr>' . "\n";
+                }
+                $email_order .= "\n\n";
+                $products_html .= sprintf ($table_format, $html_ot) . "</table>\n";
+            }
+
+            $html_email['PRODUCTS_TITLE'] = SHIPPING_TO_MULTIPLE_ADDRESSES;
+            $html_email['PRODUCTS_DETAIL'] = $products_html; 
+
+            // Same reasoning as updateOrdersTotalsAndTaxes: a missing key means that module
+            // contributed nothing. This one builds the order confirmation email, so an
+            // undefined key here would warn while the customer's receipt was being written.
+            $grand_total = $currencies->format($this->totals['ot_total'] ?? 0);
+            $html_email['ORDER_TOTALS'] = '<hr />' . sprintf ($table_format, sprintf ($order_totals_format, TEXT_GRAND_TOTAL, $grand_total));
+            $email_order .= EMAIL_SEPARATOR . "\n" . TEXT_GRAND_TOTAL . ' ' . $grand_total . "\n\n";
+
+            $html_email['ADDRESS_DELIVERY_DETAIL'] = MULTISHIP_MULTIPLE_ADDRESSES;
+        }
+    }
+ 
+    // -----
+    // Counts (and returns) the number of PHYSICAL products present in the current session's cart.
+    //
+    protected function cartPhysicalItemsCount()
+    {
+        $num_physical_items = 0;
+        $skipped = [];
+        foreach ($_SESSION['cart']->contents as $prid => $current_product) {
+            if ($this->cartItemIsPhysical($prid)) {
+                $num_physical_items += $current_product['qty'];
+            } else {
+                $skipped[] = $prid;
+            }
+        }
+        if ($skipped !== []) {
+            $this->debugLog('cartPhysicalItemsCount: not counted as physical: ' . implode(', ', $skipped));
+        }
+        return $num_physical_items;
+    }
+  
+    // -----
+    // Called at the end of the checkout-shipping page by an additional header module,
+    // allows us to see if multiple ship-to addresses should be offered (or have been
+    // previously selected) for the current order.
+    //
+    public function checkoutInitialize() 
+    {
+        // -----
+        // If the processing is currently disabled (due to configuration setting), nothing else to be done.
+        //
+        if (!$this->enabled) {
+            $this->sessionCleanup();
+            return;
+        }
+        
+        // -----
+        // Now, see if the multiple-shipping selection should be offered to the customer.  This
+        // selection is offered if all of the following are true:
+        //
+        // 1) There is more than one "physical" item in the customer's cart.
+        // 2) The current customer is not checking out via COWOA.
+        // 3) The current customer is not checking out via a PayPal Express Checkout guest account.
+        //
+        $this->can_offer = ($this->cartPhysicalItemsCount() > 1 && empty($_SESSION['COWOA']) && empty($_SESSION['customer_guest_id']) && zen_count_shipping_modules() > 0);
+        if (!$this->can_offer) {
+            $this->sessionCleanup();
+        }
+
+        // -----
+        // If multiple shipping-addresses aren't currently selected, make sure that the session-based information
+        // from a possibly previous collection of multiple shipping addresses are properly cleaned up.
+        //
+        if (!$this->selected) {
+            $this->sessionCleanup();
+            
+        // -----
+        // Otherwise, the customer has previously selected multiple shipping addresses on the checkout_multiship page ...
+        //
+        } else {
+            // -----
+            // Make sure that the currently-selected shipping method is "sane".  The 'id' element must be set and it must contain an
+            // underscore, separating the shipping method's class name from the currently-selected method.
+            //
+            $shipping_error = false;
+            if (!isset($_SESSION['shipping']['id'])) {
+                $shipping_error = true;
+                $session_shipping = false;
+            } else {
+                $shipping_info = explode ('_', $_SESSION['shipping']['id']);
+                $session_shipping = $_SESSION['shipping'];
+                if (count($shipping_info) != 2) {
+                    $shipping_error = true;
+                }
+            }
+            if ($shipping_error || isset($_SESSION['multiship_new_shipping'])) {
+                $this->debugLog('checkoutInitialization: Returning to checkout_shipping, invalid shipping method.' . PHP_EOL . json_encode($session_shipping));
+                return;
+            }
+            $this->shipping_method_id = $_SESSION['shipping']['id'];
+          
+            // -----
+            // Save the current contents of both the shopping cart and the default sendto-address.  These values will be
+            // manipulated to provide the shipping costs on a per-ship-to address basis.
+            //
+            global $total_weight, $total_count;
+            $this->saveOrdersBaseValues();
+            
+            // -----
+            // Ditto with the current order.  Save the current instance and declare that variable
+            // global so that the order-totals' processing will occur for the multiship recalculation.
+            //
+            global $order;
+            $saved_order = $order;
+            
+            // -----
+            // Set a class variable (used by the updateShippingTaxInfo method) to indicate that we're
+            // in the process of gathering the multiple ship-to addresses' information.  That way, the
+            // tax-related calculations for the order's sub-orders will use the store's current
+            // configuration.
+            //
+            $this->initialization_active = true;
+          
+            // -----
+            // Loop through each of the ship-to addresses that were previously gathered, populating the shopping-cart object
+            // with the products to be sent to that address and setting the session's sendto address ID to that value.  This
+            // allows the currently-selected shipping module to be used to calculate this sub-cart's shipping costs.
+            //
+            $this->totals = array();
+            $multiship_info = array();
+            $multiship_grand_total = 0;
+            $multiship_shipping_total = 0;
+            $invalid_address_found = false;
+            foreach ($this->cart as $address_id => $products) {
+                unset($this->cart[$address_id]['address-error']);
+                
+                $multiship_info[$address_id] = array();
+                $multiship_info[$address_id]['address'] = zen_address_label($_SESSION['customer_id'], $address_id, false, '', ', ');
+                $_SESSION['cart']->contents = array();
+                foreach ($products as $prid => $qty) {
+                    if ($prid == 'has_physical' || $prid == 'address-error') {
+                        continue;
+                    }
+                    $_SESSION['cart']->contents[$prid] = array(
+                        'qty' => $qty
+                    );
+                    if (isset($this->saved_order_info['cart_contents'][$prid]['attributes'])) {
+                        $_SESSION['cart']->contents[$prid]['attributes'] = $this->saved_order_info['cart_contents'][$prid]['attributes'];
+                    }
+                    if (isset($this->saved_order_info['cart_contents'][$prid]['attributes_values'])) {
+                        $_SESSION['cart']->contents[$prid]['attributes_values'] = $this->saved_order_info['cart_contents'][$prid]['attributes_values'];
+                    }
+                }
+            
+                // -----
+                // Get the shipping quote for this ship-to address.  If the quote comes back empty, then this shipping method is
+                // not supported for the selected products and/or address.  Redirect back to the multiship page.
+                //
+                $_SESSION['sendto'] = $address_id;
+                $total_weight = $_SESSION['cart']->show_weight();
+                $total_count = $_SESSION['cart']->count_contents();
+                $_SESSION['shipping']['cost'] = 0;
+            
+                // -----
+                // Let the order class do the "heavy lifting" in the pulling in of the product list and delivery address 
+                // information for the current shipping address.
+                //
+                $order = new order;
+                $this->debugLog("Initialize step 1 ($address_id), total_weight = $total_weight, total_count = $total_count, order-info: " . json_encode($order->info), true);
+                $multiship_info[$address_id]['products'] = $order->products;
+                $multiship_info[$address_id]['delivery'] = $order->delivery;
+                $multiship_info[$address_id]['content_type'] = $order->content_type;
+                $multiship_info[$address_id]['info'] = $order->info;
+            
+                // -----
+                // Pull in the httpClient class for those shipping methods (like UPS) that require it!
+                //
+                require_once DIR_WS_CLASSES . 'http_client.php'; 
+                
+                // -----
+                // Load the current shipping modules, bringing in the class if it's not already.
+                //
+                if (!class_exists('shipping')) {
+                    require DIR_WS_CLASSES . 'shipping.php';
+                }
+                $shipping_modules = new shipping;
+                
+                $shipping_quote = $shipping_modules->quote($shipping_info[1], $shipping_info[0]);
+                $this->debugLog("Quote received for $address_id: " . json_encode($shipping_info) . ', quote: ' . var_export($shipping_quote, true));
+                if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
+                    $this->debugLog("No shipping quote for $address_id");
+                    $this->cart[$address_id]['address-error'] = (isset($shipping_quote[0]['error'])) ? isset($shipping_quote[0]['error']) : ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING;
+                    $invalid_address_found = true;
+                    continue;
+                }
+                
+                $shipping_cost = $shipping_quote[0]['methods'][0]['cost'];
+                $multiship_info[$address_id]['info']['shipping_cost'] = $shipping_cost;
+                $multiship_shipping_total += $shipping_cost;
+                $_SESSION['shipping']['cost'] = $shipping_cost;
+                $shipping_class = $shipping_info[0];
+                global ${$shipping_class};
+                $this->shipping_method = ${$shipping_class}->title;
+                $shipping_method = $shipping_quote[0]['module'] . ' (' . $shipping_quote[0]['methods'][0]['title'] . ')';
+                $multiship_info[$address_id]['info']['shipping_method'] = $shipping_method;
+
+                // -----
+                // Now that the shipping cost for this sub-order has been calculated, let the order class do the "heavy lifting"
+                // in the pulling in of the product list and delivery address information for the current shipping address.
+                //
+                $order = new order;
+
+                require_once DIR_WS_CLASSES . 'order_total.php';
+                $order_total_modules = new order_total;
+                $order_total_modules->collect_posts();
+                $order_total_modules->pre_confirmation_check();
+                
+                $this->debugLog("Initialize step 2 ($address_id), order-info: " . json_encode($order->info));
+                $multiship_info[$address_id]['products'] = $order->products;
+                $multiship_info[$address_id]['delivery'] = $order->delivery;
+                $multiship_info[$address_id]['content_type'] = $order->content_type;
+                $multiship_info[$address_id]['info'] = $order->info;
+                
+                if (MODULE_ORDER_TOTAL_INSTALLED) {
+                    $multiship_info[$address_id]['totals'] = $order_total_modules->process();
+                    if (isset($_SESSION['shipping_tax_description'])) {
+                        $multiship_info[$address_id]['info']['shipping_tax_description'] = $_SESSION['shipping_tax_description'];
+                    }
+                    $multiship_info[$address_id]['info']['shipping_tax'] = $order->info['shipping_tax'];
+                    foreach ($multiship_info[$address_id]['totals'] as &$currentTotal) {
+                        $code = $currentTotal['code'];
+                        $currentTotal['class'] = str_replace('_', '', $code);
+                        if ($code == 'ot_shipping') {
+                            $currentTotal['value'] = $shipping_quote[0]['methods'][0]['cost'];
+                            $currentTotal['text'] = $GLOBALS['currencies']->format($currentTotal['value'], true, $order->info['currency'], $order->info['currency_value']);
+                            $currentTotal['title'] = $shipping_method;
+                        }
+                        if (!isset($this->totals[$code])) {
+                            $this->totals[$code] = 0;
+                        }
+                        $this->totals[$code] += $currentTotal['value'];
+                    }
+                    unset($currentTotal);
+                }
+                $this->debugLog(var_export($this->totals, true));
+            }
+
+            $this->details = $multiship_info;
+            $this->restoreOrdersBaseValues();
+            $_SESSION['shipping']['cost'] = $multiship_shipping_total;
+            $this->shipping_total = $multiship_shipping_total;
+            $order = $saved_order;
+        }  // Customer has chosen multiple ship-to addresses
+        
+        unset($this->initialization_active);
+        
+        // -----
+        // If any of the multiple ship-to addresses aren't valid for the currently-selected shipping method,
+        // send the customer to the 'checkout_multiship' page so that they can make other selections --
+        // unless that is the page they are already on.
+        //
+        // Without the second test this redirects to itself. checkoutInitialize() is called from
+        // checkout_multiship's own header_php (line 347) as well as from checkout_shipping, so on the
+        // multiship page the redirect lands back where it started, runs again, finds the same invalid
+        // address and goes round again. dbltoe hit exactly that -- two addresses, the second one
+        // unshippable -- and got "This page isn't working" with no error log, because a redirect loop
+        // raises no PHP error at all: 272 laps in the multiship debug log at about five a second.
+        //
+        // The loop was reachable before the selection began being retained, but only by the narrower
+        // route of a quote failing at confirmation time; keeping a rejected address put it on the path
+        // a customer takes by simply choosing one. There is nothing for the redirect to achieve here in
+        // any case: this page already marks the offending row, says so above the grid, and replaces
+        // Continue with an explanation. Arriving at it a second time adds nothing.
+        //
+        if (!empty($invalid_address_found) && ($GLOBALS['current_page_base'] ?? '') !== FILENAME_CHECKOUT_MULTISHIP) {
+            zen_redirect(zen_href_link(FILENAME_CHECKOUT_MULTISHIP, '', 'SSL'));
+        }
+    }
+    protected function saveOrdersBaseValues()
+    {
+        global $total_weight, $total_count;
+        $this->saved_order_info = array(
+            'cart_contents' => $_SESSION['cart']->contents,
+            'sendto' => $_SESSION['sendto'],
+            'shipping_cost' => $_SESSION['shipping']['cost'],
+            'total_weight' => $total_weight,
+            'total_count' => $total_count,
+        );
+        if (isset($_SESSION['shipping_tax_description'])) {
+            $this->saved_order_info['shipping_tax_description'] = $_SESSION['shipping_tax_description'];
+        }
+        if (isset($_SESSION['shipping_tax_amount'])) {
+            $this->saved_order_info['shipping_tax_amount'] = $_SESSION['shipping_tax_amount'];
+        }
+
+        // -----
+        // What each unit costs when the cart is whole. Captured here because this is the last
+        // moment it is knowable: checkoutInitialize() is about to replace the cart contents
+        // with one address's share at a time.
+        //
+        // A quantity discount belongs to the cart, not to a parcel. Zen Cart prices a line with
+        // zen_get_products_discount_price_qty($prid, $qty), which looks for a tier row with
+        // discount_qty <= $qty -- so once the cart has been split, four units of a product with
+        // a tier at three become two lots of two, no tier is reached, and the discount the
+        // customer was shown silently disappears. There is no split that avoids it: even 3 + 1
+        // discounts only the three.
+        //
+        // Confirmed on a live order before this was written, using the demo product with a 10%
+        // tier at quantity three: the customer was charged the undiscounted amount.
+        //
+        // get_products() fires NOTIFIER_CART_GET_PRODUCTS_END, which this plugin also listens
+        // to -- harmless here, because initialization_active is not set until after this method
+        // returns, so the handler stands down and this call sees the store's own pricing.
+        //
+        $this->full_cart_prices = [];
+        foreach ((array)$_SESSION['cart']->get_products() as $product) {
+            if (isset($product['id'], $product['price'])) {
+                $this->full_cart_prices[$product['id']] = $product['price'];
+            }
+        }
+    }
+
+    // -----
+    // Price a sub-order the way the whole cart was priced.
+    //
+    // Called from the observer on NOTIFIER_CART_GET_PRODUCTS_END, which passes the assembled
+    // line array by reference, while checkoutInitialize() is building each address's order.
+    //
+    // 'price' is the field to correct rather than 'final_price': order::cart() computes
+    //     $products_final_price_without_tax = $products[$i]['price'] + attributes_price(...)
+    // and everything else -- final_price, the subtotal, and the tax, which is calculated from
+    // final_price -- follows from it. Correcting the base price therefore fixes the money and
+    // the tax together, and leaves attribute pricing to core.
+    //
+    // Available from Zen Cart v2.0.0, verified at every released tag through 2.2.2 and master,
+    // so it holds across this plugin's whole declared range.
+    //
+    public function applyFullCartPricing(&$products_array)
+    {
+        if (empty($this->initialization_active) || empty($this->full_cart_prices) || !is_array($products_array)) {
+            return;
+        }
+
+        foreach ($products_array as $i => $product) {
+            if (!isset($product['id']) || !isset($this->full_cart_prices[$product['id']])) {
+                continue;
+            }
+            $cart_price = $this->full_cart_prices[$product['id']];
+            if ((float)$product['price'] !== (float)$cart_price) {
+                $this->debugLog(
+                    'applyFullCartPricing: ' . $product['id'] . ' priced at ' . $product['price']
+                    . ' for this address, restored to the cart price of ' . $cart_price . '.'
+                );
+                $products_array[$i]['price'] = $cart_price;
+            }
+        }
+    }
+
+    protected function restoreOrdersBaseValues()
+    {
+        global $total_weight, $total_count;
+        $_SESSION['cart']->contents = $this->saved_order_info['cart_contents'];
+        $_SESSION['sendto'] = $this->saved_order_info['sendto'];
+        $_SESSION['shipping']['cost'] = $this->saved_order_info['shipping_cost'];
+        $total_weight = $this->saved_order_info['total_weight'];
+        $total_count = $this->saved_order_info['total_count'];
+        if (isset($this->saved_order_info['shipping_tax_description'])) {
+            $_SESSION['shipping_tax_description'] = $this->saved_order_info['shipping_tax_description'];
+        }
+        if (isset($this->saved_order_info['shipping_tax_amount'])) {
+            $_SESSION['shipping_tax_amount'] = $this->saved_order_info['shipping_tax_amount'];
+        }
+        unset($this->saved_order_info);
+
+        // -----
+        // Cleared with everything else it was captured alongside. The cart is whole again, so
+        // the store's own pricing is correct from here and nothing should be overriding it --
+        // and leaving stale prices in the session to be applied to a later, differently-sized
+        // cart is exactly the bug this method exists to prevent for the other saved values.
+        //
+        $this->full_cart_prices = [];
+    }
+    
+    // -----
+    // Called at the start of the checkout_payment page to fix-up the session-based
+    // shipping cost to reflect any changes based on the multiple ship-to addresses.  That
+    // value is used by the order-class on initial creation of the order and stored in
+    // the order-object's info['shipping_cost'] field.
+    //
+    public function fixupSessionShippingCost()
+    {
+        if (!empty($_SESSION['shipping']) && isset($this->shipping_total)) {
+            $_SESSION['shipping']['cost'] = $this->shipping_total;
+        }
+    }
+    
+    // -----
+    // Called via notification from the ot_shipping module prior to calculating the tax to be
+    // applied to the order's shipping.  If multiple ship-to addresses are being used for this
+    // order, the updateOrdersTotalsAndTaxes method has already adjusted the order's taxes and total
+    // to account for each sub-order's values.
+    //
+    // Since there's nothing for ot_shipping to do with the shipping taxes, return a tax-rate
+    // of 0 to be applied for an "unknown" tax class.
+    //
+    public function updateShippingTaxInfo(&$shipping_tax, &$shipping_tax_description)
+    {
+        $this->debugLog("updateShippingTaxInfo, on entry: " . json_encode($GLOBALS['order']->info));
+        $shipping_tax_override = ($this->selected && empty($this->initialization_active));
+        if ($shipping_tax_override) {
+            $shipping_tax = 0;
+            $shipping_tax_description = TEXT_UNKNOWN_TAX_RATE;
+        }
+        return $shipping_tax_override;
+    }
+  
+    // -----
+    // Called at the start of the shopping_cart class' "remove" processing.  Removes all references to the
+    // specified prid from the multiship session data.  Since this action is invoked from the shopping_cart
+    // page and the customer will need to re-enter the checkout_confirmation page to continue, just clear
+    // out any multiship details that were previously calculated since the confirmation page's re-entry
+    // will result in a recalculation anyway.
+    //
+    public function removeProduct($prid) 
+    {
+        // -----
+        // First, remove all multiship class elements associated with the ship-to details.
+        //
+        unset($this->details, $this->totals, $this->text_email);
+
+        // -----
+        // Next, go through the multiship "cart" contents, removing all references to the product.  If, after
+        // removing the product, an address contains only one reference (the physical/virtual flag) then remove
+        // that address as well.
+        //
+        if (isset($this->cart)) {
+            foreach ($this->cart as $address_id => $itemInfo) {
+                unset ($this->cart[$address_id][$prid]);
+                if (count ($this->cart[$address_id]) == 1) {
+                    unset($this->cart[$address_id]);
+                }
+            }
+        }
+         
+        // -----
+        // Finally, if the multiship "cart" is either empty or only has one ship-to address,
+        // then multiship is no longer selected.
+        //
+        if (isset($this->cart) && count($this->cart) < 2) {
+            $this->sessionCleanup();
+        }
+    }
+  
+    // -----
+    // Called at the start of the shopping_cart function update_product to update the quantity (either up or down)
+    // for a product that's presently in the cart.  This processing happens either from the shopping_cart or
+    // checkout_multiship page; in either case, the customer must (eventually) return to the checkout_shipping page
+    // prior to checkout completion and the multiship shipping calculations will be performed there ... so remove all ship-to
+    // details as part of the processing.
+    //
+    public function updateProduct($prid, $new_quantity, $attributes) 
+    {
+        if ($this->selected && !empty($new_quantity)) {
+            unset($this->details, $this->totals, $this->text_email);
+      
+            // -----    
+            // If the update request did not happen on the checkout_multiship page and the to-be-updated
+            // quantity is less than that currently in the cart, remove all references to this product
+            // from the multiship 'cart'; shipping for all remaining instances of the product will
+            // default to the customer's current shipping address.
+            //
+            if (isset($_GET['main_page']) && $_GET['main_page'] != FILENAME_CHECKOUT_MULTISHIP) {
+                $products_name = zen_get_products_name($prid);
+                $in_cart_quantity = $_SESSION['cart']->get_quantity($prid);
+                if ($new_quantity < $in_cart_quantity) {
+                    $this->removeProduct($prid);
+                    $GLOBALS['messageStack']->add_session('header', sprintf(MULTISHIP_PRODUCT_DECREASE_SHIP_PRIMARY, $products_name), 'caution');
+                } elseif ($new_quantity > $in_cart_quantity) {
+                    // -----
+                    // The extra units go to the customer's primary address, which is what the
+                    // message below tells them. += reads before it writes, though, and neither
+                    // level of that array is guaranteed to exist.
+                    //
+                    // Nothing is held against the default address in the normal case: a
+                    // customer who has sent every item somewhere else has no bucket for their
+                    // own address at all. Adding more of something already in the cart then
+                    // logged two warnings from this one line -- one for the missing address,
+                    // one for the missing product inside it -- and PHP carried on from null,
+                    // so the arithmetic happened to come out right and nothing looked wrong
+                    // on screen. dbltoe found it in the log, not in the cart.
+                    //
+                    // Initialised the way _checkAddProductMessage() does a few lines below,
+                    // which has always guarded this properly.
+                    //
+                    $default_address_id = $_SESSION['customer_default_address_id'];
+                    $this->cart[$default_address_id] ??= [];
+                    $this->cart[$default_address_id][$prid] ??= 0;
+                    $this->cart[$default_address_id][$prid] += ($new_quantity - $in_cart_quantity);
+
+                    $GLOBALS['messageStack']->add_session('header', sprintf(MULTISHIP_PRODUCT_INCREASE_SHIP_PRIMARY, $products_name), 'caution');
+                }
+            }
+        }
+    }
+ 
+    // -----
+    // Called at the start of the shopping_cart function add_cart to add a product to the cart.  If
+    // multiship addresses have been previously selected, notify the customer that the product addition
+    // will be sent to their "Primary" address and that they can make changes during the checkout process and
+    // record this change in the multiship session values.
+    //
+    public function _checkAddProductMessage($prid, $qty, $attributes) 
+    {
+        global $messageStack;
+        $uprid = zen_get_uprid($prid, $attributes);
+        if ($this->selected && $qty != 0 && !$_SESSION['cart']->in_cart($uprid)) {
+            $products_name = zen_get_products_name($prid);
+            $messageStack->add_session('header', sprintf(MULTISHIP_PRODUCT_ADD_SHIP_PRIMARY, $qty, $products_name), 'caution');
+          
+            if (!isset($this->cart[$_SESSION['customer_default_address_id']])) {
+                $this->cart[$_SESSION['customer_default_address_id']] = array ();
+            }
+
+            if (!isset($this->cart[$_SESSION['customer_default_address_id']][$uprid])) {
+                $this->cart[$_SESSION['customer_default_address_id']][$uprid] = $qty;
+                unset($this->details, $this->totals, $this->text_email);
+            }
+        }
+    } 
+  
+    // -----
+    // Resets the class variables to their initial state.  Used internally as well as by the multiship_observer upon
+    // receipt of NOTIFY_HEADER_END_CHECKOUT_PROCESS (issued by the header_php.php file for the checkout_process page, just
+    // prior to re-directing to the checkout_success page).
+    //
+    // -----
+    // Clears the multiship *selection* state -- the assigned addresses and the derived
+    // totals, shipping and order information.
+    //
+    // It must NOT clear $_SESSION['multiship_chosen'], the customer's intent. This method
+    // is called from nine places as ordinary housekeeping, including checkoutInitialize()
+    // when $this->selected is false -- and false is the normal state for a customer who
+    // has just chosen multiship but has not reached the address grid yet. Clearing intent
+    // here destroyed the choice on the customer's first visit to checkout_shipping, which
+    // in turn let One Page Checkout take the order back.
+    //
+    // Intent is cleared only by declineMultiship(), which is the one place the customer
+    // has actually said no.
+    //
+    public function sessionCleanup()
+    {
+        $this->debugLog('sessionCleanup!');
+        $this->selected = false;
+        $this->address2multiship = array();
+        unset($this->details, $this->cart, $this->totals, $this->shipping_method, $this->orders_multiship_ids, $this->text_email, $this->noship_address_id);
+    }
+  
+    // -----
+    // Provides the plugin's debug-log processing.
+    //
+    protected function debugLog($message, $include_date = false)
+    {
+        if ($this->debug) {
+            self::writeLogLine($message, $include_date, $this->logfile);
+        }
+    }
+
+    // -----
+    // The same log, written from where there is no object to write it with.
+    //
+    // checkout_success runs after checkout_process has called sessionCleanup(), so
+    // $_SESSION['multiship'] is gone by then -- correctly, the order is placed. That page
+    // still rebuilds the breakdown from the database and still needs to be able to say what
+    // it found, and until now anything happening after cleanup was simply invisible.
+    //
+    // Derives the setting and the filename exactly as the constructor does, so a line written
+    // from here is indistinguishable from one written by the object.
+    //
+    public static function writeDebugLog($message, $include_date = false)
+    {
+        if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
+            self::writeLogLine($message, $include_date, DIR_FS_LOGS . '/multiship_' . date('Ymd') . '.log');
+        }
+    }
+
+    // -----
+    // One formatter for both, so the instance and static paths cannot drift apart.
+    //
+    private static function writeLogLine($message, $include_date, $logfile)
+    {
+        $header = ($include_date === false) ? '' : (PHP_EOL . date('Y-m-d H:i:s: '));
+        $header .= '(' . ($GLOBALS['current_page_base'] ?? 'unknown') . ') ';
+        error_log("$header$message" . PHP_EOL, 3, $logfile);
+    }
+}

@@ -1,1 +1,8 @@
 *.php~
+# Parked locally at dbltoe's request - notes for the Zen Cart core team, not part of the plugin
+docs/multiship_core_requirements.md
+
+# Parked locally: lat9-era v2.0.0 screenshots and walkthroughs, kept as source
+# material for a future wiki. Every one of them shows the pre-3.0.0 five-page
+# flow, so they must not ship or be published as current documentation.
+pages/

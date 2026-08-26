@@ -1,0 +1,240 @@
+/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
+   Auto-loads on checkout_confirmation.
+
+   -----
+   Everything below the colour block is scoped to .multishipConfirmation.
+
+   This file is loaded by page name, so it arrives on every confirmation page whether the
+   order is going to one address or five. A store's ordinary single-address checkout must be
+   left exactly as its own template drew it -- rearranging that would be this plugin
+   redecorating a page it has no business in. The class is set by
+   jscript_multiship_confirmation.php, in the head, and only when the order is genuinely
+   going to several addresses.
+
+   The colour variables below are unscoped because they are only ever read by .multishipOrder,
+   which does not exist on a single-address page. */
+
+:root {
+    --multiship-rule: #757575;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    :root {
+        --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
+    }
+}
+
+/* -----
+   The page laid out for what it now contains.
+
+   ZCA Bootstrap puts the four blocks of this page -- billing and payment, delivery,
+   special instructions, products -- into .card-columns, which is CSS multi-column: content
+   flows down one column and wraps into the next, in whatever order it happens to fill. That
+   works for four cards of similar size. It does not work once one of them is a full
+   breakdown of five deliveries, and dbltoe found the second of three recipients cut in half
+   between two columns.
+
+   Replaced with an explicit grid, because the blocks are no longer interchangeable. Billing
+   and payment spans the top; the deliveries span their own full-width row beneath, which is
+   what a table of items, shipping and totals needs; instructions and products sit side by
+   side below that.
+
+   column-count must be cleared explicitly -- Bootstrap sets it on .card-columns, and a grid
+   container with a column-count still tries to fragment its children. */
+.multishipConfirmation .card-columns {
+    column-count: initial;
+    -webkit-column-count: initial;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.multishipConfirmation #billingAddress-card,
+.multishipConfirmation #multishipConfirmationBreakdown {
+    grid-column: 1 / -1;
+}
+
+.multishipConfirmation #orderComment-card {
+    grid-column: 1;
+}
+
+.multishipConfirmation #cartContents-card {
+    grid-column: 2;
+}
+
+/* -----
+   Final Step and Confirm Order, together and centred.
+
+   ZCA gives that toolbar justify-content-between, which pins the wording hard left and the
+   button hard right. On a wide screen they end up at opposite ends with a gulf between --
+   "Final Step is floating around in there for some reason". They are one instruction and
+   the control it describes, so they are stacked and centred as a single closing block. */
+.multishipConfirmation #checkoutConfirmationDefault-btn-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    text-align: center;
+    margin-top: 1.5em;
+}
+
+/* -----
+   One column on anything narrower than a small desktop. Two columns of order detail on a
+   tablet leaves neither readable, and the products table needs the width more than the
+   layout needs the symmetry. */
+@media (max-width: 991px) {
+    .multishipConfirmation .card-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .multishipConfirmation #orderComment-card,
+    .multishipConfirmation #cartContents-card {
+        grid-column: 1 / -1;
+    }
+}
+
+/* -----
+   Each recipient.
+
+   column-span is kept for templates that do not use .card-columns and so never get the grid
+   above: on those the breakdown is still inside whatever column context the page provides,
+   and this takes it out. break-inside is the last line of defence -- where neither applies,
+   at least a recipient is not split down the middle. */
+#multishipConfirmationBreakdown {
+    column-span: all;
+    -webkit-column-span: all;
+}
+
+/* -----
+   Narrow the address box so the breakdown gets the room, rather than pushing it down.
+
+   The breakdown replaces #checkoutShipto -- a single ship-to means nothing on an order going
+   to several -- and core's template floats that block: #checkoutBillto is class="back" and
+   #checkoutShipto class="forward", float:left and float:right, at whatever width the template
+   gives them. responsive_classic uses 47% each, leaving the breakdown about half a row, which
+   is too little for the per-recipient tables.
+
+   Clearing it was tried first and was wrong. It does give the full width, but it drops the
+   breakdown below the floats and so below the fold, under an address the customer already
+   knows -- dbltoe's objection, and the right one: the breakdown is what this page is for, and
+   burying it to make it wider trades the thing being read for the room to read it in.
+   Narrowing the box beside it keeps it up the page with about two thirds of the row. 35% is
+   dbltoe's measurement, tested on responsive_classic.
+
+   Here rather than in the template's stylesheet, which is where the 47% lives, for two
+   reasons: an edit there is lost on the next template update, and it would shrink the address
+   boxes for every customer on every confirmation page when only a multiship order needs it.
+   Scoped to .multishipConfirmation, which jscript_multiship_confirmation.php sets on the
+   document only when the order really is going to several addresses.
+
+   Both ids are named although only the billing one survives replaceChild, so this still holds
+   if the breakdown is ever hosted somewhere other than the ship-to block. An id plus a class
+   outranks the template's bare id, so load order does not come into it. */
+.multishipConfirmation #checkoutShipto,
+.multishipConfirmation #checkoutBillto {
+    width: 35%;
+}
+
+.multishipOrder {
+    border: 1px solid var(--multiship-rule);
+    border-radius: 6px;
+    margin-top: 10px;
+    padding: 5px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+}
+
+/* -----
+   Who the parcel is going to, read before the address that confirms it.
+
+   The name is what a customer checks against: they chose these addresses a few minutes ago
+   and verified each one when it went into their address book. The full address is kept, one
+   line and quieter, because a customer holding two addresses for the same person -- a PO box
+   and a street address, which dbltoe has -- cannot tell one from the other by name alone. */
+.multishipOrderName {
+    font-weight: bold;
+}
+
+.multishipOrderAddress {
+    display: block;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* -----
+   Who it is going to on the left, what it comes to on the right, one line.
+
+   This block through to the end of the file is identical in three stylesheets: this one,
+   account_history_info.css and checkout_success.css, because tpl_modules_multiship.php
+   renders on all three pages and page CSS is loaded by page name. Change one, change all
+   three.
+
+   The totals were three stacked rows under the table, then one row under the table, and are
+   now no rows at all -- the header line already ran the width of the box with nothing to its
+   right. Ranged right, matching where totals sit on every other page of a Zen Cart checkout.
+
+   space-between with margin-left:auto on the totals so that when the recipient's name is
+   long enough to wrap the whole line, the totals still sit right rather than drifting under
+   the name. */
+.multishipOrderHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25em 1.5em;
+}
+
+/* Shrinks so the totals keep their line, rather than holding full width and pushing them
+   off it. A long recipient name wraps within itself instead. */
+.multishipOrderWho {
+    flex: 1 1 12em;
+    min-width: 0;
+}
+
+/* -----
+   The three totals stay on one line as a group.
+
+   nowrap, not wrap: with a shipping title as long as "USPS (Ground Advantage):" they will
+   wrap one-per-line at the first excuse, and one-per-line is the stacked layout this was
+   meant to get away from. The header around them still wraps, so when there genuinely is no
+   room beside the name the whole group drops to its own line intact.
+
+   Below 600px there is no line to keep them on, and stacked is the honest answer. */
+.multishipOrderTotals {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 0.25em 1.25em;
+    margin-left: auto;
+}
+
+@media (max-width: 600px) {
+    .multishipOrderTotals {
+        flex-wrap: wrap;
+    }
+}
+
+.multishipTotalItem {
+    white-space: nowrap;
+}
+
+.multishipTotalValue {
+    font-weight: bold;
+    padding-left: 0.35em;
+}
+
+/* -----
+   Nothing here for the items table, deliberately.
+
+   Quantity, Products and Total do run together, and this plugin is not going to fix that.
+   The table carries core's #cartContentsDisplay, so it is spaced by whatever the store's own
+   stylesheet does with its product tables -- and dbltoe confirmed the same crowding on the
+   account order-history page and elsewhere on the site. It is the store's look. Padding it
+   here would make the one page this plugin touches the odd one out, which is the opposite of
+   the intent: structure and behaviour are ours, appearance is the store's.
+
+   .multishipItems is on the table as a hook, unstyled, so a store owner can space these
+   tables without having to target an id that repeats down the page. */
