@@ -127,7 +127,22 @@ class multiship extends base
                        FROM " . TABLE_CUSTOMERS . " 
                       WHERE customers_id = " . (int)$_SESSION['customer_id'] . "
                       LIMIT 1");
-                if ($group->fields['customers_group_pricing'] != 0) {
+                // -----
+                // EOF checked, because a customer_id in session does not guarantee a row.
+                //
+                // A session can outlive the customer record it names -- a deleted test
+                // account is the everyday way to produce one -- and the query then returns
+                // nothing, leaving $group->fields an empty array. PHP 8 warns on the missing
+                // key, which is the "Undefined array key customers_group_pricing" dbltoe saw
+                // logged from the login page.
+                //
+                // Behaviour is deliberately unchanged. The missing key evaluated to null,
+                // null != 0 is false, and multiship stayed enabled; not entering the block
+                // when there is no row keeps exactly that, minus the warning. Enabled is also
+                // the right answer on the merits: this test exists to disable multiship for
+                // group-pricing customers, and a customer with no record is not in a group.
+                //
+                if (!$group->EOF && $group->fields['customers_group_pricing'] != 0) {
                     $this->debugLog("isEnabled, setting disabled since the currently logged-in customer is part of a group-pricing group.");
                     $this->enabled = false;
                 }
@@ -650,7 +665,17 @@ class multiship extends base
                   WHERE products_id = $pID 
                   LIMIT 1"
             );
-            $is_physical = ($virtual_check->fields['products_virtual'] == 0);
+            // -----
+            // EOF first, for the same reason as the group-pricing lookup above: a product can
+            // leave the catalogue while it is still sitting in somebody's cart, and the query
+            // then returns no row at all. Reading the key off an empty array warns on PHP 8.
+            //
+            // Treating a missing product as physical is what happened before -- null == 0 is
+            // true -- and it is kept. It is also the safer of the two answers: a physical item
+            // needs an address, and asking for one the order does not need is recoverable in a
+            // way that silently shipping nothing is not.
+            //
+            $is_physical = ($virtual_check->EOF || $virtual_check->fields['products_virtual'] == 0);
             
             // -----
             // If the product is not marked as virtual and has attributes, check to see if one of the product's
