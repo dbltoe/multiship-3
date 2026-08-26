@@ -20,6 +20,22 @@ if (isset($multiship_info) && is_array($multiship_info)) {
 // two entries apart: dbltoe has a PO box and a street address for the same person, which is
 // exactly the case this page has to let a customer catch. Quieter, not absent.
 //
+// -----
+// Escaped on output, because this one is not escaped on the way in.
+//
+// The address below it is safe already: it comes from zen_address_label(), and core's
+// zen_address_format() runs every field of it through zen_output_string_protected() before
+// handing it back. The delivery name does not take that path -- it is read straight off the
+// order, which took it from the customer's own address book -- so it arrives here exactly as
+// the customer typed it, angle brackets and all.
+//
+// A customer can only put a name into their own address book and only ever sees it on their
+// own pages, so the reach of this is one account rather than a store. It is still markup
+// built out of user input and rendered as HTML, which is worth closing on its own terms:
+// Zen Cart's plugin security scan flagged the innerHTML this markup used to travel through,
+// and "the string was ours and therefore safe" was true of the string and not of everything
+// in it.
+//
 $multishipRecipientName = $currentInfo['delivery']['name'] ?? '';
 
 // -----
@@ -36,7 +52,7 @@ $multishipItemsLabel = ($multishipRecipientName === '')
 <div class="multishipOrder">
     <div class="multishipOrderHeader">
         <span class="multishipOrderWho">
-            <span class="multishipOrderName"><?php echo TEXT_SHIPPING_TO . $multishipRecipientName; ?></span>
+            <span class="multishipOrderName"><?php echo TEXT_SHIPPING_TO . zen_output_string_protected($multishipRecipientName); ?></span>
             <span class="multishipOrderAddress"><?php echo $currentInfo['address']; ?></span>
         </span>
 <?php

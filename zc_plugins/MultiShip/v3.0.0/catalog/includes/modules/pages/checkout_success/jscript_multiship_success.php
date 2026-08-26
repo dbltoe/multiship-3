@@ -64,7 +64,27 @@ if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
     echo '<!-- multiship: breakdown built for ' . count($multiship_info) . ' address(es), see the multiship log -->' . PHP_EOL;
 }
 ?>
-
+<?php
+// -----
+// The breakdown travels as inert markup in a <template>, not as a string for innerHTML.
+//
+// It used to be json_encode()d into a JavaScript variable and assigned with innerHTML. That
+// worked and the content was safe -- it is this plugin's own server-rendered output, not
+// anything a request supplied -- but innerHTML is a sink a security scanner is right to stop
+// on, and Zen Cart's plugin review flagged it. Whoever reads this next should not have to
+// re-derive that the string was trustworthy.
+//
+// A <template> is parsed by the browser as part of the document and its content is inert:
+// nothing in it renders, no script in it runs, no image in it loads, until something clones
+// it. Cloning yields a DocumentFragment that is inserted as nodes rather than parsed from
+// text, so there is no HTML-from-string step anywhere in the path. <template> is valid in
+// <head>, which is where this file's output lands.
+//
+// The markup is echoed raw here on purpose -- it is HTML and must stay HTML. What makes that
+// safe is the escaping done where the values enter it, in tpl_modules_multiship.php.
+//
+?>
+<template id="multishipSuccessBreakdownSource"><?php echo $multiship_breakdown_html; ?></template>
 <script>
 // -----
 // Marks the document as a multiship success page, immediately.
@@ -105,7 +125,10 @@ if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    var breakdown = <?php echo json_encode($multiship_breakdown_html); ?>;
+    var breakdownSource = document.getElementById('multishipSuccessBreakdownSource');
+    if (breakdownSource === null) {
+        return;
+    }
     var multipleAddresses = <?php echo json_encode(MULTISHIP_MULTIPLE_ADDRESSES); ?>;
     var deliveryHeading = <?php echo json_encode(trim(rtrim(HEADING_DELIVERY_ADDRESS, ': '))); ?>;
 
@@ -160,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var anchor = document.getElementById('myAccountPaymentInfo') || deliveryBlock;
     var host = document.createElement('div');
     host.id = 'multishipSuccessBreakdown';
-    host.innerHTML = breakdown;
+    host.appendChild(breakdownSource.content.cloneNode(true));
 
     if (anchor !== null && anchor.parentNode !== null) {
         anchor.parentNode.insertBefore(host, anchor.nextSibling);

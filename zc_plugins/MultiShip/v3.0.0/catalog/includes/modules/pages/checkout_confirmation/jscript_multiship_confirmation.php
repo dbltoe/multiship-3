@@ -50,6 +50,27 @@ if ($multiship_breakdown_html === '') {
     return;
 }
 ?>
+<?php
+// -----
+// The breakdown travels as inert markup in a <template>, not as a string for innerHTML.
+//
+// It used to be json_encode()d into a JavaScript variable and assigned with innerHTML. That
+// worked and the content was safe -- it is this plugin's own server-rendered output, not
+// anything a request supplied -- but innerHTML is a sink a security scanner is right to stop
+// on, and Zen Cart's plugin review flagged it. Whoever reads this next should not have to
+// re-derive that the string was trustworthy.
+//
+// A <template> is parsed by the browser as part of the document and its content is inert:
+// nothing in it renders, no script in it runs, no image in it loads, until something clones
+// it. Cloning yields a DocumentFragment that is inserted as nodes rather than parsed from
+// text, so there is no HTML-from-string step anywhere in the path. <template> is valid in
+// <head>, which is where this file's output lands.
+//
+// The markup is echoed raw here on purpose -- it is HTML and must stay HTML. What makes that
+// safe is the escaping done where the values enter it, in tpl_modules_multiship.php.
+//
+?>
+<template id="multishipBreakdownSource"><?php echo $multiship_breakdown_html; ?></template>
 <script>
 // -----
 // Marks the document as a multiship confirmation, immediately.
@@ -94,7 +115,10 @@ if ($multiship_breakdown_html === '') {
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    var breakdown = <?php echo json_encode($multiship_breakdown_html); ?>;
+    var breakdownSource = document.getElementById('multishipBreakdownSource');
+    if (breakdownSource === null) {
+        return;
+    }
 
     // ZCA Bootstrap wraps the delivery address in a card; core wraps it in a plain div.
     // Both are stable ids. An unrecognized template is left alone rather than half-edited --
@@ -111,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // customer relying on that reader is the one least able to notice the contradiction.
     var host = document.createElement('div');
     host.id = 'multishipConfirmationBreakdown';
-    host.innerHTML = breakdown;
+    host.appendChild(breakdownSource.content.cloneNode(true));
     slot.parentNode.replaceChild(host, slot);
 });
 </script>

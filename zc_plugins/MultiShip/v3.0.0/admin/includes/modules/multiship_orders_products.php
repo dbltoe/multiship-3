@@ -1,5 +1,20 @@
 <?php
 // -----
+// Included by the order-detail page, never requested on its own. Guarded the way core guards
+// every file in its own admin includes/modules directory, so a direct request gets a refusal
+// rather than a partial render or a PHP error naming paths.
+//
+// The plugin's two standalone admin pages, invoice_multiship.php and packingslip_multiship.php,
+// deliberately do NOT carry this: they require includes/application_top.php as their first act,
+// exactly as core's invoice.php and orders.php do, and that is what authenticates them. The
+// constant this tests does not exist until application_top defines it, so adding the guard
+// there would refuse every legitimate request.
+//
+if (!defined('IS_ADMIN_FLAG')) {
+    die('Illegal Access');
+}
+
+// -----
 // Part of the Multiple Shipping Addresses plugin for Zen Cart
 // Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
 // @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
