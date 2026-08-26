@@ -31,6 +31,13 @@
 //
 $multiship_version = 'v3.0.0';
 
+// -----
+// Declared once and used for both the button below and github_repo at the foot of this file,
+// so the two cannot drift apart and leave the button pointing somewhere the manifest does not
+// claim.
+//
+$multiship_github = 'https://github.com/dbltoe/multiship-3';
+
 $multiship_readme_button = '';
 if (defined('DIR_WS_CATALOG')) {
     $multiship_readme_button =
@@ -39,25 +46,43 @@ if (defined('DIR_WS_CATALOG')) {
 }
 
 // -----
-// A GitHub button must not be added, and the reason has changed.
+// The source, for a store owner who wants to read it or report something against a line of it.
 //
-// It used to be "not yet", because the repository's master branch still held the pre-v3.0.0
-// plugin and linking there would have sent a store owner to code older than the one they had
-// installed. That was a wait-and-see.
+// Unguarded, unlike the Read Me button above: that one builds a path from DIR_WS_CATALOG and
+// has to be omitted if the manifest is ever read outside a storefront or admin context, while
+// this is an absolute URL that is correct wherever the file is parsed.
 //
-// The repository is now private, so a link would give every store owner a 404. github_repo
-// below is kept as the maintainer's own pointer -- the Plugin Manager renders that field
-// nowhere (see docs/multiship_core_requirements.md 2.4), so it costs nothing and misleads
-// no one where it sits. Surfacing it as a button would.
+// btn-secondary rather than btn-primary so the two do not compete. The Read Me is what a store
+// owner needs; the source is what a developer wants, and it should not be the louder of the
+// two. Both classes are Bootstrap's, and both are inert on a Plugin Manager that has never
+// heard of them -- the link still renders and still works, it simply looks like a link.
 //
-// If this plugin is ever distributed with a public source repository again, that decision
-// comes first and the button follows it, not the other way round.
+$multiship_github_button =
+    '&nbsp;<a href="' . $multiship_github . '"'
+    . ' target="_blank" rel="noopener" class="btn btn-secondary" role="button">GitHub</a>';
+
+// -----
+// Both buttons are appended to pluginDescription below.
+//
+// This comment used to explain why a GitHub button must never be added: the repository was
+// private, so a link would have given every store owner a 404. dbltoe has made it public, so
+// the objection is gone and the button is here.
+//
+// The mechanism is the same one the Read Me button uses. Plugin Manager builds its own buttons
+// from hardcoded setBoxContent() calls in PluginManagerController with no notifier anywhere
+// near them, so a plugin cannot add one properly -- but pluginDescription is echoed into the
+// same box unescaped, so a link carrying Bootstrap's button classes renders alongside the
+// genuine ones.
+//
+// If the repository is ever made private again, this button has to go with it. A link to a
+// private repository is a 404 for everyone who is not a collaborator, which is worse than no
+// link at all.
 //
 
 return [
     'pluginVersion' => $multiship_version,
     'pluginName' => 'Multiple Ship-To Addresses',
-    'pluginDescription' => 'Allows a customer to ship the individual products in their cart to two or more different addresses, splitting the order into per-address sub-orders that can be tracked and status-updated independently in the admin.<br /><br />Built on the <em>Multiple Ship-To Addresses</em> plugin created by lat9 of Vinos de Frutas Tropicales, whose original work provides the order-splitting, per-address shipping-cost and destination-based tax handling that this plugin still relies on.' . $multiship_readme_button,
+    'pluginDescription' => 'Allows a customer to ship the individual products in their cart to two or more different addresses, splitting the order into per-address sub-orders that can be tracked and status-updated independently in the admin.<br /><br />Built on the <em>Multiple Ship-To Addresses</em> plugin created by lat9 of Vinos de Frutas Tropicales, whose original work provides the order-splitting, per-address shipping-cost and destination-based tax handling that this plugin still relies on.' . $multiship_readme_button . $multiship_github_button,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
     'pluginId' => 0, // ID from Zen Cart forum
     // -----
@@ -88,8 +113,8 @@ return [
     //
     'zcVersions' => ['v2.0.0', 'v2.0.1', 'v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0'],
     'changelog' => '', // online URL (eg github release tag page, or changelog file there) or local filename only, ie: changelog.txt (in same dir as this manifest file)
-    // Private. Reachable by the maintainer and invited collaborators only -- see the note
-    // above on why this must not become a button.
-    'github_repo' => 'https://github.com/dbltoe/multiship-3',
+    // Public, and surfaced as a button in the plugin's description -- see the note above.
+    // Declared at the top of this file so the field and the button cannot disagree.
+    'github_repo' => $multiship_github,
     'pluginGroups' => [],
 ];
