@@ -18,6 +18,35 @@ if (!isset($_SESSION['multiship'])) {
 //
 $multiple_shipping_active = $_SESSION['multiship']->isSelected();
 if ($multiple_shipping_active) {
+    // -----
+    // No side columns while a multiship order is being confirmed or paid for.
+    //
+    // Core disables columns on no checkout page at all -- checkout_shipping, checkout_payment
+    // and checkout_confirmation each carry zero flag_disable in their header_php -- so whether
+    // a checkout page has side columns is entirely the template's call, made from a list in
+    // tpl_main_page.php. ZCA Bootstrap fills that list in and names all three. Stock
+    // responsive_classic ships the placeholder Zen Cart supplies,
+    // 'list_pages_to_skip_all_left_sideboxes_on_here,separated_by_commas,and_no_spaces',
+    // which matches no page ever, so every checkout page there keeps both columns and the
+    // centre column is left too narrow for the per-address breakdown. dbltoe reported the
+    // result: the data overwriting the sideboxes on steps 2 and 3.
+    //
+    // This plugin's own pages have always done this for themselves -- checkout_multiship,
+    // multiship_choice and multiship_address all set these two flags -- which is why the
+    // address grid looked right on the same template that broke the two pages after it.
+    //
+    // Guarded on the order actually being multiship, so an ordinary customer's checkout is
+    // untouched and keeps whatever the store intends. ??= rather than =, so anything that has
+    // already made this decision keeps it, and a no-op on ZCA, where the template has
+    // suppressed them before this file is reached.
+    //
+    // What this does not do is fix core's checkout for everyone else on that template. A store
+    // owner who wants their ordinary checkout pages full width fills in the list in their own
+    // tpl_main_page.php, exactly as ZCA has. That is theirs to decide, not this plugin's.
+    //
+    $flag_disable_left ??= true;
+    $flag_disable_right ??= true;
+
     $multiship_totals = $_SESSION['multiship']->getTotals();
     $multiship_grand_total = 0;
     if (is_array($multiship_totals) && isset($multiship_totals['ot_total'])) {
