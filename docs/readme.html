@@ -234,8 +234,15 @@ timeEffect : 750
         <li>CHANGE: One Page Checkout is disabled automatically for a customer who chooses multiple addresses, and left alone for everyone else, so the two plugins can coexist on one store.</li>
         <li>CHANGE: The plugin's pages take their appearance from the active template rather than shipping their own look.</li>
         <li>CHANGE: Retired the store-wide enable switch. Installing the plugin is the decision to use it.</li>
+          <li>CHANGE: An address the chosen shipping method cannot serve is now kept and marked rather than discarded. The row holds the address, a warning marker appears beside it, and the way onward is replaced by an explanation until it is resolved. Previously the selection was thrown away and the row reverted to the prompt, so the page looked as though it had ignored the click.</li>
+          <li>CHANGE: The page's warnings now render immediately above the address grid rather than at the top of the page, beside the rows they are about. The shipping-method message stays with the shipping choices, which is what it refers to.</li>
+          <li>CHANGE: Side columns are suppressed on the payment and confirmation pages of a multiship order, so the per-address breakdown has the width it needs on templates that leave them in place. An ordinary customer's checkout is untouched.</li>
+          <li>CHANGE: Removed the compatibility code for Zen Cart 1.5.5 and 1.5.6. No version this plugin supports could reach it.</li>
         <li>NEW: The per-address breakdown now appears on the order-received page, which had never shown it.</li>
         <li>NEW: This readme rewritten for the encapsulated plugin, including a warning about product weights, which multiship exposes far more sharply than a single-address order does.</li>
+          <li>NEW: <em>Read Me</em> and <em>GitHub</em> buttons in the Plugin Manager, with a link to the forum support thread beneath them.</li>
+          <li>NEW: Accessibility pass. Every <em>Send To</em> menu now names the item it belongs to, so a screen reader no longer announces a column of identical unlabeled controls; table column headers are scoped; each recipient's table names its recipient; and this readme's color-coded file lists carry a word as well as a color.</li>
+          <li>NEW: The interaction between free shipping and a split order is documented, including the case where the order completes and the customer is charged for shipping the cart page said was free.</li>
         <li>BUGFIX: <em>Edit Orders</em> was never actually blocked. The comparison it relied on could not match on a 2.x admin, so Edit Orders was free to open a multiship order and destroy its address records.</li>
         <li>BUGFIX: The admin order view, invoice, packing slip and account order history each silently lost their multiship content once the plugin was encapsulated, because each was reached by a template override that no longer resolves. All four are now delivered through notifiers.</li>
         <li>BUGFIX: Quantity discounts were lost when an order was split. Because each address was priced on its own share, a tier reached by the whole cart was reached by none of the parts, and the customer was charged more than the cart had shown them. Sub-orders are now priced at the cart's own unit prices, so the discount survives the split and each address is still taxed on its own destination.</li>
@@ -244,6 +251,14 @@ timeEffect : 750
         <li>BUGFIX: Sub-order status changes were reported as &quot;Nothing to change&quot; and left no record, although the status itself was saved.</li>
         <li>BUGFIX: PHP 8.2 dynamic-property deprecation on the order class.</li>
         <li>BUGFIX: Corrected the Zen Cart version strings in the plugin's manifest, which could never match and so cost store owners their upgrade notices.</li>
+          <li>BUGFIX: The address grid returned to the top of the page after every selection on any template that hides the document while it loads. The scroll was being restored against a document that had no layout yet.</li>
+          <li>BUGFIX: Every rule keyed on the plugin's own page classes was inert on templates that assign <code>documentElement.className</code> outright rather than appending to it, which left the confirmation, payment and order-received pages without their layout.</li>
+          <li>BUGFIX: Choosing a second address the shipping method could not serve sent the browser into a redirect loop and an error page, with nothing written to any log. The initialization redirected to the page it was already on.</li>
+          <li>BUGFIX: The per-address breakdown was squeezed into the gap beside the floated billing address on the confirmation page.</li>
+          <li>BUGFIX: The address grid had no cell padding and no row separators except on Bootstrap templates. The plugin's own table styling named markup that had not existed since the grid was rebuilt.</li>
+          <li>BUGFIX: The cannot-ship marker was a Font Awesome icon, and the plugin loads no webfont. On a template without one it rendered as nothing at all, while the message beside it told the customer to look for it.</li>
+          <li>BUGFIX: Two PHP 8 warnings raised by single-row lookups that can legitimately return no row &mdash; a session naming a deleted customer, and a product removed from the catalog while still in a cart.</li>
+          <li>BUGFIX: <code>pluginId</code> was <code>0</code>, so the online version check could never match and store owners were never told a newer release existed.</li>
       </ul></li>
       <li>v2.0.0, 2019-06-xx<ul>
         <li>BUGFIX: Correct SQL uninstall script.</li>
