@@ -67,12 +67,19 @@
 	color:#161616;
 	text-shadow: 1px 1px 1px #ffffff;
 }
+/* -----
+   The dropdown caret, drawn rather than fetched.
+
+   These two rules pointed at img/drop.png, and no img directory has ever shipped with this
+   readme -- every load of the page fetched it and took a 404. An inline SVG needs no file,
+   cannot go missing, and stays sharp on a high-density screen. Same size and placement as
+   the image it replaces. */
 #menu li .drop {
 	padding-right:21px;
-	background:url("img/drop.png") no-repeat right 8px;
+	background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23161616'/%3E%3C/svg%3E") no-repeat right 8px;
 }
 #menu li:hover .drop {
-	background:url("img/drop.png") no-repeat right 7px;
+	background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23161616'/%3E%3C/svg%3E") no-repeat right 7px;
 }
 
 .dropdown_1column, 
