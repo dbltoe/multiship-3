@@ -35,7 +35,7 @@
 // -----
 // Scoped to customers this plugin sent here, deliberately.
 //
-// The store's other shoppers keep core's behaviour. A shipping plugin quietly changing how
+// The store's other shoppers keep core's behavior. A shipping plugin quietly changing how
 // the login page behaves for everyone is not its business -- and the harm is specific to
 // this case, where the customer has been redirected mid-task and needs to read something
 // before acting. Drop the guard below to apply it to every login.

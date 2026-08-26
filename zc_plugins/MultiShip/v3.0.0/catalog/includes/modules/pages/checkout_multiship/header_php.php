@@ -249,7 +249,7 @@ if (isset($_POST['securityToken'])) {
     // 3 split it into three. It has been removed for v3.0.0.
     //
     // Every unit already has its own row, so a column of boxes all reading 1 explained
-    // nothing, and its real behaviour was discoverable only by reading the instructions
+    // nothing, and its real behavior was discoverable only by reading the instructions
     // above the grid. Quantities are the cart's business and customers already know to
     // change them there, so the page now links back rather than duplicating it.
     //

@@ -20,7 +20,7 @@
    with larger body text gets a proportionally wider layout and the same number of
    characters per line, which is the thing being limited.
 
-   Only layout is set here. Colour, font and button styling all come from the store, as
+   Only layout is set here. Color, font and button styling all come from the store, as
    everywhere else in this plugin. */
 
 #multishipChoice {
@@ -53,7 +53,7 @@
 }
 
 /* Full width of its column, so the three buttons form an even row whatever their labels
-   measure -- three different widths centred in three columns reads as three unrelated
+   measure -- three different widths centered in three columns reads as three unrelated
    controls. */
 .multishipChoiceOption .button {
     width: 100%;

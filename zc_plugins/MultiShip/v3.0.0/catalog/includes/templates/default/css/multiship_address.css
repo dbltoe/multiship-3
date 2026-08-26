@@ -2,19 +2,19 @@
    Auto-loads on multiship_address, the page for adding a delivery address mid-checkout.
 
    -----
-   The closing controls, centred one under the other.
+   The closing controls, centered one under the other.
 
    They used to carry core's "forward" and "back" -- float right and float left -- which put
    the button that finishes the page in the right margin and the way out in the left, with the
    form stranded between them. checkout_multiship and multiship_choice both close with their
-   controls centred, and a customer who has just come from one of those pages should not find
+   controls centered, and a customer who has just come from one of those pages should not find
    this one arranged differently.
 
    Submit above, cancel below: the customer came here to add an address, so the control that
    does that is the one in their way, and the escape sits under it rather than beside it where
    the two compete.
 
-   Only position is set. Colour, font and button styling stay the store's, which is why the
+   Only position is set. Color, font and button styling stay the store's, which is why the
    markup keeps its buttonRow class. */
 
 .multishipAddressSubmit,

@@ -260,7 +260,7 @@ Done:
 - Restructured to `zc_plugins/MultiShip/v3.0.0/` with `manifest.php`
 - `Installer/ScriptedInstaller.php`, replacing `init_multiship_install.php`,
   `init_multiship_upgrade.php` and `uninstall_multiship.sql`; `init_multiship.php`
-  reduced to per-request admin behaviour only
+  reduced to per-request admin behavior only
 - `MODULE_MULTISHIP_ENABLE` retired; `isEnabled()` now starts enabled and only the
   correctness guards of §5 can disable it
 - Checkout reduced from five pages to three (§2); `checkout_shipping` removed from the
@@ -309,16 +309,16 @@ Outstanding:
   Otherwise cleaner than expected: no images, so no missing `alt`; no tables; no
   "click here" link text; no inline styles; no `<font>` or `<center>`. Contrast and
   focus visibility still need checking against `docs/style.css` and `menu.css`, which
-  a static read cannot settle, as does the keyboard behaviour of
+  a static read cannot settle, as does the keyboard behavior of
   `back_to_top.min.js`.
 
   **Contrast target: 7:1 wherever achievable** (WCAG 2.2 AAA, 1.4.6 Contrast
   Enhanced), not the 4.5:1 of AA. This is the project standard set by dbltoe and
-  applies to anything this plugin ships with colour of its own — currently the
+  applies to anything this plugin ships with color of its own — currently the
   readme's stylesheets. The storefront pages deliberately inherit the store
-  template's colours, so their contrast is the store's to answer for, not ours;
+  template's colors, so their contrast is the store's to answer for, not ours;
   that is a consequence of shipping almost no CSS and is the right trade, but it
-  means the standard binds only where we actually choose colours.
+  means the standard binds only where we actually choose colors.
 - Retire the six legacy core-template overrides still parked at
   `includes/templates/YOUR_TEMPLATE/templates/`; confirm what, if anything, is
   still needed for `account_history` / `account_history_info`
@@ -445,13 +445,13 @@ without deferring it would run *before* the body's own `onload` attribute and ha
 `focus()` back just in time to be called.
 
 **Scoped server-side**, on `$_SESSION['multiship']->isChosen()` and the customer not being
-signed in — so the store's other shoppers keep core's behaviour untouched. That scoping
+signed in — so the store's other shoppers keep core's behavior untouched. That scoping
 moved out of the DOM: the old file keyed off `.multishipLoginNotice` being present, which
 is why that span used to be load-bearing and is now only a styling hook.
 
 It degrades well. The problem is caused by scripting, so with JavaScript off there is no
 focus to prevent. `listModulePagesFiles()` is `@since v2.2.0`, so on v2.0.0 and v2.1.0 the
-file is never read — inert, not broken, and those stores keep the behaviour they have
+file is never read — inert, not broken, and those stores keep the behavior they have
 today.
 
 This is a stopgap. The real fix is upstream, and is a one-line change with precedent:
@@ -481,7 +481,7 @@ default, and the better template to document against because it is what an unmod
 looks like — went through the whole flow end to end, and dbltoe confirmed it works.
 
 Getting there took six fixes, and the pattern behind them is worth stating plainly, because
-it is the same mistake in six costumes: **the plugin had been written against the behaviour
+it is the same mistake in six costumes: **the plugin had been written against the behavior
 of one template while claiming to run on any of them.** None of these were visible on ZCA.
 
 | What broke | Why it only showed on responsive_classic |
@@ -516,7 +516,7 @@ address has been quoted.
 part of the difficulty. It is not — see below. The method is already recorded per sub-order
 as the title of that sub-order's `ot_shipping` row.)
 
-That is wrong for a catalogue where different items need different carriers. A telescoping
+That is wrong for a catalog where different items need different carriers. A telescoping
 flag pole may only go UPS while a flag could go USPS. Today the customer picks USPS,
 USPS declines to quote for the sub-order containing the pole, `addressValidation()` flags
 that address, and they get the no-ship icon telling them the address is not supported by
@@ -577,7 +577,7 @@ row per address — nothing downstream changes.
 
 This also settles a question that had been posed the wrong way round. An earlier sketch here
 proposed *partitioning* an address's items into separate consignments — the pole by UPS, the
-flag by USPS, using core's `product_ships_in_own_box` as the partition rule. That optimises
+flag by USPS, using core's `product_ships_in_own_box` as the partition rule. That optimizes
 the wrong quantity: two consignments means paying two base rates, and one dearer parcel
 usually beats two cheaper ones. dbltoe's "only one method winning out per address" is both
 the simpler implementation and, in most carts, the cheaper answer for the customer.
@@ -601,7 +601,7 @@ the carrier will reject.
 
 ### Free shipping across a split — two defects, not one
 
-Analysed properly on 2026-08-23. The earlier version of this section named one mechanism and
+Analyzed properly on 2026-08-23. The earlier version of this section named one mechanism and
 called the outcome "a dead end with no message". Both halves were wrong: there are two
 mechanisms, they fail in opposite ways, and the louder of the two was until `efbcce3` an
 infinite redirect loop rather than a dead end.

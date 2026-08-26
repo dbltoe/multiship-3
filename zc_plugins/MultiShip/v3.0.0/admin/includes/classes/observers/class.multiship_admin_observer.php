@@ -72,7 +72,7 @@ class multiship_observer extends base
             // with a processed_order flag stopping the two notifications doing the work twice.
             // Both are gone. See the attach list above for why the deprecated notification could
             // never win that race on any supported version; the flag only ever guarded it, and
-            // this case was never guarded at all, so behaviour here is unchanged.
+            // this case was never guarded at all, so behavior here is unchanged.
             //
             case 'NOTIFY_ORDER_AFTER_QUERY':
                 if (empty($p2)) {

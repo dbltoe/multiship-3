@@ -212,7 +212,7 @@ $define = [
     // sentence trails off into nothing and no row carries a marker at all.
     //
     // U+26A0 needs no webfont and no co-operation from the template. U+FE0E after it forces
-    // text presentation: without it some platforms substitute a colour emoji, which would
+    // text presentation: without it some platforms substitute a color emoji, which would
     // ignore --multiship-alert and take the contrast work in checkout_multiship.css with it.
     //
     // role="img" with aria-label finally gives it an accessible name -- the CSS already

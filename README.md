@@ -18,7 +18,7 @@ through 2.3.0** on PHP 8.
 - [Architecture notes](docs/ARCHITECTURE-3.0.0.md) — why the plugin is built the way it is,
   which core seams it depends on, what has been verified live, and what is known not to work.
 - [Store owner notes](docs/STORE-OWNER-NOTES.md)
-- [Core requirements](docs/multiship_core_requirements.md) — behaviour this plugin needs from
+- [Core requirements](docs/multiship_core_requirements.md) — behavior this plugin needs from
   Zen Cart, including the places where core offers no hook and the plugin works around it.
 
 ## Installing

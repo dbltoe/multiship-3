@@ -2,7 +2,7 @@
    Auto-loads on checkout_confirmation.
 
    -----
-   Everything below the colour block is scoped to .multishipConfirmation.
+   Everything below the color block is scoped to .multishipConfirmation.
 
    This file is loaded by page name, so it arrives on every confirmation page whether the
    order is going to one address or five. A store's ordinary single-address checkout must be
@@ -11,7 +11,7 @@
    jscript_multiship_confirmation.php, in the head, and only when the order is genuinely
    going to several addresses.
 
-   The colour variables below are unscoped because they are only ever read by .multishipOrder,
+   The color variables below are unscoped because they are only ever read by .multishipOrder,
    which does not exist on a single-address page. */
 
 :root {
@@ -64,12 +64,12 @@
 }
 
 /* -----
-   Final Step and Confirm Order, together and centred.
+   Final Step and Confirm Order, together and centered.
 
    ZCA gives that toolbar justify-content-between, which pins the wording hard left and the
    button hard right. On a wide screen they end up at opposite ends with a gulf between --
    "Final Step is floating around in there for some reason". They are one instruction and
-   the control it describes, so they are stacked and centred as a single closing block. */
+   the control it describes, so they are stacked and centered as a single closing block. */
 .multishipConfirmation #checkoutConfirmationDefault-btn-toolbar {
     display: flex;
     flex-direction: column;
@@ -100,7 +100,7 @@
 
    column-span is kept for templates that do not use .card-columns and so never get the grid
    above: on those the breakdown is still inside whatever column context the page provides,
-   and this takes it out. break-inside is the last line of defence -- where neither applies,
+   and this takes it out. break-inside is the last line of defense -- where neither applies,
    at least a recipient is not split down the middle. */
 #multishipConfirmationBreakdown {
     column-span: all;
@@ -234,7 +234,7 @@
    stylesheet does with its product tables -- and dbltoe confirmed the same crowding on the
    account order-history page and elsewhere on the site. It is the store's look. Padding it
    here would make the one page this plugin touches the odd one out, which is the opposite of
-   the intent: structure and behaviour are ours, appearance is the store's.
+   the intent: structure and behavior are ours, appearance is the store's.
 
    .multishipItems is on the table as a hook, unstyled, so a store owner can space these
    tables without having to target an id that repeats down the page. */

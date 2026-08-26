@@ -191,7 +191,7 @@ them at once rather than just ours.
 
 If a customer chooses multiple addresses before signing in, they are sent to log in and
 the page arrives scrolled past the create-account section. That is core Zen Cart
-behaviour, caused by `includes/modules/pages/login/on_load_main.js`, not by this plugin.
+behavior, caused by `includes/modules/pages/login/on_load_main.js`, not by this plugin.
 
 The plugin ships a workaround that scrolls back to the top, scoped so it only affects
 logins it caused. If you would rather fix it store-wide, the change belongs in Zen Cart

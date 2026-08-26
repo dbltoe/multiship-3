@@ -1,18 +1,18 @@
 ﻿/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v2
    Auto-loads on checkout_multiship.
 
-   Layout is ours; colour is the store's. This page is reached mid-checkout, and a
+   Layout is ours; color is the store's. This page is reached mid-checkout, and a
    customer who feels handed to a different site to finish their order has been given a
-   reason to stop. So nothing here states a colour of its own where it can derive one.
+   reason to stop. So nothing here states a color of its own where it can derive one.
 
    Rules and shading are mixed from currentColor, which is whatever the store's template
    has set the text to -- so they follow a light theme, a dark theme or a branded one
-   without being told about it. Each is written twice: a plain colour first for browsers
+   without being told about it. Each is written twice: a plain color first for browsers
    without color-mix(), then the derived value, which those browsers ignore as invalid.
    The fallbacks are the values this file used to hardcode, so nothing regresses.
 
    ZCA Bootstrap, the template this was built against, exposes no custom properties at all --
-   there is no --bs-border-color to inherit, which is why colour is derived from text rather
+   there is no --bs-border-color to inherit, which is why color is derived from text rather
    than read from the theme. (Its stylesheet header says "BOOTSTRAP v3.4.0", but that is the
    ZCA template's own version string: the markup it emits is Bootstrap 4 -- card, p-3,
    float-right, custom-control.)
@@ -38,7 +38,7 @@
         --multiship-rule: color-mix(in srgb, currentColor 30%, transparent);
 
         /* -----
-           The alert colour is derived too, and for a sharper reason than the other two.
+           The alert color is derived too, and for a sharper reason than the other two.
            A fixed red cannot serve both a light and a dark store: #9b1c15 measures 8.17:1
            on white and 2.13:1 on a dark surface, so a store owner switching to a dark
            theme would silently lose the one marker on this page that means "this item
@@ -52,10 +52,10 @@
            That is a hair under the 7:1 this plugin targets, and it is a deliberate
            trade: no red holds 7:1 in both directions without desaturating into brown and
            losing the meaning. Comfortably past AA in both, and far better than a fixed
-           colour that fails outright in one. A store owner wanting AAA can set
+           color that fails outright in one. A store owner wanting AAA can set
            --multiship-alert explicitly for their own background.
 
-           Colour is not the only signal in either place it is used: the cannot-ship
+           Color is not the only signal in either place it is used: the cannot-ship
            marker is a warning sign carrying both an accessible name and hover text, and
            the surcharge line is labelled. */
         --multiship-alert: color-mix(in srgb, #e5484d 55%, currentColor);
@@ -76,7 +76,7 @@
    until the mouse is hovered over it" -- some rule in that template, Bootstrap's own or a
    customisation, taking it somewhere invisible. So every property a theme is likely to have
    an opinion about is stated here rather than inherited. Bootstrap 3 in particular gives
-   legend a full-width block, a 21px font, its own colour and a bottom border, all of which
+   legend a full-width block, a 21px font, its own color and a bottom border, all of which
    are undone below. */
 /* Restates the bottom rule set further up: a bare "border: 0" to strip the fieldset's own
    frame would come later in the file and wipe it. min-width guards against a fieldset's
@@ -127,7 +127,7 @@
    zero specificity, so anything a template says -- Bootstrap's .table td, or a store's own
    rule -- outranks this regardless of load order. It applies only where nothing else does.
 
-   A browser too old for :where() drops the rule as invalid, which is today's behaviour
+   A browser too old for :where() drops the rule as invalid, which is today's behavior
    rather than anything worse.
 
    Striping is still not attempted, for the reason it never was: a store that stripes its
@@ -176,7 +176,7 @@
    Save Addresses and this note used to share a line, button left and note floated right.
    On a narrower desktop that put the button off at one edge where it got lost, and the note
    beside it read as a caption to the button rather than as its own thing. Stacked and
-   centred, each is read in turn: save, then how to change quantities, then how to leave
+   centered, each is read in turn: save, then how to change quantities, then how to leave
    multiship, then the way on.
 
    The alert alert-info classes give the note the store's informational styling on Bootstrap
@@ -191,13 +191,13 @@
 
 /* -----
    The way out of multiship is offered first, then the way on through it, so the button a
-   finishing customer wants is the last thing on the page. Centred to sit with the button
+   finishing customer wants is the last thing on the page. Centered to sit with the button
    below it, the two reading as one block of closing choices rather than two strays. */
 .multiship-decline { clear: both; text-align: center; padding: 0.75em 0 0.25em; }
 
 /* -----
    The label wraps across lines at this width, so centre it -- ragged-left text inside a
-   button reads as a rendering fault rather than a deliberate shape. Centring the block too
+   button reads as a rendering fault rather than a deliberate shape. Centering the block too
    keeps the button under the statement above it rather than adrift at one edge. */
 #multishipContinue { clear: both; text-align: center; padding: 0.5em 0 1em; }
 #multishipContinue a { text-align: center; }
@@ -208,7 +208,7 @@
     #multishipTable th.price, #multishipTable td.msipPrice,
     #multishipTable th.sendto, #multishipTable td.sendto { width: auto; padding-right: 0.5em; }
     #multishipTable td.sendto select { max-width: 100%; }
-    /* Full width on a phone, still centred. The old rule here zeroed margin-left to undo a
+    /* Full width on a phone, still centered. The old rule here zeroed margin-left to undo a
        float that no longer exists; leaving it would have knocked the note off centre. */
     #multishipQuantityNote { max-width: 100%; }
 }

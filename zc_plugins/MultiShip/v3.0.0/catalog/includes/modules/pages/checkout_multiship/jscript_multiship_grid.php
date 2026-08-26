@@ -45,7 +45,7 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isChosen()) {
 
     // Called from each menu's onchange, before the form is submitted. Guarded at the call
     // site, so if this file is missing the submit still happens -- the customer simply gets
-    // the old behaviour rather than a broken page.
+    // the old behavior rather than a broken page.
     window.multishipRemember = function () {
         try {
             window.sessionStorage.setItem(KEY, String(window.pageYOffset || 0));

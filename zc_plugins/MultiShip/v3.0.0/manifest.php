@@ -135,7 +135,7 @@ return [
     // dotted); the dotted ones are the correct ones.
     //
     // Low severity, which is why it went unnoticed: the sole comparison drives the online
-    // catalogue's "a newer version of this plugin exists for your Zen Cart" flag. It does not
+    // catalog's "a newer version of this plugin exists for your Zen Cart" flag. It does not
     // gate installation, so a wrong value here silently costs store owners an upgrade notice
     // rather than breaking anything.
     //

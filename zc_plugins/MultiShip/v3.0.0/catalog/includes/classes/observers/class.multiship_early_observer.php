@@ -165,7 +165,7 @@ class multiship_early_observer extends base
             // flag exists to prevent runs interstitial -> checkout_shipping -> interstitial
             // and never passes through the cart, so clearing it here cannot reintroduce
             // that loop, while "go back to your cart and you will be asked again" is
-            // behaviour a customer can discover and rely on.
+            // behavior a customer can discover and rely on.
             //
             // Only a declined decision is reset. If multiship was chosen, the customer may
             // be part-way through assigning addresses and visiting the cart to check

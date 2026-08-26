@@ -213,7 +213,7 @@ foreach ($productsArray as $multishipRowIndex => $currentProduct) {
     // would otherwise throw back to the top of the document on every choice.
     //
     // Guarded rather than called outright: if that file is ever absent the submit still
-    // happens and the customer gets the old behaviour, not a dead menu. Customers without
+    // happens and the customer gets the old behavior, not a dead menu. Customers without
     // JavaScript never reach this path at all -- they set every row and press Save.
     //
     $multishipOnChange =

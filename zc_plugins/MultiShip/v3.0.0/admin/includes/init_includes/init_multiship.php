@@ -6,7 +6,7 @@
 //
 // Under the encapsulated (zc_plugin) structure, installation, upgrade and
 // configuration-group creation are all handled by Installer/ScriptedInstaller.php.
-// This script now carries only the plugin's per-request admin behaviour.
+// This script now carries only the plugin's per-request admin behavior.
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');

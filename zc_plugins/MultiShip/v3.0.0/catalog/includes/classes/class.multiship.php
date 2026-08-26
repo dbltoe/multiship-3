@@ -136,7 +136,7 @@ class multiship extends base
                 // key, which is the "Undefined array key customers_group_pricing" dbltoe saw
                 // logged from the login page.
                 //
-                // Behaviour is deliberately unchanged. The missing key evaluated to null,
+                // Behavior is deliberately unchanged. The missing key evaluated to null,
                 // null != 0 is false, and multiship stayed enabled; not entering the block
                 // when there is no row keeps exactly that, minus the warning. Enabled is also
                 // the right answer on the merits: this test exists to disable multiship for
@@ -667,7 +667,7 @@ class multiship extends base
             );
             // -----
             // EOF first, for the same reason as the group-pricing lookup above: a product can
-            // leave the catalogue while it is still sitting in somebody's cart, and the query
+            // leave the catalog while it is still sitting in somebody's cart, and the query
             // then returns no row at all. Reading the key off an empty array warns on PHP 8.
             //
             // Treating a missing product as physical is what happened before -- null == 0 is

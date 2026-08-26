@@ -8,12 +8,12 @@
    others -- Zen Cart offers no way to load one stylesheet on a chosen set of pages, and a
    stylesheet_*.css would load on every page of the store to serve three. Kept deliberately
    identical: a customer who checked their order at confirmation, saw it again on success and
-   comes back to it in their account should recognise what they are looking at each time.
+   comes back to it in their account should recognize what they are looking at each time.
    Change one, change all three.
 
    The box around each recipient takes its rule from currentColor, so it follows whatever the
-   store's template has set the text to rather than stating a grey of its own. Written twice:
-   the plain colour first for browsers without color-mix(), then the derived value. */
+   store's template has set the text to rather than stating a gray of its own. Written twice:
+   the plain color first for browsers without color-mix(), then the derived value. */
 
 :root {
     --multiship-rule: #757575;

@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var breakdown = <?php echo json_encode($multiship_breakdown_html); ?>;
 
     // ZCA Bootstrap wraps the delivery address in a card; core wraps it in a plain div.
-    // Both are stable ids. An unrecognised template is left alone rather than half-edited --
+    // Both are stable ids. An unrecognized template is left alone rather than half-edited --
     // the messageStack notice added by multiship_observer still tells that customer the
     // order is going to several addresses, which is true either way.
     var slot = document.getElementById('deliveryAddress-card') ||

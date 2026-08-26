@@ -9,7 +9,7 @@
 // centre its closing button the way the pages either side of it do.
 //
 // This is the one step of the three that is entirely core's page. Steps one and three --
-// the address grid and the confirmation -- both close with their controls centred, and
+// the address grid and the confirmation -- both close with their controls centered, and
 // dbltoe found the odd one out: "checkout_payment button is on the right."
 //
 // Scoped rather than applied outright, and that distinction matters more here than anywhere
@@ -26,7 +26,7 @@ if (empty($_SESSION['multiship']) || !$_SESSION['multiship']->isSelected()) {
 ?>
 <script>
 // documentElement rather than body, and here in the head rather than on DOMContentLoaded, so
-// the button is drawn centred once instead of being drawn right and then moved.
+// the button is drawn centered once instead of being drawn right and then moved.
 // -----
 // Set now, and set again once the document is parsed.
 //
