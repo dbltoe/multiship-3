@@ -504,6 +504,55 @@ leaves side columns on core's checkout pages for every customer, multiship or no
 checkout fills that list in as ZCA has. The plugin covers only the two pages it adds content
 to, and only for multiship orders.
 
+### Pre-submission security scan — run this before packaging, not after
+
+v3.0.0 was tagged, released and submitted before anyone ran the checks the Zen Cart Plugin
+Library runs. It came back "3 potential issue(s) flagged for moderator review", which cost a
+deleted release, a re-cut tag, a rebuilt package and a resubmission — after the reviewer had
+already downloaded the flagged copy. All three were findable in seconds. This is the check
+that should have happened first:
+
+```bash
+cd zc_plugins/MultiShip/v3.0.0
+
+# dynamic code, obfuscation, deserialization, remote fetch
+grep -rnE "(eval|exec|system|passthru|shell_exec|proc_open|create_function|assert)\s*\(" --include=*.php --include=*.js .
+grep -rnE "(base64_decode|gzinflate|str_rot13)\s*\(" --include=*.php .
+grep -rnE "(unserialize|file_get_contents|curl_init|fsockopen)\s*\(" --include=*.php .
+
+# HTML-from-string sinks
+grep -rnE "innerHTML|outerHTML|document\.write|insertAdjacentHTML" --include=*.php --include=*.js .
+
+# request data reaching a query unfiltered
+grep -rnE '\$_(GET|POST|REQUEST|COOKIE)\[' --include=*.php . | grep -vE "\(int\)|zen_db_input|zen_db_prepare_input|isset|empty|\?\?"
+
+# included admin files must carry the guard; top-level admin pages must NOT
+for f in $(find admin -name '*.php'); do grep -q IS_ADMIN_FLAG "$f" || echo "$f"; done
+
+# anything minified, packed, or loaded from off-site
+grep -rnE "https?://[^\"']*\.(js|css)" --include=*.html --include=*.php .
+```
+
+**A hit is a question, not a verdict.** The two `innerHTML` calls flagged here were this
+plugin's own server-rendered output and were safe as written. What made the exercise worth
+doing was answering *why* each was safe: that question led straight to
+`tpl_modules_multiship.php` echoing a customer's delivery name unescaped into the very markup
+those calls injected. The scanner never saw that line. Chasing its false positive did.
+
+**Where the guard goes, and where it must not.** `admin/includes/modules/` files are included
+and never requested, so they carry `if (!defined('IS_ADMIN_FLAG')) die(...)`, matching what
+core does to its own. The plugin's two standalone admin pages must not: they `require
+includes/application_top.php` as their first act, exactly as core's `invoice.php` does, and
+that constant does not exist until it runs. Admin language files carry no guard, because core
+does not give its own one either.
+
+**Bundled third-party code is the one to look at hardest.** The flagged file here was
+`back_to_top.min.js`, a packed jQuery plugin that unpacked itself at runtime. Nothing about it
+was malicious, but obfuscated JavaScript inside a plugin is indistinguishable — to a scanner
+or to a person — from something worth hiding, and no reviewer should be asked to take it on
+trust. It was replaced with sixty readable lines that need no jQuery, which also let the
+documentation stop loading anything from off-site.
+
 ## 8. Shipping: what works, what does not
 
 ### One method for the whole order — a real limitation
