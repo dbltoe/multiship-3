@@ -474,6 +474,36 @@ Also confirmed: two entries for the same person — a PO box and a street addres
 distinguishable in the Send To dropdown, because it labels options with
 `zen_address_label()`, the full formatted address, rather than the name alone.
 
+### Verified on responsive_classic, 2026-08-25
+
+Until now every live test had been on ZCA Bootstrap. `responsive_classic` — Zen Cart's own
+default, and the better template to document against because it is what an unmodified store
+looks like — went through the whole flow end to end, and dbltoe confirmed it works.
+
+Getting there took six fixes, and the pattern behind them is worth stating plainly, because
+it is the same mistake in six costumes: **the plugin had been written against the behaviour
+of one template while claiming to run on any of them.** None of these were visible on ZCA.
+
+| What broke | Why it only showed on responsive_classic |
+| --- | --- |
+| Address grid returned to the top on every selection | `<html class="no-fouc">` is `display:none` until a jQuery handler removes it, so the scroll restore ran against a document with no layout. Fixed by waiting for a scrollable document (`78fa0bc`). |
+| Every rule keyed on a page class was inert | `html_header.php:135` **assigns** `documentElement.className`, wiping what the jscript loader set at line 108. Fixed by re-asserting on `DOMContentLoaded` (`45cbe7a`). |
+| Side columns squeezed steps 2 and 3 | Core disables columns on no checkout page; the decision is the template's, and stock `responsive_classic` ships a placeholder list matching nothing. The plugin now sets the flags itself for multiship orders (`2ffda03`). |
+| Breakdown too narrow on confirmation | It replaces the float `#checkoutShipto`, inheriting neither class nor width, so it sat in the gap beside a 47% billing box (`ba85fc4`). |
+| Grid had no padding or row separators | The plugin's table CSS still named lat9's div grid and matched nothing; ZCA's Bootstrap classes had been doing the work (`e3b546c`). |
+| Cannot-ship marker could render as nothing | It was a Font Awesome `<i>` and the plugin loads no webfont (`cdfc9bc`). |
+
+The recurring shape: **a template may do anything to the document, and marking it from the
+head is not the same as the mark surviving.** Anything this plugin sets on `documentElement`,
+measures, or expects a class name to supply has to be written to survive a template that has
+its own opinions and expresses them later.
+
+What remains genuinely template-specific and is not the plugin's to fix: `responsive_classic`
+leaves side columns on core's checkout pages for every customer, multiship or not, because its
+`tpl_main_page.php` ships Zen Cart's placeholder list. A store owner who wants full-width
+checkout fills that list in as ZCA has. The plugin covers only the two pages it adds content
+to, and only for multiship orders.
+
 ## 8. Shipping: what works, what does not
 
 ### One method for the whole order — a real limitation
