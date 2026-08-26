@@ -52,14 +52,21 @@ if (defined('DIR_WS_CATALOG')) {
 // has to be omitted if the manifest is ever read outside a storefront or admin context, while
 // this is an absolute URL that is correct wherever the file is parsed.
 //
-// btn-secondary rather than btn-primary so the two do not compete. The Read Me is what a store
-// owner needs; the source is what a developer wants, and it should not be the louder of the
-// two. Both classes are Bootstrap's, and both are inert on a Plugin Manager that has never
-// heard of them -- the link still renders and still works, it simply looks like a link.
+// btn btn-primary, because that is what Plugin Manager itself uses. Every button core builds
+// in PluginManagerController -- Install, Upgrade, Disable -- carries exactly
+//     class="btn btn-primary" role="button"
+// so matching it is the only way to look like the buttons beside it.
+//
+// This started as btn-secondary, on the reasoning that the source should not compete with the
+// documentation. It rendered as a plain link: btn-secondary is Bootstrap 4's name and this
+// admin does not define it, so the class contributed nothing and the styling fell back to an
+// anchor. dbltoe spotted it immediately -- "the GitHub is a link rather than a button like
+// ReadMe and Install". Deciding which of two buttons should be quieter is not worth having one
+// of them not look like a button at all.
 //
 $multiship_github_button =
     '&nbsp;<a href="' . $multiship_github . '"'
-    . ' target="_blank" rel="noopener" class="btn btn-secondary" role="button">GitHub</a>';
+    . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">GitHub</a>';
 
 // -----
 // Both buttons are appended to pluginDescription below.
