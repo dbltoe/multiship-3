@@ -516,9 +516,9 @@ that should have happened first:
 cd zc_plugins/MultiShip/v3.0.0
 
 # dynamic code, obfuscation, deserialization, remote fetch
-grep -rnE "(eval|exec|system|passthru|shell_exec|proc_open|create_function|assert)\s*\(" --include=*.php --include=*.js .
-grep -rnE "(base64_decode|gzinflate|str_rot13)\s*\(" --include=*.php .
-grep -rnE "(unserialize|file_get_contents|curl_init|fsockopen)\s*\(" --include=*.php .
+grep -rnE "\b(eval|exec|system|passthru|shell_exec|proc_open|create_function|assert)\s*\(" --include=*.php --include=*.js .
+grep -rnE "\b(base64_decode|gzinflate|str_rot13)\s*\(" --include=*.php .
+grep -rnE "\b(unserialize|file_get_contents|curl_init|fsockopen)\s*\(" --include=*.php .
 
 # HTML-from-string sinks
 grep -rnE "innerHTML|outerHTML|document\.write|insertAdjacentHTML" --include=*.php --include=*.js .
