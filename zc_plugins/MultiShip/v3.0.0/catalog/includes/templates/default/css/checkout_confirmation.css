@@ -105,30 +105,36 @@
 #multishipConfirmationBreakdown {
     column-span: all;
     -webkit-column-span: all;
+}
 
-    /* -----
-       Clear, because this block takes the place of a floated one.
+/* -----
+   Narrow the address box so the breakdown gets the room, rather than pushing it down.
 
-       jscript_multiship_confirmation.php replaces #checkoutShipto with this breakdown -- a
-       single ship-to address means nothing on an order going to several. The element it
-       replaces is floated: core's confirmation template gives #checkoutBillto class="back"
-       and #checkoutShipto class="forward", which are float:left and float:right, and a
-       template then sets both to some share of the width -- 47% each in responsive_classic.
+   The breakdown replaces #checkoutShipto -- a single ship-to means nothing on an order going
+   to several -- and core's template floats that block: #checkoutBillto is class="back" and
+   #checkoutShipto class="forward", float:left and float:right, at whatever width the template
+   gives them. responsive_classic uses 47% each, leaving the breakdown about half a row, which
+   is too little for the per-recipient tables.
 
-       replaceChild hands over the position but not the class or the id, so what lands there
-       is an ordinary block sitting beside a left-floated 47% box, with about half the row to
-       work in. dbltoe reported it as "too narrow on page 3 of 3", and it is: the per-address
-       tables were being asked to fit in the gap left by the billing address.
+   Clearing it was tried first and was wrong. It does give the full width, but it drops the
+   breakdown below the floats and so below the fold, under an address the customer already
+   knows -- dbltoe's objection, and the right one: the breakdown is what this page is for, and
+   burying it to make it wider trades the thing being read for the room to read it in.
+   Narrowing the box beside it keeps it up the page with about two thirds of the row. 35% is
+   dbltoe's measurement, tested on responsive_classic.
 
-       Clearing drops it below the floats and gives it the full width, which is what a
-       breakdown of every recipient needs. Preferred over narrowing the store's own address
-       boxes -- the width lives in the template's stylesheet, so changing it would be lost on
-       the next template update and would shrink those boxes for every customer, including
-       everyone who never splits an order.
+   Here rather than in the template's stylesheet, which is where the 47% lives, for two
+   reasons: an edit there is lost on the next template update, and it would shrink the address
+   boxes for every customer on every confirmation page when only a multiship order needs it.
+   Scoped to .multishipConfirmation, which jscript_multiship_confirmation.php sets on the
+   document only when the order really is going to several addresses.
 
-       Inert where it is not needed: clear does nothing to a grid item, so the ZCA path
-       through .card-columns above is unaffected. */
-    clear: both;
+   Both ids are named although only the billing one survives replaceChild, so this still holds
+   if the breakdown is ever hosted somewhere other than the ship-to block. An id plus a class
+   outranks the template's bare id, so load order does not come into it. */
+.multishipConfirmation #checkoutShipto,
+.multishipConfirmation #checkoutBillto {
+    width: 35%;
 }
 
 .multishipOrder {
