@@ -14,11 +14,30 @@ table { border-collapse: collapse; width: 100%; margin-top: 0.5%; }
 th, td { padding: 1%; border: 1px solid #3333ff; }
 
 .smaller { font-size: smaller; }
-.corefile { color: red; }
+/* -----
+   File markers in the change history.
+
+   Each carries a word as well as a color, because color on its own is not a way to tell a
+   reader anything: a red path and a green path are the same path to a reader who cannot
+   separate the two, and there are four categories here across fifty-seven entries. The
+   ::before prefixes are scoped to the first span in a list item, so the file path is labeled
+   and any trailing annotation on the same line is not labeled twice.
+
+   red was #FF0000, which measures 4.00:1 on white and fails WCAG AA for normal text. #D00000
+   measures 5.70:1, is still unmistakably red, and sits close to the green's 5.14:1 so the two
+   carry similar weight on the page.
+
+   .osh was darkcyan at 4.15:1, also failing, and used nowhere in the document. Removed rather
+   than corrected -- there is no sense fixing the contrast of a class nothing wears. */
+.corefile { color: #D00000; }
 .template { color: green; }
 .removed { text-decoration: line-through; color: blue; }
 .added { color: blue; }
-.osh { color: darkcyan; }
+
+li > .corefile:first-child::before { content: "[core] "; font-weight: bold; }
+li > .template:first-child::before { content: "[template] "; font-weight: bold; }
+li > .added:first-child::before    { content: "[+] "; font-weight: bold; }
+li > .removed:first-child::before  { content: "[-] "; font-weight: bold; text-decoration: none; }
 .c1 { text-align: left; font-weight: bold; font-style: italic; width: 15%; color: #333333; }
 .c3 { vertical-align: top; }
 .center { text-align: center; }
