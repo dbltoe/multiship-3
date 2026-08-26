@@ -69,6 +69,30 @@ $multiship_github_button =
     . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">GitHub</a>';
 
 // -----
+// Cindy's credit, given its own line rather than buried in the description.
+//
+// It was a sentence inside the description prose, which is where a store owner skims past it.
+// This is the pattern dbltoe uses for Email Address Exporter, where DrByte, Swifty8078,
+// Ooba_Scott and swguy are acknowledged the same way: a quiet italic line of its own, after
+// the buttons and immediately above the Author line that Plugin Manager renders next. It reads
+// as what it is -- whose work this was built on -- rather than as a claim about features.
+//
+// The description no longer repeats it. Said twice in one panel it starts to look like
+// disclaiming rather than crediting.
+//
+// Named for what her code still does, not merely that it existed. The order splitting, the
+// per-address quoting and the destination-based tax handling in this version are hers; v3.0.0
+// encapsulated and rebuilt around them, and that is a different contribution from having
+// worked out how to do it in the first place.
+//
+$multiship_credits =
+    '<div style="margin:8px 0 0;"><em>'
+    . 'Originally created by lat9 of Vinos de Frutas Tropicales, whose order splitting, '
+    . 'per-address shipping costs and destination-based tax handling this version still '
+    . 'relies on.'
+    . '</em></div>';
+
+// -----
 // Both buttons are appended to pluginDescription below.
 //
 // This comment used to explain why a GitHub button must never be added: the repository was
@@ -89,7 +113,13 @@ $multiship_github_button =
 return [
     'pluginVersion' => $multiship_version,
     'pluginName' => 'Multiple Ship-To Addresses',
-    'pluginDescription' => 'Allows a customer to ship the individual products in their cart to two or more different addresses, splitting the order into per-address sub-orders that can be tracked and status-updated independently in the admin.<br /><br />Built on the <em>Multiple Ship-To Addresses</em> plugin created by lat9 of Vinos de Frutas Tropicales, whose original work provides the order-splitting, per-address shipping-cost and destination-based tax handling that this plugin still relies on.' . $multiship_readme_button . $multiship_github_button,
+    'pluginDescription' =>
+        'Allows a customer to ship the individual products in their cart to two or more '
+        . 'different addresses, splitting the order into per-address sub-orders that can be '
+        . 'tracked and status-updated independently in the admin.'
+        . $multiship_readme_button
+        . $multiship_github_button
+        . $multiship_credits,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
     'pluginId' => 0, // ID from Zen Cart forum
     // -----
