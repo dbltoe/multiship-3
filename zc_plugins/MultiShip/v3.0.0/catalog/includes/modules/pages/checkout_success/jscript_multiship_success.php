@@ -74,7 +74,33 @@ if (defined('MODULE_MULTISHIP_DEBUG') && MODULE_MULTISHIP_DEBUG == 'true') {
 // on documentElement so the page does not paint once in the template's layout and again in
 // ours.
 //
-document.documentElement.className += ' multishipSuccess';
+// -----
+// Set now, and set again once the document is parsed.
+//
+// A template may assign documentElement.className outright rather than appending to it, and
+// if it does so after this script the class is simply gone. responsive_classic does exactly
+// that: its html_header.php requires the jscript loader at line 108 -- which is what runs
+// this file -- and then at line 135 executes
+//     document.documentElement.className = 'no-fouc';
+// wiping whatever was there. Every rule in this plugin keyed on the class below was dead on
+// that template, which is why dbltoe still saw the store's own width on #checkoutBillto after
+// an override that outranks it on specificity: the override was never matching anything.
+//
+// classList.add rather than += so this is idempotent and cannot clobber a class someone else
+// has set, and DOMContentLoaded to get in after any such assignment. Nothing flashes: on the
+// template that needs this the document is display:none until its own ready handler runs, and
+// on templates that do not, the class set here at parse time is never disturbed.
+//
+(function () {
+    var multishipPageClass = 'multishipSuccess';
+    function multishipMarkPage() {
+        document.documentElement.classList.add(multishipPageClass);
+    }
+    multishipMarkPage();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', multishipMarkPage);
+    }
+})();
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
