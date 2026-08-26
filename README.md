@@ -36,10 +36,19 @@ Uninstalling drops the `orders_multiship` table and the `orders_multiship_id` co
 
 ## Known limitations
 
-Free shipping does not survive a split order, one shipping method applies to the whole order
-rather than the cheapest per destination, and order emails carry Zen Cart's stock
-`/email/header.jpg` banner unless the store owner has replaced it. Each is described, with its
-cause, in the Read Me and in the architecture notes.
+- **Edit Orders cannot be used on a multiship order.** Opening one returns the admin to the
+  order's normal detail page with a message. Editing it there would destroy the record of
+  which items went to which address, so the block is deliberate. Orders that are not multiship
+  are unaffected. If your workflow depends on editing orders after the fact, know this before
+  you offer multiple addresses.
+- **Free shipping does not survive a split order.** Thresholds are measured per address, so an
+  order that qualified whole may not qualify in parts.
+- **One shipping method applies to the whole order**, rather than the cheapest carrier per
+  destination.
+- **Order emails carry Zen Cart's stock `/email/header.jpg`** unless you have replaced it, and
+  this plugin sends one email per parcel rather than one per order.
+
+Each is described, with its cause, in the Read Me and in the architecture notes.
 
 ## Credits
 
