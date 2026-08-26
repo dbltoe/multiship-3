@@ -98,7 +98,8 @@ timeEffect : 750
     <p>The practical consequences for you:</p>
     <ul>
       <li>Nothing to merge, and no <code>YOUR_TEMPLATE</code> or <code>YOUR_ADMIN</code> directories to rename.</li>
-      <li>Your template is untouched. The plugin's pages adopt your store's own styling rather than imposing their own &mdash; structure and behaviour come from the plugin, appearance comes from your template.</li>
+      <li>Your template is untouched. The plugin's pages adopt your store's own styling rather than imposing their own &mdash; structure and behaviour come from the plugin, appearance comes from your template.
+          <p><strong>That care stops at the inbox.</strong> A multiship order also notifies the customer, and it does so through Zen Cart's own order emails rather than any of its own &mdash; so those emails carry the stock <code>/email/header.jpg</code> banner Zen Cart ships with, unless you have replaced it with your own artwork. A customer who has just come through pages that look like your store then opens mail that does not. Worth reading <a href="#emailbanner">The image at the top of your emails</a> before you go live, because this plugin sends more of that mail than your store does now &mdash; one per parcel, not one per order.</p></li>
       <li>Uninstalling really does remove it.</li>
     </ul>
     <p>Developed and tested against Zen Cart 2.3 with the ZCA Bootstrap template, and declared compatible with Zen Cart 2.0.0 through 2.3.0. It has not been run against a Zen Cart 3.0.0 store.</p>
@@ -137,7 +138,8 @@ timeEffect : 750
 
     <h3 id="emailbanner" class="inner">The image at the top of your emails</h3>
     <div class="sub-content">
-      <p>Worth knowing before you take multiship orders, because this plugin will make you send more email than you do now. Each sub-order has its own status, so a customer who split an order across three addresses gets three &quot;your order has shipped&quot; emails rather than one. Whatever sits at the top of those appears once per parcel &mdash; and on most stores, what sits there is a file the owner has never seen.</p>
+      <p>The plugin goes to some trouble to look like your store: it imposes no colours or typefaces of its own, taking both from your template so its pages sit inside your design rather than beside it. None of that reaches the customer's inbox. Order emails are Zen Cart's own, and they open with a file most store owners have never looked at.</p>
+        <p>Worth knowing before you take multiship orders, because this plugin will make you send more email than you do now. Each sub-order has its own status, so a customer who split an order across three addresses gets three &quot;your order has shipped&quot; emails rather than one. Whatever sits at the top of those appears once per parcel &mdash; and on most stores, what sits there is a file the owner has never seen.</p>
       <p>Zen Cart ships <code>/email/header.jpg</code>, a 550&times;110 banner, and puts it at the top of every HTML email your store sends. The constants controlling it live in <code>/includes/languages/english/lang.email_extras.php</code>:</p>
       <ol>
         <li><code>EMAIL_LOGO_FILENAME</code> &mdash; <code>header.jpg</code></li>
