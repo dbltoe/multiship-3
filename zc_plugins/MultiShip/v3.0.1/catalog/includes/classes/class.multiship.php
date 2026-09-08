@@ -333,7 +333,16 @@ class multiship extends base
                 //
                 $shipping_modules = new shipping;
                 
-                $shipping_quote = $shipping_modules->quote($method, $module);
+                // -----
+                // The same seam as in checkoutInitialize(), added in v3.0.1, so that "does any
+                // allowed module serve this address?" can stand in for "does the one the customer
+                // picked?" without this method knowing which question is being asked.
+                //
+                $shipping_quote = null;
+                $this->notify('NOTIFY_MULTISHIP_VALIDATE_ADDRESS', ['address_id' => $address_id], $shipping_quote);
+                if ($shipping_quote === null) {
+                    $shipping_quote = $shipping_modules->quote($method, $module);
+                }
                 $this->debugLog("addressValidation: Quote received for $address_id: " . var_export($shipping_quote, true));
                 if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
                     $validated = false;
@@ -1215,7 +1224,19 @@ class multiship extends base
                 }
                 $shipping_modules = new shipping;
                 
-                $shipping_quote = $shipping_modules->quote($shipping_info[1], $shipping_info[0]);
+                // -----
+                // A seam for companion plugins, added in v3.0.1. The quote is offered to observers
+                // first, null in. One that fills it -- Multiple Ship-To Addresses Pro, which quotes
+                // every module against this address and keeps the cheapest -- also hands back the
+                // [module, method] pair it chose, and everything below carries on as though the
+                // customer had picked exactly that. When nothing answers, this plugin quotes the
+                // customer's own choice, as it always has.
+                //
+                $shipping_quote = null;
+                $this->notify('NOTIFY_MULTISHIP_QUOTE_ADDRESS', ['address_id' => $address_id], $shipping_quote, $shipping_info);
+                if ($shipping_quote === null) {
+                    $shipping_quote = $shipping_modules->quote($shipping_info[1], $shipping_info[0]);
+                }
                 $this->debugLog("Quote received for $address_id: " . json_encode($shipping_info) . ', quote: ' . var_export($shipping_quote, true));
                 if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
                     $this->debugLog("No shipping quote for $address_id");
@@ -1274,6 +1295,17 @@ class multiship extends base
                 }
                 $this->debugLog(var_export($this->totals, true));
             }
+
+            // -----
+            // The third seam, added in v3.0.1: every address has been priced and nothing has been
+            // committed yet. $multiship_info holds each address's own totals rows and info;
+            // $this->totals holds their sums for the order, already added up by the loop above;
+            // $multiship_shipping_total is the shipping part of that sum; $this->shipping_method
+            // is the title createOrderHeader() writes to the parent order. An observer that changes
+            // a per-address row has to change the sums to match, which is why all four travel
+            // together.
+            //
+            $this->notify('NOTIFY_MULTISHIP_INITIALIZE_END', [], $multiship_info, $multiship_shipping_total, $this->totals, $this->shipping_method);
 
             $this->details = $multiship_info;
             $this->restoreOrdersBaseValues();

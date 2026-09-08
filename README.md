@@ -23,7 +23,7 @@ through 2.3.0** on PHP 8.
 
 ## Installing
 
-Upload `zc_plugins/MultiShip/v3.0.0/` to your store root and install from **Admin → Modules →
+Upload `zc_plugins/MultiShip/v3.0.1/` to your store root and install from **Admin → Modules →
 Plugin Manager**.
 
 **Upgrading from 2.x: delete the old plugin's files, do not upload over them.** The previous

@@ -65,6 +65,21 @@ $multishipShippingOnChange =
     'ok2leave();'
     . ' if (window.multishipRemember) { window.multishipRemember(); }'
     . ' this.form.submit();';
+
+// -----
+// The shipping choice renders unless something has hidden it. Multiple Ship-To Addresses Pro
+// does, because it chooses the cheapest carrier for every address itself, and the note it
+// supplies goes in the fieldset's place so the customer is told why nothing is being asked.
+// Both variables are set by header_php.php and offered to observers on
+// NOTIFY_HEADER_END_CHECKOUT_MULTISHIP.
+//
+if (!empty($multishipMethodChoiceHidden)) {
+    if (!empty($multishipMethodNote)) {
+?>
+    <div id="checkoutMultishipMethodNote"><?php echo $multishipMethodNote; ?></div>
+<?php
+    }
+} else {
 ?>
     <fieldset id="checkoutMultishipShipping">
         <legend id="multishipShippingHeading"><?php echo TEXT_MULTISHIP_SHIPPING_HEADING; ?></legend>
@@ -133,6 +148,9 @@ foreach ($quotes as $multishipQuote) {
 }
 ?>
     </fieldset>
+<?php
+}
+?>
     <div id="checkoutMultishipInstructions"><?php echo TEXT_MULTISHIP_INSTRUCTIONS; ?></div>
     <div id="checkoutMultishipNewAddress"><?php echo TEXT_NEED_ANOTHER_ADDRESS; ?><a class="multishipActionLink" href="<?php echo zen_href_link(FILENAME_MULTISHIP_ADDRESS, '', 'SSL'); ?>"><?php echo TEXT_ENTER_NEW_ADDRESS; ?></a></div>
 <?php

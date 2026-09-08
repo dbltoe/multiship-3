@@ -12,7 +12,7 @@
 
 <body>
 <div id="top">
-  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.0</span></h1>
+  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.1</span></h1>
   <ul id="menu">
     <li><a href="#introduction" class="drop">Introduction</a>
       <div class="dropdown_1column">
@@ -214,6 +214,9 @@
 <div class="the_content">
     <p class="sub-content">File lists below are marked <span class="added">[+] added</span>, <span class="removed">[-] removed</span>, <span class="template">[template] a file in your active template</span>, and <span class="corefile">[core] a Zen Cart core file</span>. Each marker is a word as well as a color, so the list reads the same whether or not the colors do.</p>
     <ul>
+      <li>v3.0.1, 2026<ul>
+        <li>NEW: Seams for companion plugins. <code>NOTIFY_MULTISHIP_QUOTE_ADDRESS</code> and <code>NOTIFY_MULTISHIP_VALIDATE_ADDRESS</code> fire before each address is quoted, with the quote passed by reference so an observer can supply its own; <code>NOTIFY_MULTISHIP_INITIALIZE_END</code> fires once every address is priced, with the per-address and order-level totals passed by reference; and <code>NOTIFY_HEADER_END_CHECKOUT_MULTISHIP</code> now carries two variables that let an observer hide the shipping-method choice and put a note in its place. They exist for <em>Multiple Ship-To Addresses Pro</em>. With no observer attached, nothing about this plugin's behavior changes.</li>
+      </ul></li>
       <li>v3.0.0, 2026<ul>
         <li>CHANGE: Repackaged as an encapsulated <code>zc_plugin</code>. <strong>No core files are changed and no template files are overwritten.</strong> Everything lives under <code>/zc_plugins/MultiShip/</code> and installs, upgrades and uninstalls from the Plugin Manager. The <code>YOUR_TEMPLATE</code> and <code>YOUR_ADMIN</code> directories, the merge-by-hand instructions and <code>uninstall_multiship.sql</code> are all gone.</li>
         <li>CHANGE: Checkout reduced from five steps to three. The shipping method is now chosen on the address page, and the page that existed only to confirm that choice has been removed.</li>

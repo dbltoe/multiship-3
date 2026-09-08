@@ -527,4 +527,13 @@ $breadcrumb->add(NAVBAR_TITLE_2);
 //$flag_disable_right = $flag_disable_left = true;
 
 // This should be last line of the script:
-$zco_notifier->notify('NOTIFY_HEADER_END_CHECKOUT_MULTISHIP');
+// -----
+// Two variables offered to observers, added in v3.0.1, both read by
+// tpl_checkout_multiship_default.php: when $multishipMethodChoiceHidden is truthy the
+// shipping fieldset is not rendered, and $multishipMethodNote, if set, is printed where it
+// would have been. This plugin sets neither. Observers that never heard of them are
+// unaffected -- the notifier used to pass nothing, and arguments nobody reads cost nothing.
+//
+$multishipMethodChoiceHidden = false;
+$multishipMethodNote = '';
+$zco_notifier->notify('NOTIFY_HEADER_END_CHECKOUT_MULTISHIP', [], $multishipMethodChoiceHidden, $multishipMethodNote);
