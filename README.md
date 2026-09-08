@@ -9,6 +9,10 @@ admin.
 template file, installs and uninstalls from Plugin Manager, and runs on **Zen Cart 2.0.0
 through 2.3.0** on PHP 8.
 
+**v3.0.1** fixes four bugs found on split orders under a free-shipping threshold and adds the
+notifier seams that [Multiple Ship-To Addresses Pro](https://www.myzencartzone.com/) attaches
+to. With no companion plugin installed, the seams change nothing.
+
 ## Documentation
 
 - **[Read Me](https://dbltoe.github.io/multiship-3/docs/readme.html)**
