@@ -127,7 +127,14 @@ $multishipItemsLabel = ($multishipRecipientName === '')
 <?php
         }
 ?>  
-            <th scope="col" id="ccTotalHeading"><?php echo TABLE_HEADING_TOTAL; ?></th>
+<?php
+        // -----
+        // Not core's TABLE_HEADING_TOTAL. This column is the line total, and on this page it
+        // sits a few lines beneath a header reading "Total: $60.89" for the same recipient, so a
+        // $39.99 under a heading of "Total" reads as a contradiction. Named for what it is.
+        //
+?>
+            <th scope="col" id="ccTotalHeading"><?php echo TABLE_HEADING_MULTISHIP_ITEM_TOTAL; ?></th>
         </tr>
 <?php 
         foreach ($currentInfo['products'] as $currentProduct) {

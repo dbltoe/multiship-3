@@ -164,6 +164,13 @@ $define = [
     //
     'LABEL_MULTISHIP_ITEMS_FOR' => 'Items being sent to %s',
 
+    // -----
+    // The last column of each recipient's items table: the line total. Core heads that column
+    // "Total", and here that sat a few lines beneath the recipient's own "Total: $60.89", so a
+    // $39.99 line read as a contradiction. dbltoe, on the first split order with shipping charged.
+    //
+    'TABLE_HEADING_MULTISHIP_ITEM_TOTAL' => 'Item Total',
+
     'TEXT_GRAND_TOTAL' => 'Grand Total:',
 
     'MULTISHIP_MULTIPLE' => 'Multiple',
