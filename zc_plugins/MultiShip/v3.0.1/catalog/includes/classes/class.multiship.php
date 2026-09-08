@@ -1518,6 +1518,29 @@ class multiship extends base
         if ($shipping_tax_override) {
             $shipping_tax = 0;
             $shipping_tax_description = TEXT_UNKNOWN_TAX_RATE;
+
+            // -----
+            // This notification fires from inside ot_shipping's process(), just after its
+            // free-over-a-threshold block and just before it writes its row -- and on a split
+            // order that block has just judged the PARENT against the whole cart. When the whole
+            // cart clears the threshold but its shares did not, it zeroes the parent's shipping
+            // and takes it off the total, so the confirmation page showed "Shipping: $0.00" and a
+            // total without shipping while every sub-order carried a charge and checkout_process
+            // stored the sum of those charges: the customer was shown one figure and charged
+            // another. dbltoe found it with a $79.98 cart split $39.99 / $39.99 under a $50 rule.
+            //
+            // The sub-orders have already decided; the parent reports their sum. Only put back
+            // what the block took: if the shares themselves were free, ot_shipping is
+            // uncontested and there is nothing to restore.
+            //
+            $multiship_shipping = (float)($this->totals['ot_shipping'] ?? 0);
+            $order = $GLOBALS['order'];
+            if ($multiship_shipping > 0 && is_object($order) && (float)($order->info['shipping_cost'] ?? 0) <= 0) {
+                $this->debugLog("updateShippingTaxInfo: ot_shipping made the parent order free on the whole cart; restoring the sub-orders' $multiship_shipping.");
+                $order->info['shipping_cost'] = $multiship_shipping;
+                $order->info['total'] = (float)($order->info['total'] ?? 0) + $multiship_shipping;
+                $order->info['shipping_method'] = $_SESSION['shipping']['title'] ?? $this->shipping_method;
+            }
         }
         return $shipping_tax_override;
     }
