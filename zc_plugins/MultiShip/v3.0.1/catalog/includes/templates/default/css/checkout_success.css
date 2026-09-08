@@ -96,7 +96,19 @@
     padding-left: 0.35em;
 }
 
-/* Nothing for the items table, deliberately -- it carries core's #cartContentsDisplay and is
-   spaced by the store's own stylesheet, the same as its product tables everywhere else.
-   .multishipItems is an unstyled hook so a store owner can space these without targeting an
-   id that repeats down the page. */
+/* No spacing for the items table, deliberately -- it carries core's #cartContentsDisplay and
+   is spaced by the store's own stylesheet, the same as its product tables everywhere else.
+   .multishipItems is a hook so a store owner can space these without targeting an id that
+   repeats down the page.
+
+   The number columns are the one exception: centered, because inside a box this narrow a
+   right-ranged column of line totals runs into the recipient's totals ranged right on the
+   header line above. The id outranks a template rule written against it; the class keeps it
+   to these tables. Identical block in checkout_confirmation.css, where the reasoning is. */
+#cartContentsDisplay.multishipItems th#ccQuantityHeading,
+#cartContentsDisplay.multishipItems th#ccTaxHeading,
+#cartContentsDisplay.multishipItems th#ccTotalHeading,
+#cartContentsDisplay.multishipItems td.cartQuantity,
+#cartContentsDisplay.multishipItems td.cartTotalDisplay {
+    text-align: center;
+}

@@ -227,14 +227,35 @@
 }
 
 /* -----
-   Nothing here for the items table, deliberately.
+   No spacing for the items table, deliberately.
 
-   Quantity, Products and Total do run together, and this plugin is not going to fix that.
-   The table carries core's #cartContentsDisplay, so it is spaced by whatever the store's own
-   stylesheet does with its product tables -- and dbltoe confirmed the same crowding on the
-   account order-history page and elsewhere on the site. It is the store's look. Padding it
-   here would make the one page this plugin touches the odd one out, which is the opposite of
-   the intent: structure and behavior are ours, appearance is the store's.
+   Quantity, Products and Item Total do run together, and this plugin is not going to fix
+   that. The table carries core's #cartContentsDisplay, so it is spaced by whatever the
+   store's own stylesheet does with its product tables -- and dbltoe confirmed the same
+   crowding on the account order-history page and elsewhere on the site. It is the store's
+   look. Padding it here would make the one page this plugin touches the odd one out, which
+   is the opposite of the intent: structure and behavior are ours, appearance is the store's.
 
-   .multishipItems is on the table as a hook, unstyled, so a store owner can space these
-   tables without having to target an id that repeats down the page. */
+   .multishipItems is on the table as a hook so a store owner can space these tables without
+   having to target an id that repeats down the page.
+
+   -----
+   The number columns are the one exception: centered.
+
+   A store's stylesheet ranges .cartTotalDisplay right for its own cart tables, and there that
+   is correct. Here the table sits inside a box a third the width, directly beneath the
+   recipient's own totals ranged right on the header line, and a right-ranged column of line
+   totals runs straight into them. Quantity, Item Total and the tax column when it appears are
+   centered; the Products column keeps the store's alignment. dbltoe's call, on the first
+   split order with shipping charged.
+
+   The selectors carry the table's id so they outrank a template rule written against it
+   (#cartContentsDisplay td, or the like), and the class so they touch nothing but these
+   tables. This block is identical in account_history_info.css and checkout_success.css. */
+#cartContentsDisplay.multishipItems th#ccQuantityHeading,
+#cartContentsDisplay.multishipItems th#ccTaxHeading,
+#cartContentsDisplay.multishipItems th#ccTotalHeading,
+#cartContentsDisplay.multishipItems td.cartQuantity,
+#cartContentsDisplay.multishipItems td.cartTotalDisplay {
+    text-align: center;
+}
