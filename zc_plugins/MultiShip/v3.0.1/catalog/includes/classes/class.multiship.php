@@ -1007,15 +1007,21 @@ class multiship extends base
             // Lead in with the billing address and payment method information for the text emails.
             //
             $email_order = $this->text_email . "\n" . EMAIL_TEXT_BILLING_ADDRESS . "\n" . EMAIL_SEPARATOR . "\n" . zen_address_label($_SESSION['customer_id'], $_SESSION['billto'], 0, '', "\n") . "\n\n";
-            if (is_object($GLOBALS[$_SESSION['payment']])) {
+            // -----
+            // An order that comes to nothing -- every item free and shipped free -- has no payment
+            // module: core leaves $_SESSION['payment'] empty for it, and $GLOBALS[''] is an
+            // undefined-variable warning, not a payment class. Such an order takes the same
+            // no-module branch a gift-certificate-paid order does.
+            //
+            $payment_class = (string)($_SESSION['payment'] ?? '');
+            if ($payment_class !== '' && isset($GLOBALS[$payment_class]) && is_object($GLOBALS[$payment_class])) {
                 $cc_num_display = (isset($order->info['cc_number']) && $order->info['cc_number'] != '') ? str_repeat('X', (strlen($order->info['cc_number']) - 8)) . substr($order->info['cc_number'], -4) . "\n\n" : '';
                 $email_order .= EMAIL_TEXT_PAYMENT_METHOD . "\n" . EMAIL_SEPARATOR . "\n";
-                $payment_class = $_SESSION['payment'];
                 $email_order .= $GLOBALS[$payment_class]->title . "\n\n";
                 $email_order .= (isset($order->info['cc_type']) && $order->info['cc_type'] != '') ? $order->info['cc_type'] . ' ' . $cc_num_display . "\n\n" : '';
-                $email_order .= ($GLOBALS[$payment_class]->email_footer) ? $GLOBALS[$payment_class]->email_footer . "\n\n" : '';
+                $email_order .= (!empty($GLOBALS[$payment_class]->email_footer)) ? $GLOBALS[$payment_class]->email_footer . "\n\n" : '';
             } else {
-                $email_order .= EMAIL_TEXT_PAYMENT_METHOD . "\n" . EMAIL_SEPARATOR . "\n" . PAYMENT_METHOD_GV . "\n\n";;
+                $email_order .= EMAIL_TEXT_PAYMENT_METHOD . "\n" . EMAIL_SEPARATOR . "\n" . PAYMENT_METHOD_GV . "\n\n";
             }
       
             // -----
