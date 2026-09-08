@@ -1292,9 +1292,30 @@ class multiship extends base
                 $multiship_info[$address_id]['delivery'] = $order->delivery;
                 $multiship_info[$address_id]['content_type'] = $order->content_type;
                 $multiship_info[$address_id]['info'] = $order->info;
-                
+
                 if (MODULE_ORDER_TOTAL_INSTALLED) {
                     $multiship_info[$address_id]['totals'] = $order_total_modules->process();
+
+                    // -----
+                    // The order-total modules have the last word on this sub-order, and they get it
+                    // here. The Shipping module in particular judges its free-over-a-threshold rule
+                    // against this address's share and, when it passes, zeroes the shipping cost and
+                    // takes it off the total -- so the info captured above, before process() ran,
+                    // and the quoted cost added into the running shipping total are both stale.
+                    //
+                    // This used to keep the stale copy and then write the quoted cost back into the
+                    // ot_shipping row regardless, which left a freed sub-order saying three things at
+                    // once: a shipping charge on its row, a total without one, and a parent order
+                    // whose shipping total counted it. dbltoe found it with two $52.50 halves under a
+                    // free-over-$50 rule.
+                    //
+                    $multiship_info[$address_id]['info'] = $order->info;
+                    if ($shipping_cost > 0 && (float)$order->info['shipping_cost'] <= 0) {
+                        $this->debugLog("Order-total processing made shipping free for $address_id; the quoted $shipping_cost comes off the shipping total.");
+                        $multiship_shipping_total -= $shipping_cost;
+                        $shipping_cost = 0;
+                        $multiship_info[$address_id]['info']['shipping_cost'] = 0;
+                    }
                     if (isset($_SESSION['shipping_tax_description'])) {
                         $multiship_info[$address_id]['info']['shipping_tax_description'] = $_SESSION['shipping_tax_description'];
                     }
@@ -1302,8 +1323,12 @@ class multiship extends base
                     foreach ($multiship_info[$address_id]['totals'] as &$currentTotal) {
                         $code = $currentTotal['code'];
                         $currentTotal['class'] = str_replace('_', '', $code);
-                        if ($code == 'ot_shipping') {
-                            $currentTotal['value'] = $shipping_quote[0]['methods'][0]['cost'];
+                        // -----
+                        // Name the carrier on the row, as long as the row is still a charge. A row
+                        // the Shipping module made free already says so, and is left alone.
+                        //
+                        if ($code == 'ot_shipping' && $shipping_cost > 0) {
+                            $currentTotal['value'] = $shipping_cost;
                             $currentTotal['text'] = $GLOBALS['currencies']->format($currentTotal['value'], true, $order->info['currency'], $order->info['currency_value']);
                             $currentTotal['title'] = $shipping_method;
                         }
