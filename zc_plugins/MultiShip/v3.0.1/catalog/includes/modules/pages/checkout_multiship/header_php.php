@@ -321,9 +321,9 @@ if (isset($_POST['securityToken'])) {
 // longer visits that page would have produced an order with no multiship totals at all:
 // the split would exist, the money would not.
 //
-// Only possible here because the shipping class was built above. checkoutInitialize() tests
-// zen_count_shipping_modules(), which counts instantiated modules and would otherwise read
-// zero and take the sessionCleanup() branch.
+// The shipping class is built above, so the per-address quoting inside has modules to work
+// with. (checkoutInitialize() no longer depends on that for its offer test -- it reads
+// MODULE_SHIPPING_INSTALLED rather than counting instantiated modules, since v3.0.1.)
 //
 // -----
 // Guarded on isSelected(), and that guard is the whole point.

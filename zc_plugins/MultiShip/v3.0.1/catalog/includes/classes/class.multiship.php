@@ -1101,7 +1101,22 @@ class multiship extends base
         // 2) The current customer is not checking out via COWOA.
         // 3) The current customer is not checking out via a PayPal Express Checkout guest account.
         //
-        $this->can_offer = ($this->cartPhysicalItemsCount() > 1 && empty($_SESSION['COWOA']) && empty($_SESSION['customer_guest_id']) && zen_count_shipping_modules() > 0);
+        // -----
+        // The fourth condition asks whether the store has shipping modules installed, and reads
+        // MODULE_SHIPPING_INSTALLED to find out -- the same test offerAvailable() makes, for the
+        // reason given there. This used to call zen_count_shipping_modules(), which instead
+        // counts the module *objects* whose 'enabled' flag is still up, and that flag is set by
+        // each module's constructor from whichever address was the session's send-to at the
+        // time. addressValidation() builds a fresh shipping object per address, so after it
+        // runs the flags describe the LAST address validated. When that one is outside every
+        // module's zone, the count here read zero, the offer was withdrawn, and sessionCleanup()
+        // threw away the addresses the customer had just chosen: the page came back blank. An
+        // unshippable address chosen FIRST never showed it, because the good address was
+        // validated last and switched the flags back on. dbltoe found it with a foreign address
+        // in the second row.
+        //
+        $has_shipping_modules = (defined('MODULE_SHIPPING_INSTALLED') && MODULE_SHIPPING_INSTALLED !== '');
+        $this->can_offer = ($this->cartPhysicalItemsCount() > 1 && empty($_SESSION['COWOA']) && empty($_SESSION['customer_guest_id']) && $has_shipping_modules);
         if (!$this->can_offer) {
             $this->sessionCleanup();
         }
@@ -1240,7 +1255,7 @@ class multiship extends base
                 $this->debugLog("Quote received for $address_id: " . json_encode($shipping_info) . ', quote: ' . var_export($shipping_quote, true));
                 if (!is_array($shipping_quote) || count($shipping_quote) == 0 || isset($shipping_quote[0]['error'])) {
                     $this->debugLog("No shipping quote for $address_id");
-                    $this->cart[$address_id]['address-error'] = (isset($shipping_quote[0]['error'])) ? isset($shipping_quote[0]['error']) : ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING;
+                    $this->cart[$address_id]['address-error'] = $shipping_quote[0]['error'] ?? ERROR_ADDRESS_NOT_VALID_FOR_SHIPPING;
                     $invalid_address_found = true;
                     continue;
                 }
