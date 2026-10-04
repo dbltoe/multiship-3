@@ -13,6 +13,10 @@ through 2.3.0** on PHP 8.
 notifier seams that [Multiple Ship-To Addresses Pro](https://www.myzencartzone.com/) attaches
 to. With no companion plugin installed, the seams change nothing.
 
+**v3.0.2** fixes a MySQL error that stopped the shopping cart page whenever the cart held a
+product with a ticked checkbox attribute, and one that stopped a multiship order from being
+placed when a shipping method's title contained an apostrophe.
+
 ## Documentation
 
 - **[Read Me](https://dbltoe.github.io/multiship-3/docs/readme.html)**
@@ -27,7 +31,7 @@ to. With no companion plugin installed, the seams change nothing.
 
 ## Installing
 
-Upload `zc_plugins/MultiShip/v3.0.1/` to your store root and install from **Admin → Modules →
+Upload `zc_plugins/MultiShip/v3.0.2/` to your store root and install from **Admin → Modules →
 Plugin Manager**.
 
 **Upgrading from 2.x: delete the old plugin's files, do not upload over them.** The previous

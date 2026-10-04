@@ -691,15 +691,35 @@ class multiship extends base
             // attributes identifies a download-type product.  If so, then the product is not physical.
             //
             if ($is_physical && isset($_SESSION['cart']->contents[$prid]['attributes']) && is_array($_SESSION['cart']->contents[$prid]['attributes'])) {
-                foreach ($_SESSION['cart']->contents[$prid]['attributes'] as $option_id => $value_id) {
+                foreach ($_SESSION['cart']->contents[$prid]['attributes'] as $option_key => $value_id) {
+                    // -----
+                    // The key isn't always a bare option id. Core's shopping_cart stores a checkbox
+                    // attribute under '<option>_chk<value>' (e.g. '13_chk36') so that several ticked
+                    // values of one option can sit side by side, and a text attribute under its option
+                    // id with the value PRODUCTS_OPTIONS_VALUES_TEXT_ID (0). Through v3.0.1 the key went
+                    // into the SQL as-is, so a cart holding any ticked checkbox fataled every
+                    // shopping_cart view with "Unknown column '13_chk36' in 'where clause'".
+                    //
+                    // Core builds both halves of the key from ints, so both are cast here and again
+                    // in the query; nothing else belongs in it.
+                    //
+                    $option_key = (string)$option_key;
+                    $chk_pos = strpos($option_key, '_chk');
+                    if ($chk_pos !== false) {
+                        $option_id = (int)substr($option_key, 0, $chk_pos);
+                        $value_id = (int)substr($option_key, $chk_pos + 4);
+                    } else {
+                        $option_id = (int)$option_key;
+                        $value_id = (int)$value_id;
+                    }
                     $is_download = $GLOBALS['db']->Execute(
                         "SELECT pa.products_attributes_id
                            FROM " . TABLE_PRODUCTS_ATTRIBUTES . " pa
                                 INNER JOIN " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad
                                     ON pad.products_attributes_id = pa.products_attributes_id
                           WHERE pa.products_id = $pID
-                            AND pa.options_id = $option_id
-                            AND pa.options_values_id = $value_id
+                            AND pa.options_id = " . (int)$option_id . "
+                            AND pa.options_values_id = " . (int)$value_id . "
                           LIMIT 1"
                     );
                     if (!$is_download->EOF) {
@@ -806,9 +826,14 @@ class multiship extends base
             $orders_id = $order_info_array['orders_id'];
             $order_total = (isset($this->totals['ot_total'])) ? $this->totals['ot_total'] : 0;
             $order_tax = (isset($this->totals['ot_tax'])) ? $this->totals['ot_tax'] : 0;
+            // -----
+            // The method is a shipping module's title (or a companion plugin's text), so it's
+            // escaped: through v3.0.1 a title with an apostrophe, "Bob's Courier", broke this
+            // query and with it the creation of every multiship order.
+            //
             $db->Execute(
-                "UPDATE " . TABLE_ORDERS . " 
-                    SET order_total = $order_total, order_tax = $order_tax, shipping_method = '" . $this->shipping_method . "' 
+                "UPDATE " . TABLE_ORDERS . "
+                    SET order_total = $order_total, order_tax = $order_tax, shipping_method = '" . zen_db_input($this->shipping_method) . "'
                 WHERE orders_id = $orders_id
                 LIMIT 1"
             );

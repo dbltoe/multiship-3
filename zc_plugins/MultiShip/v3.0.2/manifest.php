@@ -29,7 +29,7 @@
 // cannot leave the button pointing at a directory that no longer exists. The version
 // folder name and this value must always match.
 //
-$multiship_version = 'v3.0.1';
+$multiship_version = 'v3.0.2';
 
 // -----
 // Declared once and used for both the button below and github_repo at the foot of this file,

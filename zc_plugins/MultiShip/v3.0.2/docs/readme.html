@@ -12,7 +12,7 @@
 
 <body>
 <div id="top">
-  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.1</span></h1>
+  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.2</span></h1>
   <ul id="menu">
     <li><a href="#introduction" class="drop">Introduction</a>
       <div class="dropdown_1column">
@@ -214,6 +214,10 @@
 <div class="the_content">
     <p class="sub-content">File lists below are marked <span class="added">[+] added</span>, <span class="removed">[-] removed</span>, <span class="template">[template] a file in your active template</span>, and <span class="corefile">[core] a Zen Cart core file</span>. Each marker is a word as well as a color, so the list reads the same whether or not the colors do.</p>
     <ul>
+      <li>v3.0.2, 2026<ul>
+        <li>BUGFIX: A product with a <em>checkbox</em> attribute in the cart, with any box ticked, stopped the shopping cart page with a MySQL error (<code>Unknown column '13_chk36' in 'where clause'</code>). Zen Cart stores a ticked checkbox under a combined key, and the plugin's check for downloadable attributes read that key as if it were a plain option number. It now reads both halves of the key, so checkbox, text and every other attribute type are checked the same way.</li>
+        <li>BUGFIX: A multiship order couldn't be placed if the chosen shipping method's title contained an apostrophe (<em>Bob's Courier</em>, for example). The title was written into the order unescaped and broke the query. It's now escaped.</li>
+      </ul></li>
       <li>v3.0.1, 2026<ul>
         <li>NEW: Seams for companion plugins. <code>NOTIFY_MULTISHIP_QUOTE_ADDRESS</code> and <code>NOTIFY_MULTISHIP_VALIDATE_ADDRESS</code> fire before each address is quoted, with the quote passed by reference so an observer can supply its own; <code>NOTIFY_MULTISHIP_INITIALIZE_END</code> fires once every address is priced, with the per-address and order-level totals passed by reference; and <code>NOTIFY_HEADER_END_CHECKOUT_MULTISHIP</code> now carries two variables that let an observer hide the shipping-method choice and put a note in its place. They exist for <em>Multiple Ship-To Addresses Pro</em>. With no observer attached, nothing about this plugin's behavior changes.</li>
         <li>BUGFIX: Choosing an address that no shipping module serves, in any row but the first, emptied every row. The offer test counted shipping modules whose state reflected whichever address had been checked last; it now asks whether the store has shipping modules installed, which is what it meant.</li>
