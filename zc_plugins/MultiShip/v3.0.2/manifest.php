@@ -112,14 +112,12 @@ $multiship_github_button =
 // worked out how to do it in the first place.
 //
 // -----
-// The support thread, as an ordinary link rather than a third button. Install, Uninstall,
-// Read Me and GitHub are all things an owner does with the plugin; asking for help is a
-// different kind of act, and giving it the same weight as Uninstall would misrepresent it.
+// The support thread, a third button beside Read Me and GitHub. It was a plain link on its own
+// line until 2026-10-05, when dbltoe asked for a Support Thread button on every free plugin.
 //
-$multiship_forum_link =
-    '<div style="margin:8px 0 0;">'
-    . '<a href="' . $multiship_forum . '" target="_blank" rel="noopener">Forum Support Thread</a>'
-    . '</div>';
+$multiship_forum_button =
+    '&nbsp;<a href="' . $multiship_forum . '"'
+    . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">Forum Support Thread</a>';
 
 $multiship_credits =
     '<div style="margin:8px 0 0;"><em>'
@@ -129,7 +127,7 @@ $multiship_credits =
     . '</em></div>';
 
 // -----
-// Both buttons are appended to pluginDescription below.
+// The three buttons are appended to pluginDescription below.
 //
 // This comment used to explain why a GitHub button must never be added: the repository was
 // private, so a link would have given every store owner a 404. dbltoe has made it public, so
@@ -155,7 +153,7 @@ return [
         . 'tracked and status-updated independently in the admin.'
         . $multiship_readme_button
         . $multiship_github_button
-        . $multiship_forum_link
+        . $multiship_forum_button
         . $multiship_credits,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
     // Stored as plugin_control.zc_contrib_id and sent to zen-cart.com to check for newer
