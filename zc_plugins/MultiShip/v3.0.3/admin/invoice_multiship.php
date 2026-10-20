@@ -15,7 +15,16 @@ require 'includes/application_top.php' ;
 require DIR_WS_CLASSES . 'currencies.php';
 $currencies = new currencies();
 
-$oID = (int)zen_db_prepare_input($_GET['oID']);
+$oID = (int)zen_db_prepare_input($_GET['oID'] ?? 0);
+
+// -----
+// No order number at all, and the order class must not be asked for one: new order(0) does not
+// look anything up, it builds an order from the admin's own session cart, and on 2.2 that dies
+// in currencies::get_decimal_places() with a TypeError. Sent to the orders list instead.
+//
+if ($oID <= 0) {
+    zen_redirect(zen_href_link(FILENAME_ORDERS));
+}
 
 // -----
 // The order class.
@@ -27,6 +36,26 @@ $oID = (int)zen_db_prepare_input($_GET['oID']);
 //
 require DIR_WS_CLASSES . 'order.php';
 $order = new order($oID);
+
+// -----
+// This page draws a multiship order and nothing else. init_multiship.php only ever sends
+// core's invoice here for one, but the page can be opened directly with any oID, and for an
+// ordinary order -- or one that does not exist -- everything below reads keys that are not
+// there: $order->info['multiship_info'] (filled by the admin observer only when the order is
+// found), and for a missing order $order->billing['name'] and the rest of an empty address.
+// Found on the zclab rig on every 2.x version with an oID that had no order behind it.
+//
+// An ordinary order goes to core's invoice, which is the right page for it. A missing one goes
+// to the orders page, which says that it does not exist rather than drawing a blank invoice.
+// No loop: init_multiship.php redirects back here only when an orders_multiship row exists,
+// which is exactly when the admin observer sets is_multiship_order.
+//
+if (empty($order->info['is_multiship_order'])) {
+    if (empty($order->info)) {
+        zen_redirect(zen_href_link(FILENAME_ORDERS, 'oID=' . $oID . '&action=edit'));
+    }
+    zen_redirect(zen_href_link(FILENAME_ORDERS_INVOICE, 'oID=' . $oID));
+}
 
 $orders_status_array = array();
 $orders_status = $db->Execute(

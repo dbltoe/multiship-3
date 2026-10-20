@@ -1,0 +1,196 @@
+<?php
+// -----
+// Zen Cart version-compatibility checks for the free Multiple Ship-To Addresses plugin.
+//
+// Added in v3.0.3, for the three faults the zclab rig found in v3.0.2 on 2026-10-20. Each check
+// reproduces the core behavior that caused a fault and asserts the plugin now survives it, so a
+// regression fails here before it reaches a store.
+//
+//   php tests/compat_check.php                  every check except the include_path pair
+//   php tests/compat_check.php loader-old       include_path fallback, 2.0/2.1-style loader
+//   php tests/compat_check.php loader-new       include_path untouched, 2.2+-style loader
+//
+// tests/run_all.ps1 runs all three on every PHP build in F:\zclab\php. Exit code 0 = pass.
+//
+$plugin_root = dirname(__DIR__) . '/zc_plugins/MultiShip';
+$versions = glob($plugin_root . '/v*', GLOB_ONLYDIR);
+if (count($versions) !== 1) {
+    fwrite(STDERR, "Expected exactly one version folder under $plugin_root\n");
+    exit(1);
+}
+$ver_dir = $versions[0];
+$ver = basename($ver_dir);
+$catalog = $ver_dir . '/catalog/';
+
+$failures = 0;
+$passes = 0;
+function check(bool $ok, string $what): void
+{
+    global $failures, $passes;
+    if ($ok) {
+        $passes++;
+        echo "  ok   $what\n";
+    } else {
+        $failures++;
+        echo "  FAIL $what\n";
+    }
+}
+function finish(): void
+{
+    global $failures, $passes;
+    echo ($failures === 0 ? 'PASS' : 'FAIL') . " ($passes passed, $failures failed) on PHP " . PHP_VERSION . "\n";
+    exit($failures === 0 ? 0 : 1);
+}
+
+// -----
+// The core pages this plugin adds files to; everything else under modules/pages is its own.
+//
+$core_pages = [
+    'account', 'account_history', 'account_history_info', 'checkout_confirmation',
+    'checkout_payment', 'checkout_shipping', 'checkout_success', 'login',
+];
+
+$mode = $argv[1] ?? 'static';
+
+if ($mode === 'loader-old' || $mode === 'loader-new') {
+    // -----
+    // Stand-ins for the two generations of core's page loader: 2.2.0 added
+    // listModulePagesFiles(), and its presence is what the plugin keys on.
+    //
+    if ($mode === 'loader-old') {
+        eval('namespace Zencart\PageLoader; class PageLoader { public function getTemplatePart() {} }');
+    } else {
+        eval('namespace Zencart\PageLoader; class PageLoader { public function listModulePagesFiles() {} }');
+    }
+    eval('class base { public function attach($o, $e) {} }');
+    require $catalog . 'includes/classes/observers/class.multiship_early_observer.php';
+
+    // A store root with none of the plugin's page files, as 2.0/2.1 core has none of them.
+    $store = sys_get_temp_dir() . '/multiship_compat_' . getmypid();
+    @mkdir($store . '/includes/modules/pages/login', 0777, true);
+    file_put_contents($store . '/includes/modules/pages/login/header_php.php', "<?php\n");
+    chdir($store);
+
+    $before = get_include_path();
+    $m = new ReflectionMethod('multiship_early_observer', 'letOlderLoadersFindPageFiles');
+    $m->setAccessible(true);
+    $m->invoke(null);
+    $m->invoke(null);   // a second instantiation must not add the entry twice
+    $after = get_include_path();
+
+    echo "$ver, $mode\n";
+    if ($mode === 'loader-new') {
+        check($after === $before, 'a 2.2+ loader leaves include_path untouched');
+    } else {
+        $entries = explode(PATH_SEPARATOR, $after);
+        $plugin_entry = realpath($catalog);
+        check(end($entries) !== false && realpath(end($entries)) === $plugin_entry, 'plugin catalog appended LAST to include_path');
+        check(count(array_filter($entries, fn($e) => realpath($e) === $plugin_entry)) === 1, 'appended once, not once per instantiation');
+
+        // Exactly the path index.php / html_header.php build: $code_page_directory . '/' . $value
+        foreach ($core_pages as $page) {
+            foreach (glob($catalog . "includes/modules/pages/$page/*.php") as $file) {
+                $rel = "includes/modules/pages/$page/" . basename($file);
+                $resolved = stream_resolve_include_path($rel);
+                check($resolved !== false && realpath($resolved) === realpath($file), "2.0/2.1 require of $rel finds the plugin's copy");
+            }
+        }
+        $resolved = stream_resolve_include_path('includes/modules/pages/login/header_php.php');
+        check($resolved !== false && realpath($resolved) === realpath($store . '/includes/modules/pages/login/header_php.php'), "a file core has still resolves to core's copy");
+    }
+    unlink($store . '/includes/modules/pages/login/header_php.php');
+    finish();
+}
+
+echo "$ver, static checks\n";
+
+// -----
+// 1. Zen Cart 2.0.x: every storefront 'class' loader entry must name a relative classPath.
+//
+// 2.0's InitSystem::processAutoTypeClass() otherwise starts from DIR_FS_CATALOG . DIR_WS_CLASSES
+// and its FileSystem::getRelativeDir() cannot strip the prefix (isCatalogDir() is inverted), so
+// the plugin file is never found. Reproduced below with 2.0's own logic.
+//
+define('IS_ADMIN_FLAG', false);
+define('DIR_FS_CATALOG', '/store/');
+define('DIR_WS_INCLUDES', 'includes/');
+define('DIR_WS_CLASSES', DIR_WS_INCLUDES . 'classes/');
+function zc200_isCatalogDir(string $p): bool
+{
+    return str_replace(DIR_FS_CATALOG, '', $p) === $p;   // sic: inverted, as in 2.0.x
+}
+function zc200_getRelativeDir(string $p): string
+{
+    return zc200_isCatalogDir($p) ? str_replace(DIR_FS_CATALOG, '', $p) : $p;
+}
+$autoLoadConfig = [];
+foreach (glob($catalog . 'includes/auto_loaders/*.php') as $loader) {
+    require $loader;
+}
+$class_entries = 0;
+foreach ($autoLoadConfig as $point => $entries) {
+    foreach ($entries as $entry) {
+        if ($entry['autoType'] !== 'class') {
+            continue;
+        }
+        $class_entries++;
+        $start = $entry['classPath'] ?? (DIR_FS_CATALOG . DIR_WS_CLASSES);   // 2.0.x
+        $actual = $catalog . zc200_getRelativeDir($start) . $entry['loadFile'];
+        check(isset($entry['classPath']) && $entry['classPath'][0] !== '/', "[$point] {$entry['loadFile']} names a relative classPath");
+        check(is_file($actual), "[$point] {$entry['loadFile']} is found by 2.0.x's lookup");
+    }
+}
+check($class_entries === 3, "three storefront class entries ($class_entries found)");
+
+// -----
+// 2. No plugin catalog file may share a path with a core file, or the include_path fallback
+//    could shadow core on a host whose include_path lacks '.'. Checked against the rig's
+//    2.0 and 2.1 checkouts when they are present.
+//
+foreach (['F:/zclab/sites/zc200/', 'F:/zclab/sites/zc210/'] as $core) {
+    if (!is_dir($core)) {
+        echo "  skip collision check, $core not present\n";
+        continue;
+    }
+    $collisions = [];
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($catalog, FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) {
+        $rel = str_replace('\\', '/', substr($f->getPathname(), strlen($catalog)));
+        if (file_exists($core . $rel)) {
+            $collisions[] = $rel;
+        }
+    }
+    check($collisions === [], "no plugin catalog file shadows a core file in $core" . ($collisions ? ': ' . implode(', ', $collisions) : ''));
+}
+
+// -----
+// 3. The multiship invoice and packing slip must turn away an ordinary or missing order before
+//    anything reads the multiship or address data such an order does not have.
+//
+foreach (['invoice_multiship.php', 'packingslip_multiship.php'] as $page) {
+    // Comment lines dropped, so a comment that names those keys is not mistaken for a use.
+    $src = preg_replace('~^\s*//.*$~m', '', file_get_contents($ver_dir . '/admin/' . $page));
+    $guard = strpos($src, "if (empty(\$order->info['is_multiship_order']))");
+    $first_use = min(array_filter([
+        strpos($src, '$order->billing['),
+        strpos($src, '$order->delivery['),
+        strpos($src, "\$order->info['multiship_info']"),
+    ], fn($p) => $p !== false));
+    check($guard !== false && $guard < $first_use, "$page guards the order before its first use");
+    $zero_guard = strpos($src, 'if ($oID <= 0) {');
+    check($zero_guard !== false && $zero_guard < strpos($src, 'new order($oID)'), "$page refuses a missing oID before building an order (new order(0) builds from the cart)");
+    check(strpos($src, "\$_GET['oID'])") === false, "$page does not read \$_GET['oID'] unguarded");
+}
+
+// -----
+// 4. Version bookkeeping: folder, manifest and both copies of the readme agree.
+//
+$manifest = file_get_contents($ver_dir . '/manifest.php');
+check(strpos($manifest, "\$multiship_version = '$ver';") !== false, "manifest version is $ver");
+$readme_root = file_get_contents(dirname(__DIR__) . '/docs/readme.html');
+$readme_plugin = file_get_contents($ver_dir . '/docs/readme.html');
+check($readme_root === $readme_plugin, 'docs/readme.html and the plugin copy are identical');
+check(strpos($readme_plugin, 'Version ' . substr($ver, 1) . '</span>') !== false, 'readme title carries ' . $ver);
+check(strpos($readme_plugin, '<li>' . $ver . ', ') !== false, 'readme changelog has a ' . $ver . ' entry');
+
+finish();

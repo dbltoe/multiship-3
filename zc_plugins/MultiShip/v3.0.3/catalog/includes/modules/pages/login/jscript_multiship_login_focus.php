@@ -27,7 +27,9 @@
 // A jscript_*.php file is required inline into the <head> by
 // html_header_js_loader.php:52 (listModulePagesFiles('jscript_', '.php')), so this runs
 // before the form is parsed and can get in front of both causes rather than reacting to
-// them.
+// them. On 2.0 and 2.1 the same require happens in html_header.php itself, and reaches this
+// file only through the include_path fallback in multiship_early_observer --
+// letOlderLoadersFindPageFiles() explains why.
 //
 // Reported upstream as core-requirements 2.1, with the one-line fix core could make:
 // focus({preventScroll: true}) plus dropping the attribute. No response so far, hence this.

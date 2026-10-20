@@ -12,7 +12,7 @@
 
 <body>
 <div id="top">
-  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.2</span></h1>
+  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.3</span></h1>
   <ul id="menu">
     <li><a href="#introduction" class="drop">Introduction</a>
       <div class="dropdown_1column">
@@ -214,6 +214,11 @@
 <div class="the_content">
     <p class="sub-content">File lists below are marked <span class="added">[+] added</span>, <span class="removed">[-] removed</span>, <span class="template">[template] a file in your active template</span>, and <span class="corefile">[core] a Zen Cart core file</span>. Each marker is a word as well as a color, so the list reads the same whether or not the colors do.</p>
     <ul>
+      <li>v3.0.3, 2026<ul>
+        <li>BUGFIX: On Zen Cart 2.0.x every storefront page stopped with <code>Class "multiship_early_observer" not found</code>. Zen Cart 2.0 can't find a plugin's storefront class files unless the plugin names their folder explicitly, and this plugin relied on the default. It now names it on every version.</li>
+        <li>BUGFIX: On Zen Cart 2.0.x and 2.1.x the login page, and for a signed-in customer the My Account, order history and checkout pages, stopped with <code>Failed opening required 'includes/modules/pages/login/jscript_multiship_login_focus.php'</code>. Those versions find a plugin's files for a core page but then look for them in the core folder. The plugin now points them at its own folder, on 2.0 and 2.1 only, so its page files run there just as they do on 2.2 and later. Files Zen Cart has of its own are still found first.</li>
+        <li>BUGFIX: The multiship invoice and packing slip raised PHP warnings when opened for an order that wasn't a multiship order, or for an order number that doesn't exist, and stopped with a fatal error when opened with no order number at all. An ordinary order now goes to Zen Cart's own invoice or packing slip, and a missing or absent one to the Orders page.</li>
+      </ul></li>
       <li>v3.0.2, 2026<ul>
         <li>BUGFIX: A product with a <em>checkbox</em> attribute in the cart, with any box ticked, stopped the shopping cart page with a MySQL error (<code>Unknown column '13_chk36' in 'where clause'</code>). Zen Cart stores a ticked checkbox under a combined key, and the plugin's check for downloadable attributes read that key as if it were a plain option number. It now reads both halves of the key, so checkbox, text and every other attribute type are checked the same way.</li>
         <li>BUGFIX: A multiship order couldn't be placed if the chosen shipping method's title contained an apostrophe (<em>Bob's Courier</em>, for example). The title was written into the order unescaped and broke the query. It's now escaped.</li>

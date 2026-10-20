@@ -345,6 +345,8 @@ class multiship_observer extends base
     // $is_multiship_order and $multiship_info are set by this plugin's
     // header_php_account_history_info_multiship.php, which does load -- index.php gathers
     // 'header_php' files through listModulePagesFiles() well before the body code is chosen.
+    // (On 2.0 and 2.1 through its older getTemplatePart() loop, which needs the include_path
+    // fallback in multiship_early_observer to open the file.)
     //
     // Only the template chosen for this one page is affected; every other page, and a
     // single-address order on this page, falls through untouched.

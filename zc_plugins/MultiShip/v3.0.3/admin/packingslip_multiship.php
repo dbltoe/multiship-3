@@ -15,7 +15,12 @@ require 'includes/application_top.php';
 require DIR_WS_CLASSES . 'currencies.php';
 $currencies = new currencies();
 
-$oID = (int)zen_db_prepare_input($_GET['oID']);
+$oID = (int)zen_db_prepare_input($_GET['oID'] ?? 0);
+
+// No order number: see invoice_multiship.php for why the order class must not be built.
+if ($oID <= 0) {
+    zen_redirect(zen_href_link(FILENAME_ORDERS));
+}
 
 // -----
 // The order class.
@@ -27,6 +32,17 @@ $oID = (int)zen_db_prepare_input($_GET['oID']);
 //
 require DIR_WS_CLASSES . 'order.php';
 $order = new order($oID);
+
+// -----
+// Only for a multiship order; the twin of the guard in invoice_multiship.php, which explains
+// it. An ordinary order goes to core's packing slip, a missing one to the orders page.
+//
+if (empty($order->info['is_multiship_order'])) {
+    if (empty($order->info)) {
+        zen_redirect(zen_href_link(FILENAME_ORDERS, 'oID=' . $oID . '&action=edit'));
+    }
+    zen_redirect(zen_href_link(FILENAME_ORDERS_PACKINGSLIP, 'oID=' . $oID));
+}
 
 // prepare order-status pulldown list
 $orders_status_array = array();

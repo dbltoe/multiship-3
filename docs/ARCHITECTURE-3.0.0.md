@@ -450,9 +450,17 @@ moved out of the DOM: the old file keyed off `.multishipLoginNotice` being prese
 is why that span used to be load-bearing and is now only a styling hook.
 
 It degrades well. The problem is caused by scripting, so with JavaScript off there is no
-focus to prevent. `listModulePagesFiles()` is `@since v2.2.0`, so on v2.0.0 and v2.1.0 the
-file is never read — inert, not broken, and those stores keep the behavior they have
-today.
+focus to prevent.
+
+**Correction, v3.0.3.** This paragraph used to say that on v2.0.0 and v2.1.0, which lack
+`listModulePagesFiles()`, the file is never read and is therefore inert. It is read — and
+that was the bug. Those versions' `getTemplatePart()` lists plugin `jscript_` and
+`header_php` files for a core page and then `require`s each from core's page directory,
+where it does not exist, so the login page (and, for a signed-in customer, My Account and
+checkout) died. 3.0.3 appends the plugin's catalog directory to the end of `include_path`
+on those versions, so the same `require` resolves to the plugin's copy while every file
+core has still wins; see `multiship_early_observer::letOlderLoadersFindPageFiles()`.
+These files now run on 2.0 and 2.1 exactly as they do on 2.2 and later.
 
 This is a stopgap. The real fix is upstream, and is a one-line change with precedent:
 four core pages — `create_account`, `checkout_shipping_address`,

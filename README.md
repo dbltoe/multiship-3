@@ -17,6 +17,11 @@ to. With no companion plugin installed, the seams change nothing.
 product with a ticked checkbox attribute, and one that stopped a multiship order from being
 placed when a shipping method's title contained an apostrophe.
 
+**v3.0.3** makes the plugin run on Zen Cart 2.0.x and 2.1.x, which it claimed but didn't: 2.0
+stopped every storefront page, and on both versions the login, My Account and checkout pages
+stopped on a file the plugin adds to them. It also stops the multiship invoice and packing slip
+warning when they're opened for an order that isn't a multiship order.
+
 ## Documentation
 
 - **[Read Me](https://dbltoe.github.io/multiship-3/docs/readme.html)**
@@ -31,7 +36,7 @@ placed when a shipping method's title contained an apostrophe.
 
 ## Installing
 
-Upload `zc_plugins/MultiShip/v3.0.2/` to your store root and install from **Admin → Modules →
+Upload `zc_plugins/MultiShip/v3.0.3/` to your store root and install from **Admin → Modules →
 Plugin Manager**.
 
 **Upgrading from 2.x: delete the old plugin's files, do not upload over them.** The previous

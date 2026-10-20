@@ -40,6 +40,8 @@ class multiship_early_observer extends base
 {
     public function __construct()
     {
+        self::letOlderLoadersFindPageFiles();
+
         $this->attach(
             $this,
             [
@@ -295,5 +297,48 @@ class multiship_early_observer extends base
             default:
                 break;
         }
+    }
+
+    // -----
+    // Zen Cart 2.0.x and 2.1.x only: let core's page loader actually open the header_php_ and
+    // jscript_ files this plugin adds to core pages (account, account_history,
+    // account_history_info, checkout_shipping, checkout_payment, checkout_confirmation,
+    // checkout_success, login).
+    //
+    // On those versions PageLoader::getTemplatePart() LISTS a plugin's files for a core page --
+    // it scans zc_plugins/<plugin>/<ver>/catalog/includes/modules/pages/<page> as well as core's
+    // directory -- but returns bare file names, and index.php and html_header.php then require
+    // every one of them from core's directory:
+    //     require($code_page_directory . '/' . $value);
+    // So a file that exists only in the plugin is required from a path where it does not exist,
+    // and the page dies. The first one a visitor meets is the login page's
+    // jscript_multiship_login_focus.php; a signed-in customer meets the rest on My Account and
+    // in checkout. 2.2.0 replaced that loop with PageLoader::listModulePagesFiles(), which
+    // returns full paths, and the problem went with it.
+    //
+    // The fix rests on how PHP resolves that require. $code_page_directory is relative
+    // (includes/modules/pages/<page>), and a relative path that does not start with ./ or ../
+    // is searched for along include_path. Appending this plugin's catalog directory to the END
+    // of include_path therefore changes nothing for any file core already has -- the store's
+    // own directory comes first and wins -- and gives the loop somewhere to find the files that
+    // only this plugin ships. No plugin file shares a path with a 2.0 or 2.1 core file, so
+    // nothing of core's can be shadowed even on a host whose include_path omits '.'.
+    //
+    // Detected by capability rather than by version number: a loader that has
+    // listModulePagesFiles() resolves plugin page files itself and is left alone.
+    //
+    protected static function letOlderLoadersFindPageFiles(): void
+    {
+        if (method_exists('Zencart\PageLoader\PageLoader', 'listModulePagesFiles')) {
+            return;
+        }
+
+        // This file is catalog/includes/classes/observers/; three levels up is catalog/.
+        $plugin_catalog_dir = dirname(__DIR__, 3);
+        $include_path = (string)get_include_path();
+        if (in_array($plugin_catalog_dir, explode(PATH_SEPARATOR, $include_path), true)) {
+            return;
+        }
+        set_include_path($include_path . PATH_SEPARATOR . $plugin_catalog_dir);
     }
 }
