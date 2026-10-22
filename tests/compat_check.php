@@ -193,4 +193,28 @@ check($readme_root === $readme_plugin, 'docs/readme.html and the plugin copy are
 check(strpos($readme_plugin, 'Version ' . substr($ver, 1) . '</span>') !== false, 'readme title carries ' . $ver);
 check(strpos($readme_plugin, '<li>' . $ver . ', ') !== false, 'readme changelog has a ' . $ver . ' entry');
 
+// -----
+// 5. v3.0.4: Zen Cart 3.0.0 stays listed (John: every plugin targets 1.5.8-3.0.0), and no
+// plugin file calls zen_db_output(), which core marks deprecated on every version from 2.0
+// (it logged a notice per status comment on the multiship invoice and packing slip).
+//
+check(preg_match("/'zcVersions' => \[[^\]]*'v3\.0\.0'/", $manifest) === 1, "manifest zcVersions include v3.0.0");
+$deprecated_calls = [];
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($ver_dir, FilesystemIterator::SKIP_DOTS));
+foreach ($it as $file) {
+    if ($file->getExtension() === 'php' && preg_match('/\bzen_db_output\s*\(/', file_get_contents($file->getPathname()))) {
+        $deprecated_calls[] = substr($file->getPathname(), strlen($ver_dir) + 1);
+    }
+}
+check($deprecated_calls === [], 'no plugin file calls the deprecated zen_db_output()' . ($deprecated_calls ? ' (' . implode(', ', $deprecated_calls) . ')' : ''));
+
+// -----
+// 6. v3.0.4: checkoutInitialize() builds order_total once and refreshes its module objects for
+// each later address. A "new order_total" per address priced every address after the first to
+// nothing on Zen Cart 2.1, whose language loader answers false for an already-loaded module file.
+//
+$ms_src = file_get_contents($catalog . 'includes/classes/class.multiship.php');
+check(preg_match_all('/=\s*new\s+order_total\s*[;(]/', $ms_src) === 1, 'class.multiship.php creates order_total exactly once');
+check(strpos($ms_src, 'if ($order_total_modules === null) {') !== false && strpos($ms_src, '$GLOBALS[$ot_class] = new $ot_class();') !== false, 'later addresses get fresh order-total module objects, not a new order_total');
+
 finish();

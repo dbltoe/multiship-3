@@ -29,7 +29,7 @@
 // cannot leave the button pointing at a directory that no longer exists. The version
 // folder name and this value must always match.
 //
-$multiship_version = 'v3.0.3';
+$multiship_version = 'v3.0.4';
 
 // -----
 // Declared once and used for both the button below and github_repo at the foot of this file,
@@ -182,11 +182,12 @@ return [
     // 'v2.2.2' today. It is here so the entry is already correct when 2.3.0 ships, which is
     // the branch this plugin was developed against.
     //
-    // 3.0.0 is deliberately absent. The 3.0.0-dev master was audited seam by seam and nothing
-    // structurally blocks this plugin, but it is a moving target and has never been run
-    // against a 3.0.0 store. See docs/multiship_core_requirements.md.
+    // v3.0.0 is listed since v3.0.4. v3.0.3 was run on the zclab rig's 3.0.0 site (the
+    // master branch, PHP 8.3-8.5) on 2026-10-22: install and uninstall, the admin pages, and a
+    // signed-in two-address order through the grid, payment and confirmation to a placed
+    // order, its sub-orders, invoice and packing slip, all without an error logged.
     //
-    'zcVersions' => ['v2.0.0', 'v2.0.1', 'v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0'],
+    'zcVersions' => ['v2.0.0', 'v2.0.1', 'v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0', 'v3.0.0'],
     'changelog' => '', // online URL (eg github release tag page, or changelog file there) or local filename only, ie: changelog.txt (in same dir as this manifest file)
     // Public, and surfaced as a button in the plugin's description -- see the note above.
     // Declared at the top of this file so the field and the button cannot disagree.

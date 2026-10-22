@@ -12,7 +12,7 @@
 
 <body>
 <div id="top">
-  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 2.3.0 &mdash; <span class="smaller">Version 3.0.3</span></h1>
+  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 3.0.0 &mdash; <span class="smaller">Version 3.0.4</span></h1>
   <ul id="menu">
     <li><a href="#introduction" class="drop">Introduction</a>
       <div class="dropdown_1column">
@@ -92,7 +92,7 @@
           <p><strong>That care stops at the inbox.</strong> A multiship order also notifies the customer, and it does so through Zen Cart's own order emails rather than any of its own &mdash; so those emails carry the stock <code>/email/header.jpg</code> banner Zen Cart ships with, unless you have replaced it with your own artwork. A customer who has just come through pages that look like your store then opens mail that does not. Worth reading <a href="#emailbanner">The image at the top of your emails</a> before you go live, because this plugin sends more of that mail than your store does now &mdash; one per parcel, not one per order.</p></li>
       <li>Uninstalling really does remove it.</li>
     </ul>
-    <p>Developed and tested against Zen Cart 2.3 with the ZCA Bootstrap template, and declared compatible with Zen Cart 2.0.0 through 2.3.0. It has not been run against a Zen Cart 3.0.0 store.</p>
+    <p>Developed and tested against Zen Cart 2.3 with the ZCA Bootstrap template, and declared compatible with Zen Cart 2.0.0 through 3.0.0. Version 3.0.4 adds 3.0.0 after a complete two-address order was placed on a Zen Cart 3.0.0 test store.</p>
   </div>
 </div>
 
@@ -214,6 +214,11 @@
 <div class="the_content">
     <p class="sub-content">File lists below are marked <span class="added">[+] added</span>, <span class="removed">[-] removed</span>, <span class="template">[template] a file in your active template</span>, and <span class="corefile">[core] a Zen Cart core file</span>. Each marker is a word as well as a color, so the list reads the same whether or not the colors do.</p>
     <ul>
+      <li>v3.0.4, 2026<ul>
+        <li>BUGFIX: On Zen Cart 2.1.x an order sent to two or more addresses was charged for the first address only. Every address after the first priced to nothing, so its sub-order was saved without totals, and the payment page, the order total and the amount charged covered the first address alone, while every address still shipped. Zen Cart 2.1's language loader reports a module's language file as not loaded the second time it is asked for it in a request, and its order totals class then leaves that module out; the plugin built a new one for each address. It now builds it once and gives each address fresh order-total modules, on every Zen Cart version.</li>
+        <li>BUGFIX: The multiship invoice and packing slip printed each status comment through <code>zen_db_output()</code>, which Zen Cart marks as deprecated, so every view of a multiship order's invoice or packing slip added a deprecation notice to the logs. They now use <code>zen_output_string_protected()</code>, as Zen Cart itself recommends.</li>
+        <li>CHANGE: Zen Cart 3.0.0 is now listed among the supported versions. A complete two-address order was placed on a Zen Cart 3.0.0 test store, through the address grid, payment and confirmation, and its sub-orders, invoice and packing slip checked.</li>
+      </ul></li>
       <li>v3.0.3, 2026<ul>
         <li>BUGFIX: On Zen Cart 2.0.x every storefront page stopped with <code>Class "multiship_early_observer" not found</code>. Zen Cart 2.0 can't find a plugin's storefront class files unless the plugin names their folder explicitly, and this plugin relied on the default. It now names it on every version.</li>
         <li>BUGFIX: On Zen Cart 2.0.x and 2.1.x the login page, and for a signed-in customer the My Account, order history and checkout pages, stopped with <code>Failed opening required 'includes/modules/pages/login/jscript_multiship_login_focus.php'</code>. Those versions find a plugin's files for a core page but then look for them in the core folder. The plugin now points them at its own folder, on 2.0 and 2.1 only, so its page files run there just as they do on 2.2 and later. Files Zen Cart has of its own are still found first.</li>

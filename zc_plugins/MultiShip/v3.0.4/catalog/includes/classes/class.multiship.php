@@ -1216,6 +1216,7 @@ class multiship extends base
             $multiship_grand_total = 0;
             $multiship_shipping_total = 0;
             $invalid_address_found = false;
+            $order_total_modules = null;
             foreach ($this->cart as $address_id => $products) {
                 unset($this->cart[$address_id]['address-error']);
                 
@@ -1307,8 +1308,27 @@ class multiship extends base
                 //
                 $order = new order;
 
+                // -----
+                // One order_total for the whole loop, with fresh module objects for every address after
+                // the first. Zen Cart 2.1's language loader answers false when a module's language file
+                // was already loaded in the request, and the order_total constructor skips any module it
+                // gets false for, so a second "new order_total" there came up with no modules at all.
+                // Every address after the first then priced to nothing: its sub-order saved no totals,
+                // and the order total and the amount charged covered the first address alone (v3.0.3,
+                // found on the zclab rig 2026-10-22). Re-creating each module object resets its output
+                // exactly as the constructor would, on every version from 2.0 to 3.0.
+                //
                 require_once DIR_WS_CLASSES . 'order_total.php';
-                $order_total_modules = new order_total;
+                if ($order_total_modules === null) {
+                    $order_total_modules = new order_total;
+                } else {
+                    foreach ($order_total_modules->modules ?? [] as $ot_module) {
+                        $ot_class = pathinfo($ot_module, PATHINFO_FILENAME);
+                        if (class_exists($ot_class, false)) {
+                            $GLOBALS[$ot_class] = new $ot_class();
+                        }
+                    }
+                }
                 $order_total_modules->collect_posts();
                 $order_total_modules->pre_confirmation_check();
                 

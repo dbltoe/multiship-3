@@ -210,7 +210,7 @@ foreach ($order->info['multiship_info'] as $multiship_id => $multiship_info) {
       <tr>
         <td class="smallText" align="center" valign="top"><?php echo zen_datetime_short($orders_history->fields['date_added']); ?></td>
         <td class="smallText" valign="top"><?php echo $orders_status_array[$orders_history->fields['orders_status_id']]; ?></td>
-        <td class="smallText" valign="top"><?php echo ($orders_history->fields['comments'] == '' ? TEXT_NONE : nl2br(zen_db_output($orders_history->fields['comments']))); ?>&nbsp;</td>
+        <td class="smallText" valign="top"><?php echo ($orders_history->fields['comments'] == '' ? TEXT_NONE : nl2br(zen_output_string_protected($orders_history->fields['comments']))); ?>&nbsp;</td>
       </tr>
 <?php
                 $orders_history->MoveNext();

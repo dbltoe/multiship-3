@@ -7,7 +7,7 @@ admin.
 
 **v3.0.0** is a rewrite as a fully encapsulated `zc_plugin`. It changes no core file and no
 template file, installs and uninstalls from Plugin Manager, and runs on **Zen Cart 2.0.0
-through 2.3.0** on PHP 8.
+through 3.0.0** on PHP 8.
 
 **v3.0.1** fixes four bugs found on split orders under a free-shipping threshold and adds the
 notifier seams that [Multiple Ship-To Addresses Pro](https://www.myzencartzone.com/) attaches
@@ -21,6 +21,11 @@ placed when a shipping method's title contained an apostrophe.
 stopped every storefront page, and on both versions the login, My Account and checkout pages
 stopped on a file the plugin adds to them. It also stops the multiship invoice and packing slip
 warning when they're opened for an order that isn't a multiship order.
+
+**v3.0.4** fixes Zen Cart 2.1.x charging a two-or-more-address order for its first address only,
+adds Zen Cart 3.0.0 to the supported versions after a complete two-address order on a 3.0.0 test
+store, and stops the multiship invoice and packing slip logging a deprecation notice for each
+status comment.
 
 ## Documentation
 
@@ -36,7 +41,7 @@ warning when they're opened for an order that isn't a multiship order.
 
 ## Installing
 
-Upload `zc_plugins/MultiShip/v3.0.3/` to your store root and install from **Admin → Modules →
+Upload `zc_plugins/MultiShip/v3.0.4/` to your store root and install from **Admin → Modules →
 Plugin Manager**.
 
 **Upgrading from 2.x: delete the old plugin's files, do not upload over them.** The previous
