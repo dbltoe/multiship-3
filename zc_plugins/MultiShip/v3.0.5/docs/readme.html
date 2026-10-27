@@ -12,7 +12,7 @@
 
 <body>
 <div id="top">
-  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 3.0.0 &mdash; <span class="smaller">Version 3.0.4</span></h1>
+  <h1 id="title">Multiple Ship-To Addresses for Zen Cart 2.0.0 &ndash; 3.0.0 &mdash; <span class="smaller">Version 3.0.5</span></h1>
   <ul id="menu">
     <li><a href="#introduction" class="drop">Introduction</a>
       <div class="dropdown_1column">
@@ -108,7 +108,7 @@
 
     <h3 class="inner">Settings</h3>
     <div class="sub-content">
-      <p>Under <em>Configuration &rarr; Multiple Ship-to Addresses</em>:</p>
+      <p>Under <em>Configuration &rarr; Multiple Ship-to Addresses</em>, or click <b>Settings</b> beside the plugin in <em>Modules &rarr; Plugin Manager</em> once it is installed:</p>
       <ol>
         <li><b>Unsupported Payment Methods</b> &mdash; a comma-separated list of payment modules to hide when an order is going to several addresses. Empty by default, meaning every payment method is offered.</li>
         <li><b>Maximum Delivery Addresses</b> &mdash; how many addresses one multiship order may spread across. Defaults to 10. This is deliberately separate from <em>Maximum Address Book Entries</em> under <em>Customer Details</em>, which is left alone; set this no lower than that store-wide limit.</li>
@@ -186,7 +186,7 @@
       <li>Copy the <code>zc_plugins/MultiShip</code> folder into your store's <code>zc_plugins</code> directory, so that you end up with <code>/zc_plugins/MultiShip/v3.0.0/</code> containing <code>manifest.php</code>. Nothing goes anywhere else &mdash; do not copy anything into <code>/includes/</code> or into your admin directory.</li>
       <li>Sign in to your Zen Cart admin and go to <em>Modules &rarr; Plugin Manager</em>.</li>
       <li>Find <b>Multiple Ship-To Addresses</b> in the list and click <b>Install</b>. This creates the tables, adds the configuration settings and registers the invoice and packing-slip pages.</li>
-      <li>Go to <em>Configuration &rarr; Multiple Ship-to Addresses</em> and review the settings described under <a href="#zcai">Zen Cart Admin Interfaces</a>. The defaults are usable as they stand; there is no enable switch to find, because installing the plugin is what enables it.</li>
+      <li>Go to <em>Configuration &rarr; Multiple Ship-to Addresses</em> (or click <b>Settings</b> beside the plugin in the Plugin Manager) and review the settings described under <a href="#zcai">Zen Cart Admin Interfaces</a>. The defaults are usable as they stand; there is no enable switch to find, because installing the plugin is what enables it.</li>
       <li>Before you take real orders, audit your <b>product weights</b> &mdash; see the warning immediately below.</li>
     </ol>
     <div class="sub-content">
@@ -214,6 +214,9 @@
 <div class="the_content">
     <p class="sub-content">File lists below are marked <span class="added">[+] added</span>, <span class="removed">[-] removed</span>, <span class="template">[template] a file in your active template</span>, and <span class="corefile">[core] a Zen Cart core file</span>. Each marker is a word as well as a color, so the list reads the same whether or not the colors do.</p>
     <ul>
+      <li>v3.0.5, 2026<ul>
+        <li>NEW: A <em>Settings</em> button in the Plugin Manager, beside <em>ReadMe</em>, that opens this plugin's settings. It appears once the plugin is installed and goes away when it's uninstalled. The buttons now read <em>ReadMe | Settings | Forum Thread | GitHub</em> in one row.</li>
+      </ul></li>
       <li>v3.0.4, 2026<ul>
         <li>BUGFIX: On Zen Cart 2.1.x an order sent to two or more addresses was charged for the first address only. Every address after the first priced to nothing, so its sub-order was saved without totals, and the payment page, the order total and the amount charged covered the first address alone, while every address still shipped. Zen Cart 2.1's language loader reports a module's language file as not loaded the second time it is asked for it in a request, and its order totals class then leaves that module out; the plugin built a new one for each address. It now builds it once and gives each address fresh order-total modules, on every Zen Cart version.</li>
         <li>BUGFIX: The multiship invoice and packing slip printed each status comment through <code>zen_db_output()</code>, which Zen Cart marks as deprecated, so every view of a multiship order's invoice or packing slip added a deprecation notice to the logs. They now use <code>zen_output_string_protected()</code>, as Zen Cart itself recommends.</li>

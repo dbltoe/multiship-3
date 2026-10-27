@@ -43,6 +43,7 @@ class ScriptedInstaller extends ScriptedInstallBase
 
         $success = $this->addConfigurationKeys($cgi) && $success;
         $this->registerAdminPages($cgi);
+        $this->refreshPluginDescription();
 
         return $success;
     }
@@ -66,6 +67,7 @@ class ScriptedInstaller extends ScriptedInstallBase
         $success = $this->addConfigurationKeys($cgi) && $success;
         $this->registerAdminPages($cgi);
         $success = $this->removeRetiredConfigurationKeys() && $success;
+        $this->refreshPluginDescription();
 
         return $success;
     }
@@ -95,8 +97,33 @@ class ScriptedInstaller extends ScriptedInstallBase
               WHERE configuration_group_title = '" . self::CONFIG_GROUP_TITLE . "'
               LIMIT 1"
         ) && $success;
+        $this->refreshPluginDescription();
 
         return $success;
+    }
+
+    // -----
+    // Save the manifest's description again, now that the Settings page has been registered
+    // (install, upgrade) or removed (uninstall), so the Settings button follows suit.
+    //
+    // Needed on v2.0 and v2.1, which store plugin_control.description only when Plugin
+    // Manager first sees the plugin, before Install, so the button (built in manifest.php
+    // from the registered admin page) would never appear there. v2.2 and later rewrite the
+    // description from the manifest on every Plugin Manager visit, so this changes nothing
+    // there. Core's own install/uninstall step changes only status and version, so the
+    // description saved here stays.
+    //
+    protected function refreshPluginDescription()
+    {
+        $manifest = require dirname(__DIR__) . '/manifest.php';
+        if (!is_array($manifest) || !isset($manifest['pluginDescription'])) {
+            return;
+        }
+        $this->executeInstallerSql(
+            "UPDATE " . TABLE_PLUGIN_CONTROL
+            . " SET description = '" . $this->dbConn->prepare_input($manifest['pluginDescription']) . "'"
+            . " WHERE unique_key = 'MultiShip'"
+        );
     }
 
     // -------------------------------------------------------------------------

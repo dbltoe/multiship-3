@@ -29,7 +29,7 @@
 // cannot leave the button pointing at a directory that no longer exists. The version
 // folder name and this value must always match.
 //
-$multiship_version = 'v3.0.4';
+$multiship_version = 'v3.0.5';
 
 // -----
 // Declared once and used for both the button below and github_repo at the foot of this file,
@@ -64,11 +64,37 @@ $multiship_download = 'https://www.zen-cart.com/downloads.php?do=file&id=1823';
 //
 $multiship_forum = 'https://www.zen-cart.com/threads/189154';
 
-$multiship_readme_button = '';
+$multiship_readme_url = '';
 if (defined('DIR_WS_CATALOG')) {
-    $multiship_readme_button =
-        '<br /><br /><a href="' . DIR_WS_CATALOG . 'zc_plugins/MultiShip/' . $multiship_version . '/docs/readme.html"'
-        . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">Read Me</a>';
+    $multiship_readme_url = DIR_WS_CATALOG . 'zc_plugins/MultiShip/' . $multiship_version . '/docs/readme.html';
+}
+
+// -----
+// The Settings button: this plugin's Configuration page, shown only once the plugin is
+// installed (v3.0.5).
+//
+// The page's gID is assigned at install, so it differs from store to store and can't be
+// written here; it's read from the admin page the installer registers (page key
+// configMultiship). The link is relative ("index.php?cmd=configuration&gID=N") because
+// Plugin Manager is an admin page, so it survives a domain or admin-folder rename.
+//
+// Zen Cart reads manifests only on the Plugin Manager page, but the lookup is still guarded
+// so a manifest read anywhere else (no database, catalog side, CLI) just leaves the button
+// out. On v2.2 and later this file is re-read on every Plugin Manager visit, so the button
+// follows the install state by itself; on v2.0 and v2.1 the installer saves the re-read
+// description at Install, Upgrade and Uninstall (refreshPluginDescription()).
+//
+$multiship_settings_url = '';
+if (defined('IS_ADMIN_FLAG') && IS_ADMIN_FLAG === true && defined('TABLE_ADMIN_PAGES')
+    && isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
+    $multiship_page = $GLOBALS['db']->Execute(
+        "SELECT main_page, page_params FROM " . TABLE_ADMIN_PAGES
+        . " WHERE page_key = 'configMultiship' LIMIT 1"
+    );
+    if (!$multiship_page->EOF && defined($multiship_page->fields['main_page'])) {
+        $multiship_settings_url = 'index.php?cmd=' . constant($multiship_page->fields['main_page'])
+            . '&' . $multiship_page->fields['page_params'];
+    }
 }
 
 // -----
@@ -90,9 +116,20 @@ if (defined('DIR_WS_CATALOG')) {
 // ReadMe and Install". Deciding which of two buttons should be quieter is not worth having one
 // of them not look like a button at all.
 //
-$multiship_github_button =
-    '&nbsp;<a href="' . $multiship_github . '"'
-    . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">GitHub</a>';
+// -----
+// One row of buttons, the layout dbltoe set for every free plugin on 2026-10-27:
+//     ReadMe | Settings | Forum Thread | GitHub
+// The tighter padding and 4px gaps keep all four on one line in Plugin Manager's side panel
+// from a 1366px-wide window up, so the Author line stays above the fold. Settings opens in
+// the same tab, being part of this admin; the others open a new one.
+//
+$multiship_button_gap = '4px';
+$multiship_button_style = ' style="margin:0 ' . $multiship_button_gap . ' 0 0;padding-left:8px;padding-right:8px"';
+$multiship_button = static function ($url, $label, $new_tab) use ($multiship_button_style) {
+    return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"'
+        . ($new_tab ? ' target="_blank" rel="noopener noreferrer"' : '')
+        . ' class="btn btn-primary" role="button"' . $multiship_button_style . '>' . $label . '</a>';
+};
 
 // -----
 // Cindy's credit, given its own line rather than buried in the description.
@@ -112,12 +149,17 @@ $multiship_github_button =
 // worked out how to do it in the first place.
 //
 // -----
-// The support thread, a third button beside Read Me and GitHub. It was a plain link on its own
-// line until 2026-10-05, when dbltoe asked for a Support Thread button on every free plugin.
+// The support thread is a button in the row. It was a plain link on its own line until
+// 2026-10-05, when dbltoe asked for a Support Thread button on every free plugin; it has
+// been labeled "Forum Thread" since v3.0.5.
 //
-$multiship_forum_button =
-    '&nbsp;<a href="' . $multiship_forum . '"'
-    . ' target="_blank" rel="noopener" class="btn btn-primary" role="button">Forum Support Thread</a>';
+$multiship_links =
+    '<div style="margin:10px 0 0;padding:0 0 0 ' . $multiship_button_gap . '">'
+    . ($multiship_readme_url !== '' ? $multiship_button($multiship_readme_url, 'ReadMe', true) : '')
+    . ($multiship_settings_url !== '' ? $multiship_button($multiship_settings_url, 'Settings', false) : '')
+    . $multiship_button($multiship_forum, 'Forum Thread', true)
+    . $multiship_button($multiship_github, 'GitHub', true)
+    . '</div>';
 
 $multiship_credits =
     '<div style="margin:8px 0 0;"><em>'
@@ -127,7 +169,7 @@ $multiship_credits =
     . '</em></div>';
 
 // -----
-// The three buttons are appended to pluginDescription below.
+// The row of buttons is appended to pluginDescription below.
 //
 // This comment used to explain why a GitHub button must never be added: the repository was
 // private, so a link would have given every store owner a 404. dbltoe has made it public, so
@@ -151,9 +193,7 @@ return [
         'Allows a customer to ship the individual products in their cart to two or more '
         . 'different addresses, splitting the order into per-address sub-orders that can be '
         . 'tracked and status-updated independently in the admin.'
-        . $multiship_readme_button
-        . $multiship_github_button
-        . $multiship_forum_button
+        . $multiship_links
         . $multiship_credits,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
     // Stored as plugin_control.zc_contrib_id and sent to zen-cart.com to check for newer

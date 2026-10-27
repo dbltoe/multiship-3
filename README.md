@@ -27,12 +27,15 @@ adds Zen Cart 3.0.0 to the supported versions after a complete two-address order
 store, and stops the multiship invoice and packing slip logging a deprecation notice for each
 status comment.
 
+**v3.0.5** adds a Settings button in Plugin Manager that opens the plugin's settings once it's
+installed, and puts the buttons in one row: ReadMe | Settings | Forum Thread | GitHub.
+
 ## Documentation
 
 - **[Read Me](https://dbltoe.github.io/multiship-3/docs/readme.html)**
   — what it does, how it behaves at each step of checkout, what it does about One Page
   Checkout, Edit Orders, coupons and group pricing, and how to install and remove it. The same
-  page is reachable from the Read Me button in Plugin Manager once installed.
+  page is reachable from the ReadMe button in Plugin Manager once installed.
 - [Architecture notes](docs/ARCHITECTURE-3.0.0.md) — why the plugin is built the way it is,
   which core seams it depends on, what has been verified live, and what is known not to work.
 - [Store owner notes](docs/STORE-OWNER-NOTES.md)
@@ -41,7 +44,7 @@ status comment.
 
 ## Installing
 
-Upload `zc_plugins/MultiShip/v3.0.4/` to your store root and install from **Admin → Modules →
+Upload `zc_plugins/MultiShip/v3.0.5/` to your store root and install from **Admin → Modules →
 Plugin Manager**.
 
 **Upgrading from 2.x: delete the old plugin's files, do not upload over them.** The previous

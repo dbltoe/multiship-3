@@ -23,7 +23,7 @@ foreach ($b in $builds) {
     if ($lintErrors) { $failed += "$b lint" }
     Write-Host "$b lint: $($files.Count) files, $lintErrors errors"
 
-    foreach ($mode in 'static', 'loader-old', 'loader-new') {
+    foreach ($mode in 'static', 'loader-old', 'loader-new', 'manifest') {
         $out = & $php -n $check $mode 2>&1
         $code = $LASTEXITCODE
         ($out | Select-Object -Last 1) | ForEach-Object { Write-Host "$b ${mode}: $_" }

@@ -52,6 +52,51 @@ $core_pages = [
 
 $mode = $argv[1] ?? 'static';
 
+if ($mode === 'manifest') {
+    // -----
+    // 7. v3.0.5: Plugin Manager's row is ReadMe | Settings | Forum Thread | GitHub (dbltoe,
+    // 2026-10-27), with Settings only while the configMultiship admin page is registered, and the
+    // installer re-saves the description at Install, Upgrade and Uninstall (v2.0/v2.1 store it once).
+    //
+    final class MultishipFakeDb
+    {
+        public $row;
+        public $sql = '';
+        public function Execute($sql)
+        {
+            $this->sql = $sql;
+            return $this->row === null
+                ? (object)['EOF' => true, 'fields' => []]
+                : (object)['EOF' => false, 'fields' => $this->row];
+        }
+    }
+    define('IS_ADMIN_FLAG', true);
+    define('TABLE_ADMIN_PAGES', 'zen_admin_pages');
+    define('DIR_WS_CATALOG', '/shop/');
+    define('FILENAME_CONFIGURATION', 'configuration');
+    $row_labels = static function (array $m): string {
+        preg_match_all('/role="button"[^>]*>([^<]+)<\/a>/', $m['pluginDescription'], $l);
+        return implode('|', $l[1]);
+    };
+    $GLOBALS['db'] = new MultishipFakeDb();
+    $m_before = require $ver_dir . '/manifest.php';
+    check($row_labels($m_before) === 'ReadMe|Forum Thread|GitHub', 'not installed: ReadMe | Forum Thread | GitHub (' . $row_labels($m_before) . ')');
+    check(strpos($GLOBALS['db']->sql, "page_key = 'configMultiship'") !== false && strpos($GLOBALS['db']->sql, 'zen_admin_pages') !== false, 'Settings is looked up by page key configMultiship');
+    $GLOBALS['db']->row = ['main_page' => 'FILENAME_CONFIGURATION', 'page_params' => 'gID=42'];
+    $m_after = require $ver_dir . '/manifest.php';
+    check($row_labels($m_after) === 'ReadMe|Settings|Forum Thread|GitHub', 'installed: ReadMe | Settings | Forum Thread | GitHub (' . $row_labels($m_after) . ')');
+    check(strpos($m_after['pluginDescription'], 'href="index.php?cmd=configuration&amp;gID=42"') !== false, 'Settings links relatively to this store\'s group');
+    check(strpos($m_after['pluginDescription'], '/shop/zc_plugins/MultiShip/' . $ver . '/docs/readme.html') !== false, 'ReadMe points at this version\'s readme');
+    $installer = file_get_contents($ver_dir . '/Installer/ScriptedInstaller.php');
+    foreach (['executeInstall', 'executeUpgrade', 'executeUninstall'] as $method) {
+        preg_match('/function ' . $method . '\(.*?\r?\n    \}\r?\n/s', $installer, $body);
+        check(isset($body[0]) && strpos($body[0], '$this->refreshPluginDescription();') !== false, "$method() re-saves the description");
+    }
+    check(strpos($installer, "WHERE unique_key = 'MultiShip'") !== false, 'the description is saved to the MultiShip row');
+
+    finish();
+}
+
 if ($mode === 'loader-old' || $mode === 'loader-new') {
     // -----
     // Stand-ins for the two generations of core's page loader: 2.2.0 added
