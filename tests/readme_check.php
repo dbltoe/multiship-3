@@ -83,8 +83,14 @@ $readme_lines = explode("\n", $readme);
 //
 check($readme !== '', 'README.md is in the plugin\'s version folder');
 check(is_file($repo . '/README.md') && md5_file($repo . '/README.md') === md5_file($ver_dir . '/README.md'), 'the repository-root README.md is byte-identical to the plugin\'s');
-$html_readmes = array_values(array_filter($all, fn($f) => preg_match('~(^|/)readme\.html?$~i', $f) === 1));
-check($html_readmes === [], 'no readme.html anywhere (it was served publicly from zc_plugins/)' . ($html_readmes ? ': ' . implode(', ', $html_readmes) : ''));
+// The one exception is the repository's docs/readme.html: a pointer page kept so the old
+// GitHub Pages address still answers. It isn't in the plugin and holds no guide.
+$html_readmes = array_values(array_filter($all, fn($f) => preg_match('~(^|/)readme\.html?$~i', $f) === 1 && $f !== 'docs/readme.html'));
+check($html_readmes === [], 'no readme.html anywhere but the pointer page (it was served publicly from zc_plugins/)' . ($html_readmes ? ': ' . implode(', ', $html_readmes) : ''));
+$pointer = (string)@file_get_contents($repo . '/docs/readme.html');
+check($pointer !== '' && strlen($pointer) < 2000 && strpos($pointer, 'https://github.com/dbltoe/multiship-3#readme') !== false
+    && stripos($pointer, '<script') === false && preg_match('~<h2~i', $pointer) === 0,
+    'docs/readme.html is only a short pointer to the README, with no script');
 check(!is_dir($ver_dir . '/docs'), 'the plugin ships no docs/ folder (it held only the HTML readme and its assets)');
 $public_docs = array_values(array_filter($all, fn($f) => strpos($f, 'zc_plugins/') === 0 && preg_match('~\.(html?|md|txt)$~i', $f) === 1
     && !in_array(basename($f), ['README.md', 'index.html'], true)));
