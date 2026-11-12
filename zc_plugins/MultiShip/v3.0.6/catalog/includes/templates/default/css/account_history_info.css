@@ -1,4 +1,4 @@
-/* Multiple Ship-To Addresses (lat9) / v3.0.0 My Zen Cart Host (dbltoe) - GPL v3
+/* Multiple Ship-To Addresses / v3.0.0 My Zen Cart Host (dbltoe) - GPL v3
    Auto-loads on account_history_info when the order went to several addresses.
 
    The box around each recipient takes its rule from currentColor, so it follows whatever
