@@ -274,7 +274,8 @@ Done:
 - The Edit Orders block made to actually fire; it never had
 - `MODULE_MULTISHIP_MAX_ADDRESSES` added, so a multiship order is not capped by the
   store-wide address-book limit
-- The shipped `readme.html` rewritten for the encapsulated plugin
+- The shipped readme rewritten for the encapsulated plugin (since v3.0.6 it is
+  `README.md`, opened from the admin; see the accessibility item below)
 
 Outstanding:
 
@@ -295,27 +296,19 @@ Outstanding:
   and needs `aria-describedby`. Also unresolved: whether the three actions should be
   a `fieldset`/`legend` group.
 
-  **`docs/readme.html`** — now shipped inside the plugin and linked from the Plugin
-  Manager listing, so it is a page store owners will actually open. Two Level A
-  failures found by inspection:
-
-  - ~~no `lang` attribute on `<html>`~~ — **fixed**, `lang="en"` added
-  - still open: six `<h1>` elements, now in the sequence
-    `h1 h1 h2 h2 h1 h1 h2 h2 h1 h2 h2 h1 h2 h2 h1` — the document has no single
-    top-level heading and its outline does not nest (1.3.1 Info and Relationships).
-    Fixing it means demoting every section heading and restyling `style.css` to
-    match, which is why it was not folded into the content rewrite.
-
-  Otherwise cleaner than expected: no images, so no missing `alt`; no tables; no
-  "click here" link text; no inline styles; no `<font>` or `<center>`. Contrast and
-  focus visibility still need checking against `docs/style.css` and `menu.css`, which
-  a static read cannot settle, as does the keyboard behavior of
-  `back_to_top.min.js`.
+  **The readme** — through v3.0.5 this was an HTML page shipped inside the plugin,
+  with two Level A failures found by inspection (no `lang` attribute, fixed; and six
+  `<h1>` elements whose outline did not nest, never fixed). **Closed by replacement in
+  v3.0.6:** the guide is now `README.md`, shown by `admin/multiship_readme.php`
+  (the ReadMe button in Plugin Manager, superusers only), and the HTML page, its two
+  stylesheets and its script are gone. The page that renders it declares `lang="en"`,
+  has one `<h1>` with `<h2>`/`<h3>` nested beneath it, and runs no script. Its
+  contrast and focus visibility have not been measured.
 
   **Contrast target: 7:1 wherever achievable** (WCAG 2.2 AAA, 1.4.6 Contrast
   Enhanced), not the 4.5:1 of AA. This is the project standard set by dbltoe and
   applies to anything this plugin ships with color of its own — currently the
-  readme's stylesheets. The storefront pages deliberately inherit the store
+  admin ReadMe page's inline style. The storefront pages deliberately inherit the store
   template's colors, so their contrast is the store's to answer for, not ours;
   that is a consequence of shipping almost no CSS and is the right trade, but it
   means the standard binds only where we actually choose colors.

@@ -10,7 +10,10 @@
 //   php tests/compat_check.php loader-old       include_path fallback, 2.0/2.1-style loader
 //   php tests/compat_check.php loader-new       include_path untouched, 2.2+-style loader
 //
-// tests/run_all.ps1 runs all three on every PHP build in F:\zclab\php. Exit code 0 = pass.
+//   php tests/compat_check.php manifest         Plugin Manager's button row
+//
+// tests/run_all.ps1 runs all of them, and tests/readme_check.php (README.md, the admin ReadMe
+// page and the manifest's superuser gate), on every PHP build in F:\zclab\php. Exit code 0 = pass.
 //
 $plugin_root = dirname(__DIR__) . '/zc_plugins/MultiShip';
 $versions = glob($plugin_root . '/v*', GLOB_ONLYDIR);
@@ -86,7 +89,10 @@ if ($mode === 'manifest') {
     $m_after = require $ver_dir . '/manifest.php';
     check($row_labels($m_after) === 'ReadMe|Settings|Forum Thread|GitHub', 'installed: ReadMe | Settings | Forum Thread | GitHub (' . $row_labels($m_after) . ')');
     check(strpos($m_after['pluginDescription'], 'href="index.php?cmd=configuration&amp;gID=42"') !== false, 'Settings links relatively to this store\'s group');
-    check(strpos($m_after['pluginDescription'], '/shop/zc_plugins/MultiShip/' . $ver . '/docs/readme.html') !== false, 'ReadMe points at this version\'s readme');
+    // v3.0.6: ReadMe opens README.md through the plugin's admin page, not a public file under
+    // zc_plugins (tests/readme_check.php covers the page and the superuser gate).
+    check(strpos($m_after['pluginDescription'], '<a href="index.php?cmd=multiship_readme" target="_blank" rel="noopener noreferrer"') !== false, 'ReadMe opens the admin ReadMe page in its own window');
+    check(strpos($m_after['pluginDescription'], 'zc_plugins/') === false && strpos($m_after['pluginDescription'], 'readme.html') === false, 'no public readme file is linked');
     $installer = file_get_contents($ver_dir . '/Installer/ScriptedInstaller.php');
     foreach (['executeInstall', 'executeUpgrade', 'executeUninstall'] as $method) {
         preg_match('/function ' . $method . '\(.*?\r?\n    \}\r?\n/s', $installer, $body);
@@ -232,11 +238,13 @@ foreach (['invoice_multiship.php', 'packingslip_multiship.php'] as $page) {
 //
 $manifest = file_get_contents($ver_dir . '/manifest.php');
 check(strpos($manifest, "\$multiship_version = '$ver';") !== false, "manifest version is $ver");
-$readme_root = file_get_contents(dirname(__DIR__) . '/docs/readme.html');
-$readme_plugin = file_get_contents($ver_dir . '/docs/readme.html');
-check($readme_root === $readme_plugin, 'docs/readme.html and the plugin copy are identical');
-check(strpos($readme_plugin, 'Version ' . substr($ver, 1) . '</span>') !== false, 'readme title carries ' . $ver);
-check(strpos($readme_plugin, '<li>' . $ver . ', ') !== false, 'readme changelog has a ' . $ver . ' entry');
+//    Since v3.0.6 the readme is README.md, at the repository root and in the version folder.
+//
+$readme_root = (string)@file_get_contents(dirname(__DIR__) . '/README.md');
+$readme_plugin = (string)@file_get_contents($ver_dir . '/README.md');
+check($readme_plugin !== '' && $readme_root === $readme_plugin, 'README.md and the plugin copy are identical');
+check(strpos($readme_plugin, "\nVersion " . substr($ver, 1) . ' ') !== false, 'readme title block carries ' . $ver);
+check(preg_match('/^### ' . preg_quote($ver, '/') . '$/m', $readme_plugin) === 1, 'readme changelog has a ' . $ver . ' entry');
 
 // -----
 // 5. v3.0.4: Zen Cart 3.0.0 stays listed (John: every plugin targets 1.5.8-3.0.0), and no
