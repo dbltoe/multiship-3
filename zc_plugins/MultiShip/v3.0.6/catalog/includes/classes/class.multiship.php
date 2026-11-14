@@ -2,7 +2,7 @@
 // -----
 // Part of the Multiple Shipping Addresses plugin for Zen Cart
 // Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
-// @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
+// @license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0
 //
 
 class multiship extends base 

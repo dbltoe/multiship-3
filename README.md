@@ -1,6 +1,6 @@
 # Multiple Ship-To Addresses
 
-Version 3.0.6 · Zen Cart 2.0.0 through 3.0.0 · PHP 8.0 through 8.5 · GPL v3 · by My Zen Cart Host (dbltoe)
+Version 3.0.6 · Zen Cart 2.0.0 through 3.0.0 · PHP 8.0 through 8.5 · GPL v2 · by My Zen Cart Host (dbltoe)
 
 One order, two or more delivery addresses: each address quoted, taxed, tracked and status-updated on its own, while the customer pays once.
 
@@ -165,7 +165,6 @@ File lists in the older entries are marked [+] added, [-] removed, [template] a 
 
 Released 2026-11-11.
 
-- **License: GNU General Public License, version 3** (was version 2).
 - **readme.html is replaced by README.md.** The ReadMe button in Plugin Manager opens it inside the admin, for superusers only, in its own window (`index.php?cmd=multiship_readme`); it is no longer a public file under `zc_plugins/`. The same README.md is at the root of the download.
 - Nothing changes on the storefront or in the settings.
 
@@ -480,4 +479,4 @@ Released 2014-01-28.
 
 ## License
 
-Multiple Ship-To Addresses is free software under the GNU General Public License, version 3 (https://www.gnu.org/licenses/gpl-3.0.html); the full text is in `LICENSE.txt`. Copyright © 2026 My Zen Cart Host (dbltoe).
+Multiple Ship-To Addresses is free software under the GNU General Public License, version 2 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html); the full text is in `LICENSE.txt`. Copyright © 2026 My Zen Cart Host (dbltoe).

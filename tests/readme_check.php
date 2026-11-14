@@ -101,7 +101,7 @@ check(strpos($readme, "\r") === false, 'README.md uses LF line endings');
 // 2. The top block, the version and the paths it quotes.
 //
 check(($readme_lines[0] ?? '') === '# Multiple Ship-To Addresses' && ($readme_lines[1] ?? 'x') === '', 'it opens with the plugin\'s name');
-check(($readme_lines[2] ?? '') === 'Version ' . substr($ver, 1) . ' · Zen Cart 2.0.0 through 3.0.0 · PHP 8.0 through 8.5 · GPL v3 · by My Zen Cart Host (dbltoe)', 'its second line states version ' . substr($ver, 1) . ', the Zen Cart and PHP range, the license and the author');
+check(($readme_lines[2] ?? '') === 'Version ' . substr($ver, 1) . ' · Zen Cart 2.0.0 through 3.0.0 · PHP 8.0 through 8.5 · GPL v2 · by My Zen Cart Host (dbltoe)', 'its second line states version ' . substr($ver, 1) . ', the Zen Cart and PHP range, the license and the author');
 $manifest_src = (string)file_get_contents($ver_dir . '/manifest.php');
 check(strpos($manifest_src, "'zcVersions' => ['v2.0.0', 'v2.0.1', 'v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0', 'v3.0.0'],") !== false, 'the Zen Cart range it states is the manifest\'s (v2.0.0 through v3.0.0)');
 check(preg_match_all('~zc_plugins/MultiShip/(v[0-9.]+)~', $readme, $m) > 0 && array_unique($m[1]) === [$ver], 'every path it quotes uses this version folder');
@@ -156,11 +156,11 @@ check(preg_match('/^#{4,}/m', $prose_text) === 0, 'no heading deeper than ###');
 check(preg_match('/^[ \t]+(-|\*|\d+\.)[ \t]/m', $prose_text) === 0 && preg_match('/^\*[ \t]/m', $prose_text) === 0, 'no nested lists, and only - bullets');
 
 // -----
-// 5. The license: GPL v3 everywhere, and other people's copyright lines still in place.
+// 5. The license: GPL v2 everywhere, and other people's copyright lines still in place.
 //
-check(strpos($readme, 'GNU General Public License, version 3') !== false && strpos($readme, 'https://www.gnu.org/licenses/gpl-3.0.html') !== false, 'the readme names the license: GPL version 3, with the GNU URL');
+check(strpos($readme, 'GNU General Public License, version 2') !== false && strpos($readme, 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.html') !== false, 'the readme names the license: GPL version 2, with the GNU URL');
 $license = (string)@file_get_contents($repo . '/LICENSE.txt');
-check(strpos($license, 'GNU GENERAL PUBLIC LICENSE') !== false && strpos($license, 'Version 3, 29 June 2007') !== false && strpos($license, 'Version 2, June 1991') === false, 'LICENSE.txt is the GNU GPL version 3 text');
+check(strpos($license, 'GNU GENERAL PUBLIC LICENSE') !== false && strpos($license, 'Version 2, June 1991') !== false && strpos($license, 'Version 3, 29 June 2007') === false, 'LICENSE.txt is the GNU GPL version 2 text');
 check(strpos($readme, 'the full text is in `LICENSE.txt`') !== false && !is_file($repo . '/LICENSE'), 'the readme points at LICENSE.txt, the only license file');
 $old_license = [];
 $bad_tag = [];
@@ -171,12 +171,11 @@ foreach ($all as $f) {
     }
     $src = (string)file_get_contents($repo . '/' . $f);
     foreach (explode("\n", $src) as $i => $line) {
-        // The changelog's own "was version 2" is the one place the old license is named.
-        if (preg_match('~GPL[ -]?v?2|gpl-2\.0|zen-cart\.com/license|License V2|version 2(\.0)? of the GPL~i', $line) === 1) {
+        if (preg_match('~GPL[ -]?v?3(?![.\d])|gpl-3\.0|zen-cart\.com/license|License V3|version 3(\.0)? of the GPL~i', $line) === 1) {
             $old_license[] = $f . ':' . ($i + 1);
         }
         if (strpos($line, '@license') !== false && strpos($f, 'zc_plugins/') === 0
-            && strpos($line, '@license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0') === false) {
+            && strpos($line, '@license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0') === false) {
             $bad_tag[] = $f . ':' . ($i + 1);
         }
     }
@@ -186,8 +185,8 @@ foreach ($all as $f) {
         $headers['oscommerce'] += preg_match_all('/Portions Copyright (\(c\) )?2003 osCommerce/', $src);
     }
 }
-check($old_license === [], 'no GPL v2 or zen-cart.com license mention is left' . ($old_license ? ': ' . implode(', ', array_slice($old_license, 0, 6)) : ''));
-check($bad_tag === [], 'every @license line in the plugin is the GPL v3 one' . ($bad_tag ? ': ' . implode(', ', array_slice($bad_tag, 0, 6)) : ''));
+check($old_license === [], 'no GPL v3 or zen-cart.com license mention is left' . ($old_license ? ': ' . implode(', ', array_slice($old_license, 0, 6)) : ''));
+check($bad_tag === [], 'every @license line in the plugin is the GPL v2 one' . ($bad_tag ? ': ' . implode(', ', array_slice($bad_tag, 0, 6)) : ''));
 check($headers === ['vinos' => 45, 'zencart' => 4, 'oscommerce' => 4], "the file headers keep their copyright lines: Vinos de Frutas Tropicales {$headers['vinos']}/45, Zen Cart {$headers['zencart']}/4, osCommerce {$headers['oscommerce']}/4");
 
 // -----
@@ -218,7 +217,7 @@ check(substr_count($page, 'file_get_contents(') === 1 && strpos($page, "\$multis
 check(preg_match('~\$_(GET|POST|REQUEST|COOKIE|SERVER|FILES)\b~', $page) === 0, 'it takes no input from the request');
 check(substr_count($page, 'echo ') === 1 && strpos($page, '<?php echo $multishipReadmeHtml; ?>') !== false && strpos($page, "\$text = htmlspecialchars((string)\$text, ENT_QUOTES, 'UTF-8');") !== false, 'it outputs only the escape-first Markdown render');
 check(stripos($page, '<script') === false && preg_match('~\b(include|require)(_once)?\b~', str_replace("require 'includes/application_top.php';", '', $page)) === 0, 'it has no script and loads nothing but application_top');
-check(strpos($page, '@license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0') !== false, 'it carries the GPL v3 license line');
+check(strpos($page, '@license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0') !== false, 'it carries the GPL v2 license line');
 
 // -----
 // 7. The renderer itself: lift the two functions out of the page and run them on the guide.

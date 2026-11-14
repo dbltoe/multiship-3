@@ -9,10 +9,10 @@
 // |                                                                      |
 // | Portions Copyright (c) 2003 osCommerce                               |
 // +----------------------------------------------------------------------+
-// | This source file is subject to version 3.0 of the GPL license,       |
+// | This source file is subject to version 2.0 of the GPL license,       |
 // | that is bundled with this package in the file LICENSE, and is        |
 // | available through the world-wide-web at the following url:           |
-// | https://www.gnu.org/licenses/gpl-3.0.html.                           |
+// | https://www.gnu.org/licenses/old-licenses/gpl-2.0.html.              |
 // | If you did not receive a copy of the zen-cart license and are unable |
 // | to obtain it through the world-wide-web, please send a note to       |
 // | license@zen-cart.com so we can mail you a copy immediately.          |
@@ -29,7 +29,7 @@
 // Original plugin Copyright (C) 2014-2019, Vinos de Frutas Tropicales (lat9)
 // Converted to the array-based lang.*.php format in v3.0.0,
 //   Copyright (C) 2026 My Zen Cart Host (dbltoe)
-// @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
+// @license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0
 //
 $define = [
     'TABLE_HEADING_COMMENTS' => 'Comments',

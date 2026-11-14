@@ -3,7 +3,7 @@
  * @package admin
  * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
- * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
+ * @license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0
  * @version $Id: invoice.php 19136 2011-07-18 16:56:18Z wilt $
 */
 // -----

@@ -3,7 +3,7 @@
  * @package admin
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
- * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
+ * @license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0
  * @version $Id: packingslip.php 15788 2010-04-02 10:44:40Z drbyte $
 */
 // -----
