@@ -157,6 +157,13 @@ Each is described, with its cause, in the sections above.
 
 The architecture notes and store-owner notes are in the `docs` folder of the GitHub repository.
 
+## Donations
+
+This plugin is free. If it has saved you time or money, a donation is always welcome.
+
+- Donate to JEANDRET, who maintains this plugin: https://myzencartzone.com/index.php?main_page=page&id=215
+- Donate to Zen Cart, the free, open-source software this plugin runs on: https://www.zen-cart.com/donate
+
 ## Changelog
 
 File lists in the older entries are marked [+] added, [-] removed, [template] a file in your active template, and [core] a Zen Cart core file.
