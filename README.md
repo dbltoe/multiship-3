@@ -170,9 +170,10 @@ File lists in the older entries are marked [+] added, [-] removed, [template] a 
 
 ### v3.0.6
 
-Released 2026-11-11.
+Released 2026-11-27.
 
 - **readme.html is replaced by README.md.** The ReadMe button in Plugin Manager opens it inside the admin, for superusers only, in its own window (`index.php?cmd=multiship_readme`); it is no longer a public file under `zc_plugins/`. The same README.md is at the root of the download.
+- The guide has a Donations section.
 - Nothing changes on the storefront or in the settings.
 
 Upgrading: put the v3.0.6 folder beside the old one and click **Upgrade** in Admin > Modules > Plugin Manager. Your settings and your multiship orders are kept.
